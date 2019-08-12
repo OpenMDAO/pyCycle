@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/OpenMDAO/pyCycle.svg?token=bjP9ksqdYMj1myyynUyh&branch=master)](https://travis-ci.com/OpenMDAO/pyCycle)
+[![Build Status](https://travis-ci.org/OpenMDAO/pyCycle.svg?token=bjP9ksqdYMj1myyynUyh&branch=master)](https://travis-ci.org/OpenMDAO/pyCycle)
 
 # pyCycle
 --------------
