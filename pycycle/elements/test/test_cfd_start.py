@@ -44,7 +44,7 @@ class FlowStartTestCase(unittest.TestCase):
         params.add_output('alt', val=35000., units='ft')
         params.add_output('W', val=15., units='lbm/s')
 
-        p.model.add_subsystem('fc', FlightConditions(), promotes_inputs=['MN', 'alt', ('fs.W', 'W')])
+        p.model.add_subsystem('fc', FlightConditions(), promotes_inputs=['MN', 'alt', 'W'])
 
         p.model.add_subsystem('cfd_start', CFDStart()) #, promotes_inputs=['Ps', 'V', 'area', 'W'])
         p.model.connect('fc.Fl_O:stat:P', 'cfd_start.Ps')
