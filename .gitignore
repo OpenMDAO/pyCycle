@@ -1,0 +1,9 @@
+*.idea
+*.pyc
+.cache
+*~
+.DS_Store
+.dropbox
+pycycle.egg-info/*
+/build*
+*testflo_report.out
