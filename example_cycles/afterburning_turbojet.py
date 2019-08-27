@@ -150,7 +150,7 @@ def viewer(prob, pt, file=sys.stdout):
     shaft_full_names = [f'{pt}.{s}' for s in shaft_names]
     pyc.print_shaft(prob, shaft_full_names, file=file)
 
-    bleed_names = ['comp.cool1', 'comp.cool2']
+    bleed_names = ['comp']
     bleed_full_names = [f'{pt}.{b}' for b in bleed_names]
     pyc.print_bleed(prob, bleed_full_names, file=file)
 
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     des_vars.add_output('OD8_Rline', 2.0),
 
     # DESIGN CASE
-    prob.model.add_subsystem('DESIGN', Turbojet())
+    prob.model.add_subsystem('DESIGN', ABTurbojet())
 
     prob.model.connect('alt', 'DESIGN.fc.alt')
     prob.model.connect('MN', 'DESIGN.fc.MN')
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     # pts = [] #'OD1','OD2','OD3','OD4','OD5','OD6','OD7','OD8'
 
     for pt in pts:
-        prob.model.add_subsystem(pt, Turbojet(design=False))
+        prob.model.add_subsystem(pt, ABTurbojet(design=False))
 
         prob.model.connect('duct1:dPqP', pt+'.duct1.dPqP')
         prob.model.connect('burn:dPqP', pt+'.burner.dPqP')
