@@ -220,7 +220,8 @@ if __name__ == "__main__":
 
     prob = om.Problem()
 
-    des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
+    des_vars = prob.model.add_subsystem('des_vars', 
+                                        om.IndepVarComp(), promotes=["*"])
 
     # FOR DESIGN
     des_vars.add_output('alt', 35000., units='ft'),

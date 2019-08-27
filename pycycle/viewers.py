@@ -49,9 +49,7 @@ def print_compressor(prob, element_names, file=sys.stdout):
 
     line_tmpl = '{:<14}|  '+'{:11.3f}'*12
     for e_name in element_names:
-        print(e_name)
         sys = prob.model._get_subsystem(e_name)
-        print(sys)
         if sys.options['design']:
           PR_temp = prob[e_name+'.map.scalars.PR'][0]
           eff_temp = prob[e_name+'.map.scalars.eff'][0]
