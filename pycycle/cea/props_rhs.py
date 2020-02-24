@@ -1,5 +1,4 @@
 import numpy as np
-from six.moves import range
 
 from openmdao.api import ExplicitComponent
 
