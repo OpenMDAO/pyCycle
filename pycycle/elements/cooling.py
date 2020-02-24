@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 from six.moves import range
 
@@ -253,7 +252,7 @@ class TurbineCooling(om.Group):
         n_stages = self.options['n_stages']
         n_rows = 2 * n_stages
 
-        if self.options['owns_x_factor']: 
+        if self.options['owns_x_factor']:
             indeps = self.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
             indeps.add_output('x_factor', val=1.0)
 

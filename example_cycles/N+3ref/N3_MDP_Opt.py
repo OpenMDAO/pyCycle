@@ -1,11 +1,9 @@
-from __future__ import print_function
-
 import numpy as np
 import time
 import pickle
 from pprint import pprint
 
-import openmdao.api as om 
+import openmdao.api as om
 
 from N3ref import N3, viewer
 

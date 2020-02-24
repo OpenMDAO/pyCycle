@@ -1,10 +1,8 @@
-from __future__ import print_function
-
 import numpy as np
 from collections import Iterable
 import itertools
 
-import openmdao.api as om 
+import openmdao.api as om
 
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
@@ -441,7 +439,7 @@ class Compressor(om.Group):
 
         map_calcs = CompressorMap(map_data=self.options['map_data'], design=design,
                             interp_method=interp_method, extrap=map_extrap)
-        self.add_subsystem('map', map_calcs, 
+        self.add_subsystem('map', map_calcs,
                             promotes=['s_Nc','s_eff','s_Wc','s_PR','Nc','Wc',
                                     'PR','eff','SMN','SMW'])
 

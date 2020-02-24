@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 import numpy as np
 
@@ -280,7 +278,7 @@ class N3(om.Group):
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
-def viewer(prob, pt, file=sys.stdout): 
+def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
     """
@@ -305,7 +303,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC      BPR ", file=file, flush=True)
     print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f  %7.3f" %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC'], prob[pt+'.splitter.BPR']), file=file, flush=True)
-    
+
     fs_names = ['fc.Fl_O','inlet.Fl_O','fan.Fl_O','splitter.Fl_O1','duct2.Fl_O',
                 'lpc.Fl_O','bld25.Fl_O','duct25.Fl_O','hpc.Fl_O','bld3.Fl_O',
                 'burner.Fl_O','hpt.Fl_O','duct45.Fl_O','lpt.Fl_O','duct5.Fl_O',

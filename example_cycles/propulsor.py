@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import openmdao.api as om
 
 import pycycle.api as pyc
@@ -7,7 +5,7 @@ import pycycle.api as pyc
 
 class Propulsor(om.Group):
 
-    def initialize(self): 
+    def initialize(self):
         self.options.declare('design', types=bool, default=True)
 
     def setup(self):
@@ -19,25 +17,25 @@ class Propulsor(om.Group):
                                                   elements=pyc.AIR_MIX))
 
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_MIX, 
+        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_MIX,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
         self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
-        if design: 
+        if design:
             self.add_subsystem('shaft', om.IndepVarComp('Nmech', 1., units='rpm'))
             self.connect('shaft.Nmech', 'fan.Nmech')
 
-            balance.add_balance('W', units='lbm/s', eq_units='hp', val=50., lower=1., upper=500.)            
+            balance.add_balance('W', units='lbm/s', eq_units='hp', val=50., lower=1., upper=500.)
             self.add_subsystem('balance', balance,
                                promotes_inputs=[('rhs:W', 'pwr_target')])
             self.connect('fan.power', 'balance.lhs:W')
 
 
 
-        else: 
+        else:
             # vary mass flow till the nozzle area matches the design values
             balance.add_balance('W', units='lbm/s', eq_units='inch**2', val=50, lower=1., upper=500.)
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
@@ -83,7 +81,7 @@ class Propulsor(om.Group):
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
 
-def viewer(prob, pt): 
+def viewer(prob, pt):
 
 
     fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'fan.Fl_O', 'nozz.Fl_O']
@@ -135,7 +133,7 @@ if __name__ == "__main__":
     prob.model.connect('OD:alt', 'off_design.fc.alt')
     prob.model.connect('OD:MN', 'off_design.fc.MN')
 
-    # need to pass some design values to the OD point 
+    # need to pass some design values to the OD point
     # prob.model.connect('design.inlet:ram_recovery', 'off_design.inlet.ram_recovery')
     prob.model.connect('design.inlet.Fl_O:stat:area', 'off_design.inlet.area')
 

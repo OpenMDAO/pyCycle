@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 
 import openmdao.api as om
@@ -117,7 +115,7 @@ class Turboshaft(om.Group):
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
-def viewer(prob, pt, file=sys.stdout): 
+def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
     """
@@ -132,7 +130,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     PSFC ")
     print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" \
                 %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'], \
-                prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))    
+                prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))
 
 
     fs_names = ['fc.Fl_O','inlet.Fl_O','comp.Fl_O',

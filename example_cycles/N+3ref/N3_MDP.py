@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import time
 import pickle
@@ -501,7 +499,7 @@ st = time.time()
 #  'des_vars.fan:PRdes': array([ 1.34302179]),
 #  'des_vars.lpc:PRdes': array([ 3.1535308])}
 
-# for k,v in xdv.items(): 
+# for k,v in xdv.items():
 #     prob[k] = v
 
 # prob['CRZ:VjetRatio'] = 1.40327376

@@ -1,7 +1,5 @@
 """ Tests the turbine component. """
 
-from __future__ import print_function
-
 import os
 import unittest
 
@@ -91,7 +89,7 @@ class TurbineTestCase(unittest.TestCase):
 
             print()
             print('---- Test Case,', i, '----')
-            
+
             self.prob['PR'] = data[h_map['PRdes']]
             self.prob['Nmech'] = data[h_map['Nmech']]
             self.prob['eff'] = data[h_map['EffDes']]

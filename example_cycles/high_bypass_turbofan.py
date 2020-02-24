@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 
 import numpy as np
@@ -77,13 +75,13 @@ class HBTF(om.Group):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
-            balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8, 
+            balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8,
                                 eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lpt_PR', 'lpt.PR')
             self.connect('lp_shaft.pwr_in_real', 'balance.lhs:lpt_PR')
             self.connect('lp_shaft.pwr_out_real', 'balance.rhs:lpt_PR')
 
-            balance.add_balance('hpt_PR', val=1.5, lower=1.001, upper=8, 
+            balance.add_balance('hpt_PR', val=1.5, lower=1.001, upper=8,
                                 eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hpt_PR', 'hpt.PR')
             self.connect('hp_shaft.pwr_in_real', 'balance.lhs:hpt_PR')
@@ -133,7 +131,7 @@ class HBTF(om.Group):
         pyc.connect_flow(self, 'splitter.Fl_O2', 'byp_bld.Fl_I')
         pyc.connect_flow(self, 'byp_bld.Fl_O', 'duct15.Fl_I')
         pyc.connect_flow(self, 'duct15.Fl_O', 'byp_nozz.Fl_I')
-       
+
 
         pyc.connect_flow(self, 'hpc.cool1', 'lpt.cool1', connect_stat=False)
         pyc.connect_flow(self, 'hpc.cool2', 'lpt.cool2', connect_stat=False)
@@ -148,7 +146,7 @@ class HBTF(om.Group):
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
 
-        
+
         # ls = newton.linesearch = BoundsEnforceLS()
         ls = newton.linesearch = om.ArmijoGoldsteinLS()
         ls.options['maxiter'] = 3
@@ -158,7 +156,7 @@ class HBTF(om.Group):
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
 
-def viewer(prob, pt, file=sys.stdout): 
+def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
     """
@@ -183,11 +181,11 @@ def viewer(prob, pt, file=sys.stdout):
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC      BPR ", file=file, flush=True)
     print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f  %7.3f" %(MN, prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC'], prob[pt+'.splitter.BPR']), file=file, flush=True)
-    
 
-    fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'fan.Fl_O', 'splitter.Fl_O1', 'splitter.Fl_O2', 
-                'duct4.Fl_O', 'lpc.Fl_O', 'duct6.Fl_O', 'hpc.Fl_O', 'bld3.Fl_O', 'burner.Fl_O', 
-                'hpt.Fl_O', 'duct11.Fl_O', 'lpt.Fl_O', 'duct13.Fl_O', 'core_nozz.Fl_O', 'byp_bld.Fl_O', 
+
+    fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'fan.Fl_O', 'splitter.Fl_O1', 'splitter.Fl_O2',
+                'duct4.Fl_O', 'lpc.Fl_O', 'duct6.Fl_O', 'hpc.Fl_O', 'bld3.Fl_O', 'burner.Fl_O',
+                'hpt.Fl_O', 'duct11.Fl_O', 'lpt.Fl_O', 'duct13.Fl_O', 'core_nozz.Fl_O', 'byp_bld.Fl_O',
                 'duct15.Fl_O', 'byp_nozz.Fl_O']
     fs_full_names = [f'{pt}.{fs}' for fs in fs_names]
     pyc.print_flow_station(prob, fs_full_names, file=file)
@@ -220,7 +218,7 @@ if __name__ == "__main__":
 
     prob = om.Problem()
 
-    des_vars = prob.model.add_subsystem('des_vars', 
+    des_vars = prob.model.add_subsystem('des_vars',
                                         om.IndepVarComp(), promotes=["*"])
 
     # FOR DESIGN
@@ -422,7 +420,7 @@ if __name__ == "__main__":
         prob.model.connect('DESIGN.core_nozz.Throat:stat:area',pt+'.balance.rhs:W')
         prob.model.connect('DESIGN.byp_nozz.Throat:stat:area',pt+'.balance.rhs:BPR')
 
-    
+
         prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
         prob.model.connect('DESIGN.fan.Fl_O:stat:area', pt+'.fan.area')
         prob.model.connect('DESIGN.splitter.Fl_O1:stat:area', pt+'.splitter.area1')
@@ -481,4 +479,3 @@ if __name__ == "__main__":
     print()
     print("time", time.time() - st)
 
-    

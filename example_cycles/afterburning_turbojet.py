@@ -1,9 +1,7 @@
-from __future__ import print_function
-
 import sys
 import numpy as np
 
-import openmdao.api as om 
+import openmdao.api as om
 
 import pycycle.api as pyc
 
@@ -84,7 +82,7 @@ class ABTurbojet(om.Group):
 
             self.set_order(['balance', 'fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf'])
 
-    
+
         pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
         pyc.connect_flow(self, 'inlet.Fl_O', 'duct1.Fl_I', connect_stat=False)
         pyc.connect_flow(self, 'duct1.Fl_O', 'comp.Fl_I', connect_stat=False)
@@ -111,7 +109,7 @@ class ABTurbojet(om.Group):
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
-def viewer(prob, pt, file=sys.stdout): 
+def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
     """
@@ -125,9 +123,9 @@ def viewer(prob, pt, file=sys.stdout):
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC  ", file=file, flush=True)
     print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC']), file=file, flush=True)
-    
 
-    fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'duct1.Fl_O', 'comp.Fl_O', 'burner.Fl_O', 
+
+    fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'duct1.Fl_O', 'comp.Fl_O', 'burner.Fl_O',
                 'turb.Fl_O', 'ab.Fl_O','nozz.Fl_O']
     fs_full_names = [f'{pt}.{fs}' for fs in fs_names]
     pyc.print_flow_station(prob, fs_full_names, file=file)
@@ -316,7 +314,7 @@ if __name__ == "__main__":
         prob.model.connect('DESIGN.turb.s_eff', pt+'.turb.s_eff')
         prob.model.connect('DESIGN.turb.s_Np', pt+'.turb.s_Np')
 
-    
+
         prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
         prob.model.connect('DESIGN.duct1.Fl_O:stat:area', pt+'.duct1.area')
         prob.model.connect('DESIGN.comp.Fl_O:stat:area', pt+'.comp.area')

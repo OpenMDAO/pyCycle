@@ -1,10 +1,8 @@
 """ Class definition for Combustor."""
 
-from __future__ import print_function
-
 import numpy as np
 
-import openmdao.api as om 
+import openmdao.api as om
 
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic

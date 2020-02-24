@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import inspect
 import numpy as np
 from six import iteritems, PY3

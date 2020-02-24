@@ -1,8 +1,6 @@
 """
 Test for the SetStaticArea component.
 """
-from __future__ import print_function
-
 import os.path
 import unittest
 

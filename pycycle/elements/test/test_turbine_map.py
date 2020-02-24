@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import unittest
 import os
@@ -239,7 +237,7 @@ class TurbineMapODTestCase(unittest.TestCase):
             # check to make sure balance is converged
             assert_rel_error(self, self.prob['Np'], self.prob['scaledOutput.Np'], tol)
             print('Np balance:',self.prob['Np'][0], self.prob['scaledOutput.Np'][0])
-            
+
             assert_rel_error(self, self.prob['Wp'], self.prob['scaledOutput.Wp'], tol)
             print('Wp balance:',self.prob['Wp'][0], self.prob['scaledOutput.Wp'][0])
             print()

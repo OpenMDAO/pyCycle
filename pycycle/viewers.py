@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 
 
@@ -60,7 +58,7 @@ def print_compressor(prob, element_names, file=sys.stdout):
         print(line_tmpl.format(e_name, prob[e_name+'.Wc'][0], PR_temp,
                                eff_temp, prob[e_name+'.eff_poly'][0], prob[e_name+'.Nc'][0], prob[e_name+'.power'][0],
                                prob[e_name+'.map.RlineMap'][0], prob[e_name+'.map.NcMap'][0],prob[e_name+'.map.PRmap'][0],
-                               prob[e_name+'.map.map.alphaMap'][0], prob[e_name+'.SMN'][0], prob[e_name+'.SMW'][0]), 
+                               prob[e_name+'.map.map.alphaMap'][0], prob[e_name+'.SMN'][0], prob[e_name+'.SMW'][0]),
               file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
@@ -83,7 +81,7 @@ def print_burner(prob, element_names, file=sys.stdout):
         FAR = W_fuel/W_air
         print(line_tmpl.format(e_name, prob[e_name+'.dPqP'][0],
                                prob[e_name+'.Fl_O:tot:T'][0],
-                               W_fuel, FAR), 
+                               W_fuel, FAR),
               file=file, flush=True)
 
 
@@ -95,7 +93,7 @@ def print_turbine(prob, element_names, file=sys.stdout):
     print("-"*len_header, file=file, flush=True)
 
     line_tmpl = '{:<14}|  '+'{:>13}'*7
-    print(line_tmpl.format('Turbine', 'Wp', 'PR', 'eff', 'Np', 'pwr', 'NpMap', 'PRmap'), 
+    print(line_tmpl.format('Turbine', 'Wp', 'PR', 'eff', 'Np', 'pwr', 'NpMap', 'PRmap'),
         file=file, flush=True)
 
 
@@ -111,7 +109,7 @@ def print_turbine(prob, element_names, file=sys.stdout):
 
         print(line_tmpl.format(e_name, prob[e_name+'.Wp'][0], PR_temp,
                                eff_temp, prob[e_name+'.Np'][0], prob[e_name+'.power'][0],
-                               prob[e_name+'.map.NpMap'][0], prob[e_name+'.map.PRmap'][0]), 
+                               prob[e_name+'.map.NpMap'][0], prob[e_name+'.map.PRmap'][0]),
               file=file, flush=True)
 
 
@@ -141,21 +139,21 @@ def print_nozzle(prob, element_names, file=sys.stdout):
         print(line_tmpl.format(e_name, prob[e_name+'.PR'][0], Cv_val, Cfg_val,
                                prob[e_name+'.Throat:stat:area'][0], prob[e_name+'.Throat:stat:MN'][0],
                                prob[e_name+'.Fl_O:stat:MN'][0],
-                               prob[e_name+'.Fl_O:stat:V'][0], prob[e_name+'.Fg'][0]), 
+                               prob[e_name+'.Fl_O:stat:V'][0], prob[e_name+'.Fg'][0]),
              file=file, flush=True)
 
 
 def print_bleed(prob, element_names, file=sys.stdout):
 
     # get max name length:
-    max_name_len = 0 
+    max_name_len = 0
     for e_name in element_names:
         print('foo', e_name)
         bleed = prob.model._get_subsystem(e_name)
-        for bn in bleed.options['bleed_names']: 
+        for bn in bleed.options['bleed_names']:
             max_name_len = max(max_name_len, len(e_name+bn))
 
-    max_name_len += 2 
+    max_name_len += 2
 
     len_header = max_name_len+3+7*13
     print("-"*len_header, file=file, flush=True)
@@ -172,10 +170,10 @@ def print_bleed(prob, element_names, file=sys.stdout):
 
         bleed_names = bleed.options['bleed_names']
 
-        for bn in bleed_names: 
+        for bn in bleed_names:
 
             full_bleed_name = bleed.pathname + '.' + bn
-          
+
             try: # this one will work for interstage bleeds on compressor
                 bld_pwr_path = bleed.pathname + '.blds_pwr.' + bn
                 frac_p = prob[bld_pwr_path+':frac_P'][0]
@@ -224,7 +222,7 @@ def print_mixer(prob, element_names, file=sys.stdout):
     print("-"*len_header, file=file, flush=True)
 
     line_tmpl = '{:<20}|  '+'{:>20}'*5
-    print(line_tmpl.format('Mixer', 'balance.P_tot', 'designed_stream', 'Fl_calc:stat:P', 'Fl_calc:stat:area', 'Fl_calc:stat:MN'), 
+    print(line_tmpl.format('Mixer', 'balance.P_tot', 'designed_stream', 'Fl_calc:stat:P', 'Fl_calc:stat:area', 'Fl_calc:stat:MN'),
           file=file, flush=True)
 
     line_tmpl = '{:<20}|  {:20.3f}{:^20}'+'{:20.3f}'*3
@@ -235,11 +233,11 @@ def print_mixer(prob, element_names, file=sys.stdout):
             print(line_tmpl.format(e_name, prob[e_name+'.balance.P_tot'][0], 1,
                                    prob[e_name+'.Fl_I1_calc:stat:P'][0],
                                    prob[e_name+'.Fl_I1_calc:stat:area'][0],
-                                   prob[e_name+'.Fl_I1_calc:stat:MN'][0]), 
+                                   prob[e_name+'.Fl_I1_calc:stat:MN'][0]),
                   file=file, flush=True)
         else:
             print(line_tmpl.format(e_name, prob[e_name+'.balance.P_tot'][0], 2,
                                    prob[e_name+'.Fl_I2_calc:stat:P'][0],
                                    prob[e_name+'.Fl_I2_calc:stat:area'][0],
-                                   prob[e_name+'.Fl_I2_calc:stat:MN'][0]), 
+                                   prob[e_name+'.Fl_I2_calc:stat:MN'][0]),
                   file=file, flush=True)
