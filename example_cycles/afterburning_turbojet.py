@@ -103,6 +103,7 @@ class ABTurbojet(om.Group):
         newton.options['maxiter'] = 15
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
+        newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
         # newton.linesearch.options['c'] = .0001

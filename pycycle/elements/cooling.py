@@ -186,7 +186,7 @@ class Row(om.Group):
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
 
         self.options.declare('thermo_data', default=species_data.janaf,
-                               desc='thermodynamic data set')
+                               desc='thermodynamic data set', recordable=False)
         # self.options.declare('main_flow_elements', default=AIR_FUEL_MIX,
         #                       desc='set of elements present in the flow')
         # self.options.declare('bld_flow_elements', default=AIR_MIX,
@@ -240,7 +240,7 @@ class TurbineCooling(om.Group):
         self.options.declare('T_metal', types=float, default=2460., desc='safety factor applied') # units=degR
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('primary_elements', default=AIR_FUEL_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('cool_elements', default=AIR_MIX,

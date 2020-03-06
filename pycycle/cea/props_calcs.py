@@ -12,7 +12,7 @@ class PropsCalcs(ExplicitComponent):
     """computes, S, H, Cp, Cv, gamma, given a converged equilibirum mixture"""
 
     def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object')
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
 
     def setup(self):
 

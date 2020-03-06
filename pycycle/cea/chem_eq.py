@@ -29,7 +29,7 @@ class ChemEq(om.ImplicitComponent):
                 outputs['T'] = 1000.
 
     def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object')
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
         self.options.declare('mode',
                               desc='the input variable that defines the total properties',
                               default='T',
@@ -42,6 +42,8 @@ class ChemEq(om.ImplicitComponent):
         newton.options['iprint'] = 2
         newton.options['atol'] = 1e-10
         newton.options['rtol'] = 1e-10
+        newton.options['solve_subsystems'] = True
+        newton.options['reraise_child_analysiserror'] = False
 
         self.options['assembled_jac_type'] = 'dense'
         self.linear_solver = om.DirectSolver(assemble_jac=True)
