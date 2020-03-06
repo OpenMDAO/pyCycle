@@ -9,9 +9,10 @@ from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver, ArmijoGold
 from openmdao.api import Problem, IndepVarComp, SqliteRecorder, CaseReader, BalanceComp, ScipyKrylov, PETScKrylov, ExecComp
 from openmdao.utils.units import convert_units as cu
 
-from pycycle.elements.api import CombineCooling, TurbineCooling
-from pycycle.cea import species_data
-from pycycle.connect_flow import connect_flow
+# from pycycle.elements.api import CombineCooling, TurbineCooling
+# from pycycle.cea import species_data
+# from pycycle.connect_flow import connect_flow
+import pycycle.api as pyc
 
 from N3ref import N3, viewer
 
@@ -142,7 +143,7 @@ des_vars.add_output('CRZ:VjetRatio', 1.40) #1.41038)
 
 
 # TOC POINT (DESIGN)
-prob.model.add_subsystem('TOC', N3(statics=True))
+prob.model.add_subsystem('TOC', N3())
 
 prob.model.connect('TOC:alt', 'TOC.fc.alt')
 prob.model.connect('TOC:MN', 'TOC.fc.MN')
@@ -230,10 +231,10 @@ prob.model.connect('RTO:Fn_target', 'RTO.balance.rhs:FAR')
 # prob.model.connect('SLS:Fn_target', 'SLS.balance.rhs:FAR')
 # prob.model.connect('CRZ:Fn_target', 'CRZ.balance.rhs:FAR')
 
-prob.model.add_subsystem('RTO', N3(design=False, statics=OD_statics, cooling=True))
-# prob.model.add_subsystem('RTO', N3(design=False, statics=OD_statics))
-prob.model.add_subsystem('SLS', N3(design=False, statics=OD_statics))
-prob.model.add_subsystem('CRZ', N3(design=False, statics=OD_statics))
+prob.model.add_subsystem('RTO', N3(design=False, cooling=True))
+# prob.model.add_subsystem('RTO', N3(design=False))
+prob.model.add_subsystem('SLS', N3(design=False))
+prob.model.add_subsystem('CRZ', N3(design=False))
 
 
 for pt in pts:
@@ -386,7 +387,8 @@ newton.options['iprint'] = 2
 newton.options['maxiter'] = 20
 newton.options['solve_subsystems'] = True
 newton.options['max_sub_solves'] = 10
-newton.options['err_on_maxiter'] = True
+newton.options['err_on_non_converge'] = True
+newton.options['reraise_child_analysiserror'] = False
 # newton.linesearch =  ArmijoGoldsteinLS()
 newton.linesearch =  BoundsEnforceLS()
 # newton.linesearch.options['maxiter'] = 2
@@ -428,10 +430,10 @@ prob.model.linear_solver = DirectSolver(assemble_jac=True)
 
 
 
-recorder = SqliteRecorder('Saved Results/N3_MDP.sql')
-prob.model.add_recorder(recorder)
-prob.model.recording_options['record_inputs'] = True
-prob.model.recording_options['record_outputs'] = True
+# recorder = SqliteRecorder('Saved Results/N3_MDP.sql')
+# prob.model.add_recorder(recorder)
+# prob.model.recording_options['record_inputs'] = True
+# prob.model.recording_options['record_outputs'] = True
 
 prob.setup(check=False)
 

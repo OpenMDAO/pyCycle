@@ -10,7 +10,7 @@ class PsCalc(ExplicitComponent):
     """Mach number, Area calculation for when Ps is known"""
 
     def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object')
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
 
     def setup(self):
 

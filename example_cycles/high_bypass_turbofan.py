@@ -147,7 +147,7 @@ class HBTF(om.Group):
         newton.options['maxiter'] = 50
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
-
+        newton.options['reraise_child_analysiserror'] = False
         
         # ls = newton.linesearch = BoundsEnforceLS()
         ls = newton.linesearch = om.ArmijoGoldsteinLS()

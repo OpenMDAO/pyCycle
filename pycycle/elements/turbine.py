@@ -171,7 +171,7 @@ class Bleeds(om.ExplicitComponent):
 
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('main_flow_elements',
                               desc='set of elements present in the flow')
         self.options.declare('bld_flow_elements', default=AIR_MIX,
@@ -494,7 +494,7 @@ class Turbine(om.Group):
     def initialize(self):
         self.options.declare('map_data', default=LPT2269)
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('bleed_elements', default=AIR_MIX,

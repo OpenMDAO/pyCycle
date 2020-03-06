@@ -268,6 +268,7 @@ class N3(om.Group):
         newton.options['maxiter'] = 10
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 10
+        newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
         # newton.linesearch.options['maxiter'] = 2

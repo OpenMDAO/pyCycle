@@ -13,7 +13,7 @@ class FlightConditions(om.Group):
 
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
 
@@ -36,6 +36,7 @@ class FlightConditions(om.Group):
         newton.options['maxiter'] = 10
         newton.options['iprint'] = -1
         newton.options['solve_subsystems'] = True
+        newton.options['reraise_child_analysiserror'] = False
         newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch.options['bound_enforcement'] = 'scalar'
 
