@@ -1,7 +1,5 @@
 """ Tests the duct component. """
 
-from __future__ import print_function
-
 import unittest
 import os
 
@@ -151,7 +149,7 @@ class DuctTestCase(unittest.TestCase):
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
 
-    
+
         data = ref_data[0]
         self.prob['dPqP_des'] = data[h_map['dPqP']]
 

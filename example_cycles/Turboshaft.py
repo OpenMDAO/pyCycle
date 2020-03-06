@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 import numpy as np
 
@@ -21,7 +19,7 @@ class Turboshaft(om.Group):
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('duct1', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX), 
+        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX),
                            promotes_inputs=[('Nmech','IP_Nmech')])
         self.add_subsystem('icduct', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('hpc_axi', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX),
@@ -91,7 +89,7 @@ class Turboshaft(om.Group):
             self.connect('balance.pt_PR', 'pt.PR')
             self.connect('lp_shaft.pwr_net', 'balance.lhs:pt_PR')
 
-           
+
         else:
             # Need to check all these balances once power turbine map is updated
             balance.add_balance('FAR', eq_units='lbf', lower=1e-4, val=.017)
@@ -131,7 +129,7 @@ class Turboshaft(om.Group):
         pyc.connect_flow(self, 'itduct.Fl_O', 'pt.Fl_I')
         pyc.connect_flow(self, 'pt.Fl_O', 'duct12.Fl_I')
         pyc.connect_flow(self, 'duct12.Fl_O', 'nozzle.Fl_I')
-        
+
         pyc.connect_flow(self, 'bld25.cool1', 'lpt.cool1', connect_stat=False)
         pyc.connect_flow(self, 'bld25.cool2', 'lpt.cool2', connect_stat=False)
         pyc.connect_flow(self, 'bld3.cool3', 'hpt.cool3', connect_stat=False)
@@ -153,7 +151,7 @@ class Turboshaft(om.Group):
 
         self.linear_solver = om.DirectSolver()
 
-def viewer(prob, pt, file=sys.stdout): 
+def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
     """
@@ -168,7 +166,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     PSFC ")
     print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" \
                 %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'], \
-                prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))    
+                prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))
 
 
     fs_names = ['fc.Fl_O','inlet.Fl_O','duct1.Fl_O','lpc.Fl_O',
@@ -330,7 +328,7 @@ if __name__ == "__main__":
 
     # prob.model.connect('FAR', 'DESIGN.burner.Fl_I:FAR')
     # prob.model.connect('W', 'DESIGN.inlet.Fl_I:stat:W')
-    
+
     # OFF DESIGN CASES
     pts = [] # 'OD1','OD2','OD3','OD4','OD5','OD6','OD7','OD8']
 

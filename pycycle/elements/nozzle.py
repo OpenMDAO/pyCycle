@@ -1,9 +1,5 @@
 """ Class definition for Nozzle."""
 
-from __future__ import print_function
-
-from six.moves import range
-
 import openmdao.api as om
 
 from pycycle.cea import species_data

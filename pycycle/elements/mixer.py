@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 
 import openmdao.api as om
@@ -218,7 +216,7 @@ class Impulse(om.ExplicitComponent):
 
 class Mixer(om.Group):
     """
-    Combines two incomming flows into a single outgoing flow 
+    Combines two incomming flows into a single outgoing flow
     using a conservation of momentum approach
 
     --------------
@@ -236,7 +234,7 @@ class Mixer(om.Group):
 
         implicit states
         ---------------
-        balance.P_tot 
+        balance.P_tot
 
         outputs
         --------
@@ -251,7 +249,7 @@ class Mixer(om.Group):
 
         implicit states
         ---------------
-        balance.P_tot 
+        balance.P_tot
 
     """
 

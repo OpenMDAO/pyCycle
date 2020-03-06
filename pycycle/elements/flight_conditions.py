@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import openmdao.api as om
 
 from pycycle.cea import species_data

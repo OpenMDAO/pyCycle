@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import openmdao.api as om
 
 from pycycle.maps.lpt2269 import LPT2269
@@ -126,7 +124,7 @@ class TurbineMap(om.Group):
         for o in outputs:
             readmap.add_output(o['name'], val=o['default'], units=o['units'],
                         training_data=o['values'])
-        
+
         if design:
             # In design mode, operating point specified by default values for RlineMap, NcMap and alphaMap
             mapDesPt = om.IndepVarComp()
@@ -156,9 +154,9 @@ class TurbineMap(om.Group):
             # Use balance component to vary NpMap and PRmap to match incoming corrected flow and speed
             map_bal = om.BalanceComp()
             map_bal.add_balance('NpMap', val=map_data.defaults['NpMap'], units='rpm', eq_units='rpm', lower=1., upper=200.)
-            map_bal.add_balance('PRmap', val=map_data.defaults['PRmap'], units=None, 
+            map_bal.add_balance('PRmap', val=map_data.defaults['PRmap'], units=None,
                                 eq_units='lbm/s', lower=1.01)
-            self.add_subsystem(name='map_bal', subsys=map_bal, 
+            self.add_subsystem(name='map_bal', subsys=map_bal,
                                 promotes_inputs=[('lhs:NpMap','Np'),('lhs:PRmap','Wp')],
                                 promotes_outputs=['NpMap', 'PRmap'])
             self.connect('scaledOutput.Np','map_bal.rhs:NpMap')

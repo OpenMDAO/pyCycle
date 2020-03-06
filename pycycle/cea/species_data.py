@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import interpolate
-from six.moves import range
 
 from collections import OrderedDict
 

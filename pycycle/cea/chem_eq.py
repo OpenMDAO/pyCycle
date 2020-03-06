@@ -1,6 +1,4 @@
-from __future__ import division, print_function
 import numpy as np
-from six.moves import range
 
 import openmdao.api as om
 
@@ -177,10 +175,10 @@ class ChemEq(om.ImplicitComponent):
         b0 = np.sum(thermo.aij * inputs['init_prod_amounts'], axis=1)
         resids['b0'] = b0 - outputs['b0']
 
-        try: 
+        try:
             self.H0_T = H0_T = thermo.H0(T)
             self.S0_T = S0_T = thermo.S0(T)
-        except: 
+        except:
             raise AnalysisError('Bad Temp')
             # T[:] = 500.
             # self.H0_T = H0_T = thermo.H0(T)

@@ -1,17 +1,10 @@
-from __future__ import print_function
-
 import inspect
 import numpy as np
-from six import iteritems, PY3
 
 from openmdao.api import ExplicitComponent
 
-if PY3:
-    _full_out_args = inspect.getfullargspec(ExplicitComponent.add_output)
-    _allowed_out_args = set(_full_out_args.args[3:] + _full_out_args.kwonlyargs)
-else:
-    _full_out_args = inspect.getargspec(ExplicitComponent.add_output)
-    _allowed_out_args = set(_full_out_args.args[3:])
+_full_out_args = inspect.getfullargspec(ExplicitComponent.add_output)
+_allowed_out_args = set(_full_out_args.args[3:] + _full_out_args.kwonlyargs)
 
 
 class UnitCompBase(ExplicitComponent):
@@ -32,7 +25,7 @@ class UnitCompBase(ExplicitComponent):
 
             meta = rel2meta[in_name]
             val = meta['value'].copy()
-            new_meta = {k:v for k, v in iteritems(meta) if k in _allowed_out_args}
+            new_meta = {k:v for k, v in meta.items() if k in _allowed_out_args}
 
             out_name = '{0}:{1}'.format(fl_name, in_name)
             self.add_output(out_name, val=val, **new_meta)

@@ -1,10 +1,8 @@
-from __future__ import print_function
-
 import numpy as np
 import unittest
 import os
 
-import openmdao.api as om 
+import openmdao.api as om
 from openmdao.utils.assert_utils import assert_rel_error
 
 from pycycle.cea.species_data import janaf
