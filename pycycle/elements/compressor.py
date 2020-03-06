@@ -388,7 +388,7 @@ class Compressor(om.Group):
         self.options.declare('map_data', default=NCP01,
                               desc='data container for raw compressor map data')
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,

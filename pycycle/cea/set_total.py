@@ -13,7 +13,7 @@ from pycycle.cea.species_data import Thermo
 class Properties(om.Group):
 
     def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object')
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
 
     def setup(self):
         thermo = self.options['thermo']
@@ -40,7 +40,7 @@ class Properties(om.Group):
 class SetTotal(om.Group):
 
     def initialize(self):
-        self.options.declare('thermo_data', desc='thermodynamic data set')
+        self.options.declare('thermo_data', desc='thermodynamic data set', recordable=False)
         self.options.declare('fl_name',
                               default="flow",
                               desc='flowstation name of the output flow variables')
@@ -144,6 +144,7 @@ class SetTotal(om.Group):
             newton.options['iprint'] = 2
             newton.options['solve_subsystems'] = True
             newton.options['max_sub_solves'] = 50
+            newton.options['reraise_child_analysiserror'] = False
 
             self.options['assembled_jac_type'] = 'dense'
             newton.linear_solver = om.DirectSolver(assemble_jac=True)

@@ -20,7 +20,7 @@ class MixFuel(om.ExplicitComponent):
 
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('fuel_type', default="JP-7",
@@ -190,7 +190,7 @@ class Combustor(om.Group):
 
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
                               desc='set of elements present in the air flow')
         self.options.declare('air_fuel_elements', default=AIR_FUEL_MIX,

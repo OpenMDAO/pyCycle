@@ -18,7 +18,7 @@ class MixFlow(om.ExplicitComponent):
 
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('Fl_I1_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,
@@ -256,7 +256,7 @@ class Mixer(om.Group):
     def initialize(self):
 
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set')
+                              desc='thermodynamic data set', recordable=False)
         self.options.declare('Fl_I1_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,
@@ -362,6 +362,7 @@ class Mixer(om.Group):
             newton.options['atol'] = 1e-2
             newton.options['solve_subsystems'] = True
             newton.options['max_sub_solves'] = 20
+            newton.options['reraise_child_analysiserror'] = False
             newton.linesearch = om.BoundsEnforceLS()
             newton.linesearch.options['bound_enforcement'] = 'scalar'
             newton.linesearch.options['iprint'] = -1

@@ -9,7 +9,7 @@ class SetStatic(om.Group):
 
     def initialize(self):
         self.options.declare('mode', values=['Ps', 'area', 'MN'])
-        self.options.declare('thermo_data', desc='thermodynamic data set')
+        self.options.declare('thermo_data', desc='thermodynamic data set', recordable=False)
         self.options.declare('fl_name',
                               default="flow",
                               desc='flowstation name of the output flow variables')
