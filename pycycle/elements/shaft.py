@@ -2,6 +2,7 @@ import numpy as np
 
 from openmdao.api import ExplicitComponent
 
+
 class Shaft(ExplicitComponent):
 
     """Calculates power balance for shaft"""
@@ -132,14 +133,15 @@ class Shaft(ExplicitComponent):
                 J['pwr_out_real', trq_var_name] = Nmech * self.convert
                 J['pwr_net', trq_var_name] = Nmech * self.convert
 
+
 if __name__ == "__main__":
     from openmdao.api import Problem,  Group
 
     p = Problem()
     p.model = Group()
-    p.model.add("shaft", Shaft(10))
+    p.model.add_subsystem("shaft", Shaft(10))
 
     p.setup()
-    p.run()
+    p.run_model()
 
     #print(p['shaft.PortTrqs'])

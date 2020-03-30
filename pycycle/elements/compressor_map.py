@@ -1,9 +1,5 @@
 import openmdao.api as om
 
-from pycycle.maps.ncp01 import NCP01
-
-import numpy as np
-
 
 class StallCalcs(om.ExplicitComponent):
     """Component to compute the stall margins at constant speed (SMN) and constant flow (SMW)"""

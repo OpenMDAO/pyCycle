@@ -5,6 +5,7 @@ from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
 from pycycle.constants import AIR_MIX
 
+
 class FlowStart(Group):
 
     def initialize(self):
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     print("Pressure", p['P'], p['Fl_O:tot:P'])
     print("h", p['totals.h'], p['Fl_O:tot:h'])
     print("S", p['totals.S'])
-    print("actual Ps", p['exit_static.Ps'],p['Fl_O:stat:P'])
+    print("actual Ps", p['exit_static.Ps'], p['Fl_O:stat:P'])
     print("Mach", p['Fl_O:stat:MN'])
     print("n tot", p['Fl_O:tot:n'])
     print("n stat", p['Fl_O:stat:n'])

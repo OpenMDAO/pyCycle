@@ -1,14 +1,11 @@
 import numpy as np
-
 import openmdao.api as om
 
-from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
+from pycycle.cea.set_total import SetTotal
 from pycycle.cea.species_data import Thermo, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
-from pycycle.elements.duct import PressureLoss
 from pycycle.flow_in import FlowIn
-from pycycle.passthrough import PassThrough
 
 
 class MixFlow(om.ExplicitComponent):

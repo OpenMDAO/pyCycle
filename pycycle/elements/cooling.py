@@ -1,12 +1,11 @@
-import numpy as np
-
 import openmdao.api as om
 
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
-from pycycle.flow_in import FlowIn
+from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
 from pycycle.elements.turbine import Bleeds
+from pycycle.flow_in import FlowIn
+
 
 class CombineCooling(om.ExplicitComponent):
 
@@ -26,7 +25,6 @@ class CombineCooling(om.ExplicitComponent):
         for i in range(1, self.options['n_ins']+1):
             W_cool += inputs['W_{}'.format(i)]
         outputs['W_cool'] = W_cool
-
 
 
 class CoolingCalcs(om.ExplicitComponent):

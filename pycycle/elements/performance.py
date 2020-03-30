@@ -101,13 +101,12 @@ class Performance(ExplicitComponent):
             J['PSFC', 'power'] = -3600. * wfuel / power ** 2
 
 
-
 if __name__ == "__main__":
     from openmdao.core.problem import Problem, IndepVarComp
 
     p = Problem()
 
-    des_vars = p.model.add('des_vars', IndepVarComp(), promotes=['*'])
+    des_vars = p.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
     des_vars.add_output('power', 200.0, units='hp')
     des_vars.add_output('Pt2', 204.696, units='psi')
     des_vars.add_output('Pt3', 104.696, units='psi')
@@ -116,10 +115,8 @@ if __name__ == "__main__":
     des_vars.add_output('Fg_0', 1200, units='lbf')
     des_vars.add_output('Fg_1', 2000, units='lbf')
 
-    p.model.add('comp', Performance(num_nozzles=2, num_burners=1), promotes=['*'])
+    p.model.add_subsystem('comp', Performance(num_nozzles=2, num_burners=1), promotes=['*'])
     # p.model.comp.fd_options['form'] = 'complex_step'
-
-
 
     p.setup(check=True)
     p.run_model()

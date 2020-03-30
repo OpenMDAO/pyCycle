@@ -1,5 +1,5 @@
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 import itertools
 
 import openmdao.api as om
