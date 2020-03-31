@@ -162,6 +162,7 @@ class TurbineMap(om.Group):
             self.connect('scaledOutput.Np','map_bal.rhs:NpMap')
             self.connect('scaledOutput.Wp','map_bal.rhs:PRmap')
 
+
 if __name__ == "__main__":
     from pycycle.maps.lpt2269 import LPT2269
 

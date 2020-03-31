@@ -498,7 +498,7 @@ if __name__ == "__main__":
     # # p.model.MNth = 1.0
     # # p.model.throat_static.n2ls.Pt = 3.457820249
 
-    p.run()
+    p.run_model()
 
     # from openmdao.main.api import set_as_top
     # nozzle = set_as_top(Nozzle())

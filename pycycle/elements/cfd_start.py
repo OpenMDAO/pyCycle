@@ -1,29 +1,31 @@
-import numpy as np
-
 import openmdao.api as om
 
 from pycycle.cea import species_data
 from pycycle.constants import AIR_MIX
 from pycycle.elements.flow_start import FlowStart
 
+
 class CFDStart(om.Group):
 
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
+                             desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
-                              desc='set of elements present in the flow')
+                             desc='set of elements present in the flow')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        self.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements), promotes_outputs=['Fl_O:*'], promotes_inputs=['W'] )
+        self.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements), promotes_outputs=['Fl_O:*'],
+                           promotes_inputs=['W'])
 
         balance = om.BalanceComp()
-        balance.add_balance('P', val=10., units='psi', eq_units='psi', lhs_name='Ps_computed', rhs_name='Ps', lower=1e-1)
+        balance.add_balance('P', val=10., units='psi', eq_units='psi', lhs_name='Ps_computed', rhs_name='Ps',
+                            lower=1e-1)
                             #guess_func=lambda inputs, resids: 5.)
-        balance.add_balance('T', val=800., units='degR', eq_units='ft/s', lhs_name='V_computed', rhs_name='V', lower=1e-1)
+        balance.add_balance('T', val=800., units='degR', eq_units='ft/s', lhs_name='V_computed', rhs_name='V',
+                            lower=1e-1)
                             #guess_func=lambda inputs, resids: 400.)
         balance.add_balance('MN', val=.3, eq_units='inch**2', lhs_name='area_computed', rhs_name='area', lower=1e-6)
                             #guess_func=lambda inputs, resids: .6)
@@ -51,7 +53,7 @@ if __name__ == "__main__":
 
     p = om.Problem()
 
-    params = p.model.add_subsystem('params', IndepVarComp(), promotes=['*'])
+    params = p.model.add_subsystem('params', om.IndepVarComp(), promotes=['*'])
     params.add_output('Ps', units='Pa', val=22845.15677648)
     params.add_output('V', units='m/s', val=158.83851913)
     params.add_output('area', units='m**2', val=0.87451328)

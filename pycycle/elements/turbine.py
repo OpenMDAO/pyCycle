@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections.abc import Iterable
 from copy import copy
 
 import numpy as np
@@ -676,7 +676,7 @@ class Turbine(om.Group):
 
 
 if __name__ == "__main__":
-    from pycycle.elements.api import FlowStart
+    from pycycle.api import FlowStart
     from pycycle.cea import species_data
     from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
     from pycycle.connect_flow import connect_flow

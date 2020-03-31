@@ -20,11 +20,11 @@ class MixFuel(om.ExplicitComponent):
 
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set', recordable=False)
+                             desc='thermodynamic data set', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
-                              desc='set of elements present in the flow')
+                             desc='set of elements present in the flow')
         self.options.declare('fuel_type', default="JP-7",
-                              desc='Type of fuel.')
+                             desc='Type of fuel.')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
@@ -190,17 +190,17 @@ class Combustor(om.Group):
 
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set', recordable=False)
+                             desc='thermodynamic data set', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
-                              desc='set of elements present in the air flow')
+                             desc='set of elements present in the air flow')
         self.options.declare('air_fuel_elements', default=AIR_FUEL_MIX,
-                              desc='set of elements present in the fuel')
+                             desc='set of elements present in the fuel')
         self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
+                             desc='Switch between on-design and off-design calculation.')
         self.options.declare('statics', default=True,
-                              desc='If True, calculate static properties.')
+                             desc='If True, calculate static properties.')
         self.options.declare('fuel_type', default="JP-7",
-                              desc='Type of fuel.')
+                             desc='Type of fuel.')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
@@ -286,15 +286,15 @@ if __name__ == "__main__":
 
     p = om.Problem()
     p.model = om.Group()
-    p.model.add('comp', MixFuel(), promotes=['*'])
+    p.model.add_subsystem('comp', MixFuel(), promotes=['*'])
 
-    p.model.add('d1', IndepVarComp('Fl_I:stat:W', val=1.0, units='lbm/s', desc='weight flow'),
-                promotes=['*'])
-    p.model.add('d2', IndepVarComp('Fl_I:FAR', val=0.2, desc='Fuel to air ratio'), promotes=['*'])
-    p.model.add('d3', IndepVarComp('Fl_I:tot:h', val=1.0, units='Btu/lbm', desc='total enthalpy'),
-                promotes=['*'])
-    p.model.add('d4', IndepVarComp('fuel_Tt', val=518.0, units='degR', desc='fuel temperature'),
-                promotes=['*'])
+    p.model.add_subsystem('d1', om.IndepVarComp('Fl_I:stat:W', val=1.0, units='lbm/s', desc='weight flow'),
+                          promotes=['*'])
+    p.model.add_subsystem('d2', om.IndepVarComp('Fl_I:FAR', val=0.2, desc='Fuel to air ratio'), promotes=['*'])
+    p.model.add_subsystem('d3', om.IndepVarComp('Fl_I:tot:h', val=1.0, units='Btu/lbm', desc='total enthalpy'),
+                          promotes=['*'])
+    p.model.add_subsystem('d4', om.IndepVarComp('fuel_Tt', val=518.0, units='degR', desc='fuel temperature'),
+                          promotes=['*'])
 
     p.setup(check=False)
     p.run_model()
