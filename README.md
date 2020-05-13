@@ -18,17 +18,17 @@ If you use pyCycle, please cite this paper:
 
 *E. S. Hendricks and J. S. Gray, “Pycycle: a tool for efficient optimization of gas turbine engine cycles,” Aerospace, vol. 6, iss. 87, 2019.*
 
-@article{Hendricks2019,
-author="Eric S. Hendricks and Justin S. Gray" ,
-title = "pyCycle: A Tool for Efficient Optimization of Gas Turbine Engine Cycles",
-journal = "Aerospace",
-year = "2019",
-day = "8",
-month = "August",
-volume = {6},
-number = {87},
-doi = {10.3390/aerospace6080087},
-}
+    @article{Hendricks2019, 
+    author="Eric S. Hendricks and Justin S. Gray" , 
+    title = "pyCycle: A Tool for Efficient Optimization of Gas Turbine Engine Cycles", 
+    journal = "Aerospace", 
+    year = "2019", 
+    day = "8", 
+    month = "August",
+    volume = {6},  
+    number = {87},
+    doi = {10.3390/aerospace6080087},
+    }
 
 ## Installation 
 
