@@ -83,7 +83,6 @@ des_vars.add_output('duct17:MN_out', 0.45),
 des_vars.add_output('TOC:alt', 35000., units='ft'),
 des_vars.add_output('TOC:MN', 0.8),
 des_vars.add_output('TOC:T4max', 3150.0, units='degR'),
-# des_vars.add_output('FAR', 0.02833)
 des_vars.add_output('TOC:Fn_des', 6073.4, units='lbf'),
 des_vars.add_output('TOC:ram_recovery', 0.9980),
 des_vars.add_output('TR', 0.926470588)
@@ -139,29 +138,18 @@ prob.model.add_subsystem('TOC', N3())
 
 prob.model.connect('TOC:alt', 'TOC.fc.alt')
 prob.model.connect('TOC:MN', 'TOC.fc.MN')
-# prob.model.connect('TOC:Fn_des', 'TOC.balance.rhs:W')
-# prob.model.connect('TOC:T4max', 'TOC.balance.rhs:FAR')
-# prob.model.connect('FAR','TOC.burner.Fl_I:FAR')
 
 prob.model.connect('TOC:ram_recovery', 'TOC.inlet.ram_recovery')
 prob.model.connect('fan:PRdes', 'TOC.fan.PR')
-# prob.model.connect('fan:effDes', 'TOC.fan.map.effDes')
 prob.model.connect('fan:effPoly', 'TOC.balance.rhs:fan_eff')
-# prob.model.connect('splitter:BPR', 'TOC.splitter.BPR')
 prob.model.connect('duct2:dPqP', 'TOC.duct2.dPqP')
 prob.model.connect('lpc:PRdes', 'TOC.lpc.PR')
-# prob.model.connect('lpc:effDes', 'TOC.lpc.map.effDes')
 prob.model.connect('lpc:effPoly', 'TOC.balance.rhs:lpc_eff')
 prob.model.connect('duct25:dPqP', 'TOC.duct25.dPqP')
-# prob.model.connect('hpc:PRdes', 'TOC.hpc.PR')
 prob.model.connect('OPR', 'TOC.balance.rhs:hpc_PR')
-# prob.model.connect('hpc:effDes', 'TOC.hpc.map.effDes')
-# prob.model.connect('hpc:effPoly', 'TOC.balance.rhs:hpc_eff')
 prob.model.connect('burner:dPqP', 'TOC.burner.dPqP')
-# prob.model.connect('hpt:effDes', 'TOC.hpt.map.effDes')
 prob.model.connect('hpt:effPoly', 'TOC.balance.rhs:hpt_eff')
 prob.model.connect('duct45:dPqP', 'TOC.duct45.dPqP')
-# prob.model.connect('lpt:effDes', 'TOC.lpt.map.effDes')
 prob.model.connect('lpt:effPoly', 'TOC.balance.rhs:lpt_eff')
 prob.model.connect('duct5:dPqP', 'TOC.duct5.dPqP')
 prob.model.connect('core_nozz:Cv', 'TOC.core_nozz.Cv')
@@ -180,8 +168,6 @@ prob.model.connect('hpc:bld_inlet:frac_work', 'TOC.hpc.bld_inlet:frac_work')
 prob.model.connect('hpc:bld_exit:frac_W', 'TOC.hpc.bld_exit:frac_W')
 prob.model.connect('hpc:bld_exit:frac_P', 'TOC.hpc.bld_exit:frac_P')
 prob.model.connect('hpc:bld_exit:frac_work', 'TOC.hpc.bld_exit:frac_work')
-# prob.model.connect('bld3:bld_inlet:frac_W', 'TOC.bld3.bld_inlet:frac_W')
-# prob.model.connect('bld3:bld_exit:frac_W', 'TOC.bld3.bld_exit:frac_W')
 prob.model.connect('hpc:cust:frac_W', 'TOC.hpc.cust:frac_W')
 prob.model.connect('hpc:cust:frac_P', 'TOC.hpc.cust:frac_P')
 prob.model.connect('hpc:cust:frac_work', 'TOC.hpc.cust:frac_work')
@@ -210,12 +196,8 @@ prob.model.connect('bypBld:MN_out', 'TOC.byp_bld.MN')
 prob.model.connect('duct17:MN_out', 'TOC.duct17.MN')
 
 
-
-
-
 # OTHER POINTS (OFF-DESIGN)
 pts = ['RTO','SLS','CRZ']
-
 
 prob.model.connect('RTO:Fn_target', 'RTO.balance.rhs:FAR')
 
@@ -223,32 +205,20 @@ prob.model.add_subsystem('RTO', N3(design=False, cooling=True))
 prob.model.add_subsystem('SLS', N3(design=False))
 prob.model.add_subsystem('CRZ', N3(design=False))
 
-
 for pt in pts:
-    # ODpt.nonlinear_solver.options['maxiter'] = 0
 
     prob.model.connect(pt+':alt', pt+'.fc.alt')
     prob.model.connect(pt+':MN', pt+'.fc.MN')
-    # prob.model.connect(pt+':Fn_target', pt+'.balance.rhs:FAR')
     prob.model.connect(pt+':dTs', pt+'.fc.dTs')
-    # prob.model.connect(pt+':Ath',pt+'.balance.rhs:BPR')
     prob.model.connect(pt+':RlineMap',pt+'.balance.rhs:BPR')
 
-    # prob.model.connect(pt+':cust_fracW', pt+'.hpc.cust:frac_W')
-
     prob.model.connect(pt+':ram_recovery', pt+'.inlet.ram_recovery')
-    # prob.model.connect('splitter:BPR', pt+'.splitter.BPR')
-    # prob.model.connect(pt+':duct2:dPqP', pt+'.duct2.dPqP')
     prob.model.connect('TOC.duct2.s_dPqP', pt+'.duct2.s_dPqP')
-    # prob.model.connect(pt+':duct25:dPqP', pt+'.duct25.dPqP')
     prob.model.connect('TOC.duct25.s_dPqP', pt+'.duct25.s_dPqP')
     prob.model.connect('burner:dPqP', pt+'.burner.dPqP')
-    # prob.model.connect(pt+':duct45:dPqP', pt+'.duct45.dPqP')
     prob.model.connect('TOC.duct45.s_dPqP', pt+'.duct45.s_dPqP')
-    # prob.model.connect(pt+':duct5:dPqP', pt+'.duct5.dPqP')
     prob.model.connect('TOC.duct5.s_dPqP', pt+'.duct5.s_dPqP')
     prob.model.connect('core_nozz:Cv', pt+'.core_nozz.Cv')
-    # prob.model.connect(pt+':duct17:dPqP', pt+'.duct17.dPqP')
     prob.model.connect('TOC.duct17.s_dPqP', pt+'.duct17.s_dPqP')
     prob.model.connect('byp_nozz:Cv', pt+'.byp_nozz.Cv')
     prob.model.connect('lp_shaft:fracLoss', pt+'.lp_shaft.fracLoss')
@@ -261,10 +231,6 @@ for pt in pts:
     prob.model.connect('hpc:bld_exit:frac_W', pt+'.hpc.bld_exit:frac_W')
     prob.model.connect('hpc:bld_exit:frac_P', pt+'.hpc.bld_exit:frac_P')
     prob.model.connect('hpc:bld_exit:frac_work', pt+'.hpc.bld_exit:frac_work')
-    # prob.model.connect('bld3:bld_inlet:frac_W', pt+'.bld3.bld_inlet:frac_W')
-    # prob.model.connect('bld3:bld_exit:frac_W', pt+'.bld3.bld_exit:frac_W')
-    # prob.model.connect('TOC.balance.hpt_chrg_cool_frac', pt+'.bld3.bld_inlet:frac_W')
-    # prob.model.connect('TOC.balance.hpt_nochrg_cool_frac', pt+'.bld3.bld_exit:frac_W')
     prob.model.connect('hpc:cust:frac_W', pt+'.hpc.cust:frac_W')
     prob.model.connect('hpc:cust:frac_P', pt+'.hpc.cust:frac_P')
     prob.model.connect('hpc:cust:frac_work', pt+'.hpc.cust:frac_work')
@@ -297,8 +263,6 @@ for pt in pts:
 
     prob.model.connect('TOC.gearbox.gear_ratio', pt+'.gearbox.gear_ratio')
     prob.model.connect('TOC.core_nozz.Throat:stat:area',pt+'.balance.rhs:W')
-    # prob.model.connect('TOC.byp_nozz.Throat:stat:area',pt+'.balance.rhs:BPR')
-
 
     prob.model.connect('TOC.inlet.Fl_O:stat:area', pt+'.inlet.area')
     prob.model.connect('TOC.fan.Fl_O:stat:area', pt+'.fan.area')
@@ -371,17 +335,11 @@ newton.options['solve_subsystems'] = True
 newton.options['max_sub_solves'] = 10
 newton.options['err_on_non_converge'] = True
 newton.options['reraise_child_analysiserror'] = False
-# newton.linesearch =  om.ArmijoGoldsteinLS()
 newton.linesearch =  om.BoundsEnforceLS()
-# newton.linesearch.options['maxiter'] = 2
 newton.linesearch.options['bound_enforcement'] = 'scalar'
-# newton.linesearch.options['print_bound_enforce'] = True
 newton.linesearch.options['iprint'] = -1
-# newton.linesearch.options['print_bound_enforce'] = False
-# newton.linesearch.options['alpha'] = 0.5
 
 prob.model.linear_solver = om.DirectSolver(assemble_jac=True)
-
 
 # setup the optimization
 prob.driver = om.pyOptSparseDriver()
@@ -406,18 +364,7 @@ prob.model.add_recorder(recorder)
 prob.model.recording_options['record_inputs'] = True
 prob.model.recording_options['record_outputs'] = True
 
-
-
 prob.setup(check=False)
-# print('blah')
-# prob.final_setup()
-# print('here')
-# exit()
-
-# prob.final_setup()
-# from openmdao.api import view_model
-# view_model(prob)
-# exit()
 
 prob['RTO.hpt_cooling.x_factor'] = 0.9
 
@@ -483,59 +430,9 @@ for pt in pts:
 
 st = time.time()
 
-# prob.model.RTO.nonlinear_solver.options['maxiter']=1
-# prob.model.nonlinear_solver.linesearch.options['print_bound_enforce'] = True
-
-# from openmdao.api import view_model
-# view_model(prob)
-# exit()
-
-# from numpy import array
-
-
-
-# xdv = {'des_vars.CRZ:VjetRatio': array([ 1.35]),
-#  'des_vars.OPR': array([ 57.]),
-#  'des_vars.RTO:T4max': array([ 3326.49412547]),
-#  'des_vars.fan:PRdes': array([ 1.34302179]),
-#  'des_vars.lpc:PRdes': array([ 3.1535308])}
-
-# for k,v in xdv.items():
-#     prob[k] = v
-
-# prob['CRZ:VjetRatio'] = 1.40327376
-# prob['OPR'] = 59.80724704
-# prob['RTO:T4max'] = 3333.07755502
-# prob['TR'] = 0.94442099
-# prob['fan:PRdes'] = 1.33760913
-# prob['lpc:PRdes'] = 3.01656099
-
-
-# cr = CaseReader('N3_base2.sql')
-# # Load the last case written
-# last_case = cr.system_cases.get_case(-1)
-# prob.load_case(last_case)
-
 prob.set_solver_print(level=-1)
 prob.set_solver_print(level=2, depth=1)
 prob.run_model()
-# prob.run_driver()
-# prob.check_partials(comps=['OD1.gearbox'], compact_print=True)
-
-# prob.check_partials(compact_print=True,comps=['TOC.lpt.blds',  'TOC.hpt.blds'],abs_err_tol=1e-3, rel_err_tol=1e-3)
-# prob.check_partials(compact_print=True,abs_err_tol=1e-3, rel_err_tol=1e-3)
-# prob.check_totals(step_calc='rel', step=1e-3)
-# totals = prob.compute_totals()
-# import pprint
-# pprint.pprint(totals)
-
-data = prob.compute_totals(of=['TOC.perf.Fn','RTO.perf.Fn','SLS.perf.Fn','CRZ.perf.Fn',
-                                'TOC.perf.TSFC','RTO.perf.TSFC','SLS.perf.TSFC','CRZ.perf.TSFC',
-                                'bal.TOC_BPR','TOC.hpc_CS.CS',], wrt=['OPR', 'RTO:T4max'])
-pprint(data)
-
-with open('derivs.pkl','wb') as f:
-    pickle.dump(data, file=f)
 
 for pt in ['TOC']+pts:
     viewer(prob, pt)
@@ -543,45 +440,4 @@ for pt in ['TOC']+pts:
 print()
 print('Diameter', prob['TOC.fan_dia.FanDia'][0])
 print("time", time.time() - st)
-
-prob.model.list_outputs(explicit=True, residuals=True, residuals_tol=1e-6)
-
-
-# exit()
-##################################
-# Check Totals: Hand calcualted values
-#   'TOC.perf.TSFC' wrt 'des_vars.OPR' = -1.87E-4
-#   'TOC.perf.TSFC' wrt 'des_vars.RTO:T4max' = 6.338e-6
-# prob.check_totals(step_calc='rel', step=1e-3)
-##################################
-
-print('OPR', prob['fan:PRdes']*prob['lpc:PRdes']*prob['TOC.balance.hpc_PR'])
-print('OPR', prob['OPR'])
-print('T4max', prob['RTO:T4max'])
-print('T4max', prob['T4_ratio.TOC_T4'])
-print('TSFC', prob['TOC.perf.TSFC'])
-print('Fn', prob['TOC.perf.Fn'])
-
-prob['RTO:T4max'] *= (1.0+1e-4)
-# prob['OPR'] *= (1.0+1e-4)
-prob.run_model()
-
-print('OPR', prob['fan:PRdes']*prob['lpc:PRdes']*prob['TOC.balance.hpc_PR'])
-print('OPR', prob['OPR'])
-print('T4max', prob['RTO:T4max'])
-print('T4max', prob['T4_ratio.TOC_T4'])
-print('TSFC', prob['TOC.perf.TSFC'])
-print('Fn', prob['TOC.perf.Fn'])
-
-prob['RTO:T4max'] /= (1.0+1e-4)
-prob['OPR'] *= (1.0+1e-4)
-prob.run_model()
-
-print('OPR', prob['fan:PRdes']*prob['lpc:PRdes']*prob['TOC.balance.hpc_PR'])
-print('OPR', prob['OPR'])
-print('T4max', prob['RTO:T4max'])
-print('T4max', prob['T4_ratio.TOC_T4'])
-print('TSFC', prob['TOC.perf.TSFC'])
-print('Fn', prob['TOC.perf.Fn'])
-
 
