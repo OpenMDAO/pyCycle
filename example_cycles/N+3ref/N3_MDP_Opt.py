@@ -397,8 +397,8 @@ prob.model.linear_solver = om.DirectSolver(assemble_jac=True)
 
 
 # setup the optimization
-prob.driver = om.pyOptSparseDriver()
-prob.driver.options['optimizer'] = 'SNOPT'
+prob.driver = om.ScipyOptimizeDriver()
+prob.driver.options['optimizer'] = 'SLSQP'
 prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'objs']
 prob.driver.opt_settings={'Major step limit': 0.05}
 
