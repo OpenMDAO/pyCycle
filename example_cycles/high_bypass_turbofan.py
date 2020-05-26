@@ -10,16 +10,27 @@ import pycycle.api as pyc
 class HBTF(om.Group):
 
     def initialize(self):
+        # Initialize the model here by setting option variables such as a switch for design vs off-des cases
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
 
     def setup(self):
-
-        thermo_spec = pyc.species_data.janaf
+        #Setup the problem by including all the relavant components here - comp, burner, turbine etc
+        
+        #Create any relavent short hands here:
+        thermo_spec = pyc.species_data.janaf #Thermodynamic data specification 
         design = self.options['design']
-
+        
+        #Add subsystems to build the engine deck:
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
+        
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
+        
+        # Note variable promotion for the fan -- 
+        # the LP spool speed and the fan speed are INPUTS that are promoted:
+        # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
+        # in fact for a multi-spool engine you HAVE(?) to alias if you want to promote_inputs
+        # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
         self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
@@ -45,36 +56,59 @@ class HBTF(om.Group):
         self.add_subsystem('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
         self.add_subsystem('duct15', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-
+        
+        #Create shaft instances. Note that LP shaft has 3 ports! => no gearbox
         self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
-
+    
+        # Now use the explicit connect method to make connections -- connect(<from>, <to>)
+        
+        #Connect the inputs to perf group
         self.connect('inlet.Fl_O:tot:P', 'perf.Pt2')
         self.connect('hpc.Fl_O:tot:P', 'perf.Pt3')
         self.connect('burner.Wfuel', 'perf.Wfuel_0')
         self.connect('inlet.F_ram', 'perf.ram_drag')
         self.connect('core_nozz.Fg', 'perf.Fg_0')
         self.connect('byp_nozz.Fg', 'perf.Fg_1')
-
+        
+        #LP-shaft connections
         self.connect('fan.trq', 'lp_shaft.trq_0')
         self.connect('lpc.trq', 'lp_shaft.trq_1')
         self.connect('lpt.trq', 'lp_shaft.trq_2')
+        #HP-shaft connections
         self.connect('hpc.trq', 'hp_shaft.trq_0')
         self.connect('hpt.trq', 'hp_shaft.trq_1')
+        #Ideally expanding flow by conneting flight condition static pressure to nozzle exhaust pressure
         self.connect('fc.Fl_O:stat:P', 'core_nozz.Ps_exhaust')
         self.connect('fc.Fl_O:stat:P', 'byp_nozz.Ps_exhaust')
+        
+        #Create a balance component
+        # Balances can be a bit confusing, here's some explanation -
+        #   State Variables:
+        #           (W)        Inlet mass flow rate to implictly balance thrust
+        #                      LHS: perf.Fn  == RHS: Thrust requirement (set when TF is instantiated)
+        #
+        #           (FAR)      Fuel-air ratio to balance Tt4
+        #                      LHS: burner.Fl_O:tot:T  == RHS: Tt4 target (set when TF is instantiated)
+        #
+        #           (lpt_PR)   LPT press ratio to balance shaft power on the low spool
+        #           (hpt_PR)   HPT press ratio to balance shaft power on the high spool
+        # Ref: look at the XDSM diagrams in the pyCycle paper and this:
+        # http://openmdao.org/twodocs/versions/latest/features/building_blocks/components/balance_comp.html
 
         balance = self.add_subsystem('balance', om.BalanceComp())
         if design:
             balance.add_balance('W', units='lbm/s', eq_units='lbf')
-            self.connect('balance.W', 'inlet.Fl_I:stat:W')
-            self.connect('perf.Fn', 'balance.lhs:W')
+            #Here balance.W is implicit state variable that is the OUTPUT of balance object
+            self.connect('balance.W', 'inlet.Fl_I:stat:W') #Connect the output of balance to the relevant input
+            self.connect('perf.Fn', 'balance.lhs:W')       #This statement makes perf.Fn the LHS of the balance eqn.
 
             balance.add_balance('FAR', eq_units='degR', lower=1e-4, val=.017)
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
-
+            
+            # Note that for the following two balances the mult val is set to -1 so that the NET torque is zero
             balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8,
                                 eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lpt_PR', 'lpt.PR')
@@ -88,7 +122,20 @@ class HBTF(om.Group):
             self.connect('hp_shaft.pwr_out_real', 'balance.rhs:hpt_PR')
 
         else:
-
+            
+            #In OFF-DESIGN mode we need to redefine the balances:
+            #   State Variables:
+            #           (W)        Inlet mass flow rate to balance core flow area
+            #                      LHS: core_nozz.Throat:stat:area == Area from DESIGN calculation 
+            #
+            #           (FAR)      Fuel-air ratio to balance Thrust req.
+            #                      LHS: perf.Fn  == RHS: Thrust requirement (set when TF is instantiated)
+            #
+            #           (BPR)      Bypass ratio to balance byp. noz. area
+            #                      LHS: byp_nozz.Throat:stat:area == Area from DESIGN calculation
+            #
+            #           (lp_Nmech)   LP spool speed to balance shaft power on the low spool
+            #           (hp_Nmech)   HP spool speed to balance shaft power on the high spool
             balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='lbf')
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('perf.Fn', 'balance.lhs:FAR')
@@ -101,6 +148,7 @@ class HBTF(om.Group):
             self.connect('balance.BPR', 'splitter.BPR')
             self.connect('byp_nozz.Throat:stat:area', 'balance.lhs:BPR')
 
+            # Again for the following two balances the mult val is set to -1 so that the NET torque is zero
             balance.add_balance('lp_Nmech', val=1.5, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lp_Nmech', 'LP_Nmech')
             self.connect('lp_shaft.pwr_in_real', 'balance.lhs:lp_Nmech')
@@ -110,10 +158,13 @@ class HBTF(om.Group):
             self.connect('balance.hp_Nmech', 'HP_Nmech')
             self.connect('hp_shaft.pwr_in_real', 'balance.lhs:hp_Nmech')
             self.connect('hp_shaft.pwr_out_real', 'balance.rhs:hp_Nmech')
-
+            
+            # Specify the order in which the subsystems are executed:
+            
             self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
                             'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
-
+        
+        # Set up all the flow connections:
         pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
         pyc.connect_flow(self, 'inlet.Fl_O', 'fan.Fl_I')
         pyc.connect_flow(self, 'fan.Fl_O', 'splitter.Fl_I')
@@ -132,12 +183,13 @@ class HBTF(om.Group):
         pyc.connect_flow(self, 'byp_bld.Fl_O', 'duct15.Fl_I')
         pyc.connect_flow(self, 'duct15.Fl_O', 'byp_nozz.Fl_I')
 
-
+        #Bleed flows:
         pyc.connect_flow(self, 'hpc.cool1', 'lpt.cool1', connect_stat=False)
         pyc.connect_flow(self, 'hpc.cool2', 'lpt.cool2', connect_stat=False)
         pyc.connect_flow(self, 'bld3.cool3', 'hpt.cool3', connect_stat=False)
         pyc.connect_flow(self, 'bld3.cool4', 'hpt.cool4', connect_stat=False)
-
+        
+        #Specify solver settings:
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-8
         newton.options['rtol'] = 1e-8
@@ -216,55 +268,102 @@ if __name__ == "__main__":
     import time
 
     prob = om.Problem()
-
+    
+    #Create all the independent variables that are input to the system
     des_vars = prob.model.add_subsystem('des_vars',
                                         om.IndepVarComp(), promotes=["*"])
 
     # FOR DESIGN
+    # Note that here the outputs of des_vars are actually DESIGN INPUTS/ FLIGHT CONDITIONS
+
+    
+    # ====== START DECLARING DESIGN VARIABLES ======
+    #Flight conidtions
     des_vars.add_output('alt', 35000., units='ft'),
     des_vars.add_output('MN', 0.8),
-    des_vars.add_output('T4max', 2857.0, units='degR'),
+    
+    #Target Tt4 and Fn_design for the balances
+    des_vars.add_output('T4max', 2857, units='degR'),
     des_vars.add_output('Fn_des', 5500.0, units='lbf'),
-
+    
+    # Component level setup
+    # --- INLET -----
     des_vars.add_output('inlet:ram_recovery', 0.9990),
     des_vars.add_output('inlet:MN_out', 0.751),
+    # ---------------
+    # ----- FAN -----
     des_vars.add_output('fan:PRdes', 1.685),
     des_vars.add_output('fan:effDes', 0.8948),
     des_vars.add_output('fan:MN_out', 0.4578)
+    # ---------------
+    # --- SPLITTER ---
     des_vars.add_output('splitter:BPR', 5.105),
     des_vars.add_output('splitter:MN_out1', 0.3104)
     des_vars.add_output('splitter:MN_out2', 0.4518)
+    # ---------------
+    # --- DUCT 4 -----
     des_vars.add_output('duct4:dPqP', 0.0048),
     des_vars.add_output('duct4:MN_out', 0.3121),
+    # ---------------
+    # --- LPC -----
     des_vars.add_output('lpc:PRdes', 1.935),
     des_vars.add_output('lpc:effDes', 0.9243),
     des_vars.add_output('lpc:MN_out', 0.3059),
+    # ---------------
+    # --- DUCT 6 -----
     des_vars.add_output('duct6:dPqP', 0.0101),
     des_vars.add_output('duct6:MN_out', 0.3563),
+    # ---------------
+    # ---  HPC -----
     des_vars.add_output('hpc:PRdes', 9.369),
     des_vars.add_output('hpc:effDes', 0.8707),
     des_vars.add_output('hpc:MN_out', 0.2442),
+    # ---------------
+    # --- BLEED -----
     des_vars.add_output('bld3:MN_out', 0.3000)
+    # ---------------
+    # --- BURNER -----
     des_vars.add_output('burner:dPqP', 0.0540),
     des_vars.add_output('burner:MN_out', 0.1025),
+    # ---------------
+    # --- HPT -----
     des_vars.add_output('hpt:effDes', 0.8888),
     des_vars.add_output('hpt:MN_out', 0.3650),
+    # ---------------
+    # --- DUCT -----
     des_vars.add_output('duct11:dPqP', 0.0051),
     des_vars.add_output('duct11:MN_out', 0.3063),
+    # ---------------
+    # --- LPT -----
     des_vars.add_output('lpt:effDes', 0.8996),
     des_vars.add_output('lpt:MN_out', 0.4127),
+    # ---------------
+    # --- DUCT 13 -----
     des_vars.add_output('duct13:dPqP', 0.0107),
     des_vars.add_output('duct13:MN_out', 0.4463),
+    # ---------------
+    # --- CORE NOZZLE -----
     des_vars.add_output('core_nozz:Cv', 0.9933),
+    # ---------------
+    # --- BLEED -----
     des_vars.add_output('bypBld:frac_W', 0.005),
     des_vars.add_output('bypBld:MN_out', 0.4489),
+    # ---------------
+    # --- DUCT 15 -----
     des_vars.add_output('duct15:dPqP', 0.0149),
     des_vars.add_output('duct15:MN_out', 0.4589),
+    # ---------------
+    # --- BYPASS NOZZ -----
     des_vars.add_output('byp_nozz:Cv', 0.9939),
+    # ---------------
+    # --- LP SHAFT -----
     des_vars.add_output('lp_shaft:Nmech', 4666.1, units='rpm'),
+    # ---------------
+    # --- HP SHAFT -----
     des_vars.add_output('hp_shaft:Nmech', 14705.7, units='rpm'),
     des_vars.add_output('hp_shaft:HPX', 250.0, units='hp'),
-
+    
+    # --- Set up bleed values -----
     des_vars.add_output('hpc:cool1:frac_W', 0.050708),
     des_vars.add_output('hpc:cool1:frac_P', 0.5),
     des_vars.add_output('hpc:cool1:frac_work', 0.5),
@@ -283,21 +382,30 @@ if __name__ == "__main__":
 
 
     # OFF DESIGN
+    # The array represents multiple flight conditions. Later while setting up the model the 
+    # model.connect function allows to connect only part of an array output (here des_vars.outputs)
+    # to an input of a smaller size.
     des_vars.add_output('OD_MN', [0.8, 0.8, 0.25, 0.00001]),
     des_vars.add_output('OD_alt', [35000.0, 35000.0, 0.0, 0.0], units='ft'),
     des_vars.add_output('OD_Fn_target', [5500.0, 5970.0, 22590.0, 27113.0], units='lbf'), #8950.0
     des_vars.add_output('OD_dTs', [0.0, 0.0, 27.0, 27.0], units='degR')
     des_vars.add_output('OD_cust_fracW', [0.0445, 0.0422, 0.0177, 0.0185])
+    
+    # ====== END DECLARING DESIGN VARIABLES ======
 
 
-    # DESIGN CASE
-    prob.model.add_subsystem('DESIGN', HBTF())
-
+    # DESIGN CASE  
+    prob.model.add_subsystem('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
+       
+    #Set Flight conditions:
     prob.model.connect('alt', 'DESIGN.fc.alt')
     prob.model.connect('MN', 'DESIGN.fc.MN')
+    
+    # Set the RHS of the balances:
     prob.model.connect('Fn_des', 'DESIGN.balance.rhs:W')
     prob.model.connect('T4max', 'DESIGN.balance.rhs:FAR')
 
+    #Connect des vars to their corresponding variables in a DESIGN instance
     prob.model.connect('inlet:ram_recovery', 'DESIGN.inlet.ram_recovery')
     prob.model.connect('inlet:MN_out', 'DESIGN.inlet.MN')
     prob.model.connect('fan:PRdes', 'DESIGN.fan.PR')
@@ -359,7 +467,8 @@ if __name__ == "__main__":
 
     for i_OD, pt in enumerate(pts):
         ODpt = prob.model.add_subsystem(pt, HBTF(design=False))
-
+        # [prash] Here the src_indices basically tell the model which index of the output array
+        # in this case the output array is the OD des_var arrays. 
         prob.model.connect('OD_alt', pt+'.fc.alt', src_indices=i_OD)
         prob.model.connect('OD_MN', pt+'.fc.MN', src_indices=i_OD)
         prob.model.connect('OD_Fn_target', pt+'.balance.rhs:FAR', src_indices=i_OD)
@@ -394,7 +503,8 @@ if __name__ == "__main__":
         prob.model.connect('lpt:cool1:frac_P', pt+'.lpt.cool1:frac_P')
         prob.model.connect('lpt:cool2:frac_P', pt+'.lpt.cool2:frac_P')
         prob.model.connect('bypBld:frac_W', pt+'.byp_bld.bypBld:frac_W')
-
+        
+        #Connect all DESIGN map scalars to the off design cases
         prob.model.connect('DESIGN.fan.s_PR', pt+'.fan.s_PR')
         prob.model.connect('DESIGN.fan.s_Wc', pt+'.fan.s_Wc')
         prob.model.connect('DESIGN.fan.s_eff', pt+'.fan.s_eff')
@@ -415,7 +525,8 @@ if __name__ == "__main__":
         prob.model.connect('DESIGN.lpt.s_Wp', pt+'.lpt.s_Wp')
         prob.model.connect('DESIGN.lpt.s_eff', pt+'.lpt.s_eff')
         prob.model.connect('DESIGN.lpt.s_Np', pt+'.lpt.s_Np')
-
+        
+        #Set up the RHS of the balances!
         prob.model.connect('DESIGN.core_nozz.Throat:stat:area',pt+'.balance.rhs:W')
         prob.model.connect('DESIGN.byp_nozz.Throat:stat:area',pt+'.balance.rhs:BPR')
 
