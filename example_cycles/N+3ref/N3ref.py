@@ -656,8 +656,8 @@ if __name__ == "__main__":
 
 
     # setup the optimization
-    prob.driver = om.pyOptSparseDriver()
-    prob.driver.options['optimizer'] = 'SNOPT'
+    prob.driver = om.ScipyOptimizeDriver()
+    prob.driver.options['optimizer'] = 'SLSQP'
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'objs']
     prob.driver.opt_settings={'Major step limit': 0.05}
 

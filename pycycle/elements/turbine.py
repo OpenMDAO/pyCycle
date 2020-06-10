@@ -569,7 +569,7 @@ class Turbine(om.Group):
                                '{}:*'.format(BN)])
 
         # Calculate bleed parameters
-        blds = Bleeds(bleed_names=bleeds, main_flow_elements=elements)
+        blds = Bleeds(bleed_names=bleeds, main_flow_elements=elements, bld_flow_elements = bleed_elements)
         self.add_subsystem('blds', blds,
                            promotes_inputs=[('W_in', 'Fl_I:stat:W'),
                                             ('Pt_in', 'Fl_I:tot:P'), ('n_in', 'Fl_I:tot:n')] +
