@@ -94,10 +94,8 @@ class Turboshaft(om.Group):
 
 
         else:
-            # Need to check all these balances once power turbine map is updated
             balance.add_balance('FAR', eq_units='hp', lower=1e-4, val=.017)
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
-            # self.connect('perf.Fn', 'balance.lhs:FAR')
             self.connect('lp_shaft.pwr_net', 'balance.lhs:FAR')
 
             balance.add_balance('W', units='lbm/s', eq_units='inch**2')
@@ -111,10 +109,6 @@ class Turboshaft(om.Group):
             balance.add_balance('HP_Nmech', val=14800.0, units='rpm', lower=1.001, eq_units='hp', rhs_val=0.)
             self.connect('balance.HP_Nmech', 'HP_Nmech')
             self.connect('hp_shaft.pwr_net', 'balance.lhs:HP_Nmech')
-
-            # balance.add_balance('LP_Nmech', val=1800.0, units='rpm', lower=1.001, eq_units='hp', rhs_val=0.)
-            # self.connect('balance.LP_Nmech', 'LP_Nmech')
-            # self.connect('lp_shaft.pwr_net', 'balance.lhs:LP_Nmech')
 
         pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
         pyc.connect_flow(self, 'inlet.Fl_O', 'duct1.Fl_I')
@@ -148,8 +142,6 @@ class Turboshaft(om.Group):
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
         newton.linesearch = om.BoundsEnforceLS()
-        # newton.linesearch = ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
         newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
 
@@ -266,13 +258,10 @@ if __name__ == "__main__":
     des_vars.add_output('ip_shaft:Nmech', 12000., units='rpm'),
     des_vars.add_output('hp_shaft:Nmech', 14800., units='rpm'),
 
-    # des_vars.add_output('FAR', 0.02261)
-    # des_vars.add_output('W', 10.76, units='lbm/s')
 
     # OFF DESIGN 1
     des_vars.add_output('OD1_MN', 0.5),
     des_vars.add_output('OD1_alt', 28000.0, units='ft'),
-    # des_vars.add_output('OD1_Fn_target', 5497.0, units='lbf'),
     des_vars.add_output('OD1_P_target', 1600.0, units='hp')
     des_vars.add_output('OD1_LP_Nmech', 12750.0, units='rpm')
 
@@ -331,18 +320,14 @@ if __name__ == "__main__":
     prob.model.connect('ip_shaft:Nmech', 'DESIGN.IP_Nmech')
     prob.model.connect('hp_shaft:Nmech', 'DESIGN.HP_Nmech')
 
-    # prob.model.connect('FAR', 'DESIGN.burner.Fl_I:FAR')
-    # prob.model.connect('W', 'DESIGN.inlet.Fl_I:stat:W')
-
     # OFF DESIGN CASES
-    pts = ['OD1'] # 'OD1','OD2','OD3','OD4','OD5','OD6','OD7','OD8']
+    pts = ['OD1'] 
 
     for pt in pts:
         ODpt = prob.model.add_subsystem(pt, Turboshaft(design=False, maxiter=10))
 
         prob.model.connect(pt+'_alt', pt+'.fc.alt')
         prob.model.connect(pt+'_MN', pt+'.fc.MN')
-        # prob.model.connect(pt+'_Fn_target', pt+'.thrust_balance.rhs')
 
         prob.model.connect('inlet:ram_recovery', pt+'.inlet.ram_recovery')
         prob.model.connect('duct1:dPqP', pt+'.duct1.dPqP')
@@ -357,11 +342,7 @@ if __name__ == "__main__":
         prob.model.connect('OD1_LP_Nmech', pt+'.LP_Nmech')
 
         prob.model.connect('bld25:cool1:frac_W', pt+'.bld25.cool1:frac_W')
-        # prob.model.connect('bld25:cool1:frac_P', pt+'.bld25.cool1:frac_P')
-        # prob.model.connect('bld25:cool1:frac_work', pt+'.bld25.cool1:frac_work')
         prob.model.connect('bld25:cool2:frac_W', pt+'.bld25.cool2:frac_W')
-        # prob.model.connect('bld25:cool2:frac_P', pt+'.bld25.cool2:frac_P')
-        # prob.model.connect('bld25:cool2:frac_work', pt+'.bld25.cool2:frac_work')
         prob.model.connect('bld3:cool3:frac_W', pt+'.bld3.cool3:frac_W')
         prob.model.connect('bld3:cool4:frac_W', pt+'.bld3.cool4:frac_W')
         prob.model.connect('hpt:cool3:frac_P', pt+'.hpt.cool3:frac_P')
@@ -428,7 +409,6 @@ if __name__ == "__main__":
         prob[pt+'.balance.W'] = 10.775
         prob[pt+'.balance.HP_Nmech'] = 14800.000
         prob[pt+'.balance.IP_Nmech'] = 12000.000
-        # prob[pt+'.LP_Nmech'] = 12750.000
         prob[pt+'.hpt.PR'] = 4.233
         prob[pt+'.lpt.PR'] = 1.979
         prob[pt+'.pt.PR'] = 4.919
