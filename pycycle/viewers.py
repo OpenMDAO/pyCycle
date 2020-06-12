@@ -148,7 +148,7 @@ def print_bleed(prob, element_names, file=sys.stdout):
     # get max name length:
     max_name_len = 0
     for e_name in element_names:
-        print('foo', e_name)
+        # print('foo', e_name)
         bleed = prob.model._get_subsystem(e_name)
         for bn in bleed.options['bleed_names']:
             max_name_len = max(max_name_len, len(e_name+bn))
