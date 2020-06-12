@@ -10,11 +10,14 @@ class Turboshaft(om.Group):
     def initialize(self):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
+        self.options.declare('maxiter', default=10,
+                              desc='Maximum number of Newton solver iterations.')
 
     def setup(self):
 
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
+        maxiter = self.options['maxiter']
 
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
@@ -92,11 +95,12 @@ class Turboshaft(om.Group):
 
         else:
             # Need to check all these balances once power turbine map is updated
-            balance.add_balance('FAR', eq_units='lbf', lower=1e-4, val=.017)
+            balance.add_balance('FAR', eq_units='hp', lower=1e-4, val=.017)
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
-            self.connect('perf.Fn', 'balance.lhs:FAR')
+            # self.connect('perf.Fn', 'balance.lhs:FAR')
+            self.connect('lp_shaft.pwr_net', 'balance.lhs:FAR')
 
-            balance.add_balance('W', units='lbm/s', eq_units=None)
+            balance.add_balance('W', units='lbm/s', eq_units='inch**2')
             self.connect('balance.W', 'inlet.Fl_I:stat:W')
             self.connect('nozzle.Throat:stat:area', 'balance.lhs:W')
 
@@ -108,9 +112,9 @@ class Turboshaft(om.Group):
             self.connect('balance.HP_Nmech', 'HP_Nmech')
             self.connect('hp_shaft.pwr_net', 'balance.lhs:HP_Nmech')
 
-            balance.add_balance('LP_Nmech', val=1800.0, units='rpm', lower=1.001, eq_units='hp', rhs_val=0.)
-            self.connect('balance.LP_Nmech', 'LP_Nmech')
-            self.connect('lp_shaft.pwr_net', 'balance.lhs:LP_Nmech')
+            # balance.add_balance('LP_Nmech', val=1800.0, units='rpm', lower=1.001, eq_units='hp', rhs_val=0.)
+            # self.connect('balance.LP_Nmech', 'LP_Nmech')
+            # self.connect('lp_shaft.pwr_net', 'balance.lhs:LP_Nmech')
 
         pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
         pyc.connect_flow(self, 'inlet.Fl_O', 'duct1.Fl_I')
@@ -139,7 +143,7 @@ class Turboshaft(om.Group):
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
         newton.options['iprint'] = 2
-        newton.options['maxiter'] = 10
+        newton.options['maxiter'] = maxiter
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
@@ -183,7 +187,7 @@ def viewer(prob, pt, file=sys.stdout):
 
     pyc.print_burner(prob, [f'{pt}.burner'])
 
-    turb_names = ['hpt','lpt']
+    turb_names = ['hpt','lpt','pt']
     turb_full_names = [f'{pt}.{t}' for t in turb_names]
     pyc.print_turbine(prob, turb_full_names, file=file)
 
@@ -191,7 +195,7 @@ def viewer(prob, pt, file=sys.stdout):
     noz_full_names = [f'{pt}.{n}' for n in noz_names]
     pyc.print_nozzle(prob, noz_full_names, file=file)
 
-    shaft_names = ['hp_shaft','lp_shaft']
+    shaft_names = ['hp_shaft','ip_shaft','lp_shaft']
     shaft_full_names = [f'{pt}.{s}' for s in shaft_names]
     pyc.print_shaft(prob, shaft_full_names, file=file)
 
@@ -269,7 +273,8 @@ if __name__ == "__main__":
     des_vars.add_output('OD1_MN', 0.5),
     des_vars.add_output('OD1_alt', 28000.0, units='ft'),
     # des_vars.add_output('OD1_Fn_target', 5497.0, units='lbf'),
-    des_vars.add_output('OD1_P_target', 7500.0, units='hp')
+    des_vars.add_output('OD1_P_target', 1600.0, units='hp')
+    des_vars.add_output('OD1_LP_Nmech', 12750.0, units='rpm')
 
     # DESIGN CASE
     prob.model.add_subsystem('DESIGN', Turboshaft())
@@ -330,105 +335,106 @@ if __name__ == "__main__":
     # prob.model.connect('W', 'DESIGN.inlet.Fl_I:stat:W')
 
     # OFF DESIGN CASES
-    pts = [] # 'OD1','OD2','OD3','OD4','OD5','OD6','OD7','OD8']
+    pts = ['OD1'] # 'OD1','OD2','OD3','OD4','OD5','OD6','OD7','OD8']
 
-    # for pt in pts:
-    #     ODpt = prob.model.add_subsystem(pt, Turboshaft(design=False))
+    for pt in pts:
+        ODpt = prob.model.add_subsystem(pt, Turboshaft(design=False, maxiter=10))
 
-    #     prob.model.connect(pt+'_alt', pt+'.fc.alt')
-    #     prob.model.connect(pt+'_MN', pt+'.fc.MN')
-    #     # prob.model.connect(pt+'_Fn_target', pt+'.thrust_balance.rhs')
+        prob.model.connect(pt+'_alt', pt+'.fc.alt')
+        prob.model.connect(pt+'_MN', pt+'.fc.MN')
+        # prob.model.connect(pt+'_Fn_target', pt+'.thrust_balance.rhs')
 
-    #     prob.model.connect('inlet:ram_recovery', pt+'.inlet.ram_recovery')
-    #     prob.model.connect('duct4:dPqP', pt+'.duct4.dPqP')
-    #     prob.model.connect('duct6:dPqP', pt+'.duct6.dPqP')
-    #     prob.model.connect('burner:dPqP', pt+'.burner.dPqP')
-    #     prob.model.connect('duct11:dPqP', pt+'.duct11.dPqP')
-    #     prob.model.connect('duct13:dPqP', pt+'.duct13.dPqP')
-    #     prob.model.connect('nozzle:Cv', pt+'.nozzle.Cv')
-    #     prob.model.connect('duct15:dPqP', pt+'.duct15.dPqP')
-    #     prob.model.connect('hp_shaft:HPX', pt+'.hp_shaft.HPX')
+        prob.model.connect('inlet:ram_recovery', pt+'.inlet.ram_recovery')
+        prob.model.connect('duct1:dPqP', pt+'.duct1.dPqP')
+        prob.model.connect('icduct:dPqP', pt+'.icduct.dPqP')
+        prob.model.connect('duct6:dPqP', pt+'.duct6.dPqP')
+        prob.model.connect('burner:dPqP', pt+'.burner.dPqP')
+        prob.model.connect('duct43:dPqP', pt+'.duct43.dPqP')
+        prob.model.connect('itduct:dPqP', pt+'.itduct.dPqP')
+        prob.model.connect('duct12:dPqP', pt+'.duct12.dPqP')
+        prob.model.connect('nozzle:Cv', pt+'.nozzle.Cv')
+        prob.model.connect('OD1_P_target', pt+'.balance.rhs:FAR')
+        prob.model.connect('OD1_LP_Nmech', pt+'.LP_Nmech')
 
-    #     prob.model.connect('hpc:cool1:frac_W', pt+'.hpc.cool1:frac_W')
-    #     prob.model.connect('hpc:cool1:frac_P', pt+'.hpc.cool1:frac_P')
-    #     prob.model.connect('hpc:cool1:frac_work', pt+'.hpc.cool1:frac_work')
-    #     prob.model.connect('hpc:cool2:frac_W', pt+'.hpc.cool2:frac_W')
-    #     prob.model.connect('hpc:cool2:frac_P', pt+'.hpc.cool2:frac_P')
-    #     prob.model.connect('hpc:cool2:frac_work', pt+'.hpc.cool2:frac_work')
-    #     prob.model.connect('bld3:cool3:frac_W', pt+'.bld3.cool3:frac_W')
-    #     prob.model.connect('bld3:cool4:frac_W', pt+'.bld3.cool4:frac_W')
-    #     prob.model.connect('hpc:cust:frac_W', pt+'.hpc.cust:frac_W')
-    #     prob.model.connect('hpc:cust:frac_P', pt+'.hpc.cust:frac_P')
-    #     prob.model.connect('hpc:cust:frac_work', pt+'.hpc.cust:frac_work')
-    #     prob.model.connect('hpt:cool3:frac_P', pt+'.hpt.cool3:frac_P')
-    #     prob.model.connect('hpt:cool4:frac_P', pt+'.hpt.cool4:frac_P')
-    #     prob.model.connect('lpt:cool1:frac_P', pt+'.lpt.cool1:frac_P')
-    #     prob.model.connect('lpt:cool2:frac_P', pt+'.lpt.cool2:frac_P')
-    #     prob.model.connect('bypBld:frac_W', pt+'.byp_bld.bypBld:frac_W')
+        prob.model.connect('bld25:cool1:frac_W', pt+'.bld25.cool1:frac_W')
+        # prob.model.connect('bld25:cool1:frac_P', pt+'.bld25.cool1:frac_P')
+        # prob.model.connect('bld25:cool1:frac_work', pt+'.bld25.cool1:frac_work')
+        prob.model.connect('bld25:cool2:frac_W', pt+'.bld25.cool2:frac_W')
+        # prob.model.connect('bld25:cool2:frac_P', pt+'.bld25.cool2:frac_P')
+        # prob.model.connect('bld25:cool2:frac_work', pt+'.bld25.cool2:frac_work')
+        prob.model.connect('bld3:cool3:frac_W', pt+'.bld3.cool3:frac_W')
+        prob.model.connect('bld3:cool4:frac_W', pt+'.bld3.cool4:frac_W')
+        prob.model.connect('hpt:cool3:frac_P', pt+'.hpt.cool3:frac_P')
+        prob.model.connect('hpt:cool4:frac_P', pt+'.hpt.cool4:frac_P')
+        prob.model.connect('lpt:cool1:frac_P', pt+'.lpt.cool1:frac_P')
+        prob.model.connect('lpt:cool2:frac_P', pt+'.lpt.cool2:frac_P')
 
-    #     prob.model.connect('DESIGN.fan.s_PRdes', pt+'.fan.s_PRdes')
-    #     prob.model.connect('DESIGN.fan.s_WcDes', pt+'.fan.s_WcDes')
-    #     prob.model.connect('DESIGN.fan.s_effDes', pt+'.fan.s_effDes')
-    #     prob.model.connect('DESIGN.fan.s_NcDes', pt+'.fan.s_NcDes')
-    #     prob.model.connect('DESIGN.lpc.s_PRdes', pt+'.lpc.s_PRdes')
-    #     prob.model.connect('DESIGN.lpc.s_WcDes', pt+'.lpc.s_WcDes')
-    #     prob.model.connect('DESIGN.lpc.s_effDes', pt+'.lpc.s_effDes')
-    #     prob.model.connect('DESIGN.lpc.s_NcDes', pt+'.lpc.s_NcDes')
-    #     prob.model.connect('DESIGN.hpc.s_PRdes', pt+'.hpc.s_PRdes')
-    #     prob.model.connect('DESIGN.hpc.s_WcDes', pt+'.hpc.s_WcDes')
-    #     prob.model.connect('DESIGN.hpc.s_effDes', pt+'.hpc.s_effDes')
-    #     prob.model.connect('DESIGN.hpc.s_NcDes', pt+'.hpc.s_NcDes')
-    #     prob.model.connect('DESIGN.hpt.s_PRdes', pt+'.hpt.s_PRdes')
-    #     prob.model.connect('DESIGN.hpt.s_WpDes', pt+'.hpt.s_WpDes')
-    #     prob.model.connect('DESIGN.hpt.s_effDes', pt+'.hpt.s_effDes')
-    #     prob.model.connect('DESIGN.hpt.s_NpDes', pt+'.hpt.s_NpDes')
-    #     prob.model.connect('DESIGN.lpt.s_PRdes', pt+'.lpt.s_PRdes')
-    #     prob.model.connect('DESIGN.lpt.s_WpDes', pt+'.lpt.s_WpDes')
-    #     prob.model.connect('DESIGN.lpt.s_effDes', pt+'.lpt.s_effDes')
-    #     prob.model.connect('DESIGN.lpt.s_NpDes', pt+'.lpt.s_NpDes')
+        prob.model.connect('DESIGN.lpc.s_PR', pt+'.lpc.s_PR')
+        prob.model.connect('DESIGN.lpc.s_Wc', pt+'.lpc.s_Wc')
+        prob.model.connect('DESIGN.lpc.s_eff', pt+'.lpc.s_eff')
+        prob.model.connect('DESIGN.lpc.s_Nc', pt+'.lpc.s_Nc')
+        prob.model.connect('DESIGN.hpc_axi.s_PR', pt+'.hpc_axi.s_PR')
+        prob.model.connect('DESIGN.hpc_axi.s_Wc', pt+'.hpc_axi.s_Wc')
+        prob.model.connect('DESIGN.hpc_axi.s_eff', pt+'.hpc_axi.s_eff')
+        prob.model.connect('DESIGN.hpc_axi.s_Nc', pt+'.hpc_axi.s_Nc')
+        prob.model.connect('DESIGN.hpc_centri.s_PR', pt+'.hpc_centri.s_PR')
+        prob.model.connect('DESIGN.hpc_centri.s_Wc', pt+'.hpc_centri.s_Wc')
+        prob.model.connect('DESIGN.hpc_centri.s_eff', pt+'.hpc_centri.s_eff')
+        prob.model.connect('DESIGN.hpc_centri.s_Nc', pt+'.hpc_centri.s_Nc')
+        prob.model.connect('DESIGN.hpt.s_PR', pt+'.hpt.s_PR')
+        prob.model.connect('DESIGN.hpt.s_Wp', pt+'.hpt.s_Wp')
+        prob.model.connect('DESIGN.hpt.s_eff', pt+'.hpt.s_eff')
+        prob.model.connect('DESIGN.hpt.s_Np', pt+'.hpt.s_Np')
+        prob.model.connect('DESIGN.lpt.s_PR', pt+'.lpt.s_PR')
+        prob.model.connect('DESIGN.lpt.s_Wp', pt+'.lpt.s_Wp')
+        prob.model.connect('DESIGN.lpt.s_eff', pt+'.lpt.s_eff')
+        prob.model.connect('DESIGN.lpt.s_Np', pt+'.lpt.s_Np')
+        prob.model.connect('DESIGN.pt.s_PR', pt+'.pt.s_PR')
+        prob.model.connect('DESIGN.pt.s_Wp', pt+'.pt.s_Wp')
+        prob.model.connect('DESIGN.pt.s_eff', pt+'.pt.s_eff')
+        prob.model.connect('DESIGN.pt.s_Np', pt+'.pt.s_Np')
 
-    #     prob.model.connect('DESIGN.nozzle.Throat:stat:area',pt+'.core_flow_balance.rhs')
+        prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
+        prob.model.connect('DESIGN.duct1.Fl_O:stat:area', pt+'.duct1.area')
+        prob.model.connect('DESIGN.lpc.Fl_O:stat:area', pt+'.lpc.area')
+        prob.model.connect('DESIGN.icduct.Fl_O:stat:area', pt+'.icduct.area')
+        prob.model.connect('DESIGN.hpc_axi.Fl_O:stat:area', pt+'.hpc_axi.area')
+        prob.model.connect('DESIGN.bld25.Fl_O:stat:area', pt+'.bld25.area')
+        prob.model.connect('DESIGN.hpc_centri.Fl_O:stat:area', pt+'.hpc_centri.area')
+        prob.model.connect('DESIGN.bld3.Fl_O:stat:area', pt+'.bld3.area')
+        prob.model.connect('DESIGN.burner.Fl_O:stat:area', pt+'.burner.area')
+        prob.model.connect('DESIGN.hpt.Fl_O:stat:area', pt+'.hpt.area')
+        prob.model.connect('DESIGN.duct43.Fl_O:stat:area', pt+'.duct43.area')
+        prob.model.connect('DESIGN.lpt.Fl_O:stat:area', pt+'.lpt.area')
+        prob.model.connect('DESIGN.itduct.Fl_O:stat:area', pt+'.itduct.area')
+        prob.model.connect('DESIGN.pt.Fl_O:stat:area', pt+'.pt.area')
+        prob.model.connect('DESIGN.duct12.Fl_O:stat:area', pt+'.duct12.area')
+        prob.model.connect('DESIGN.nozzle.Throat:stat:area',pt+'.balance.rhs:W')
 
-    #     prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
-    #     prob.model.connect('DESIGN.fan.Fl_O:stat:area', pt+'.fan.area')
-    #     prob.model.connect('DESIGN.splitter.Fl_O1:stat:area', pt+'.splitter.area1')
-    #     prob.model.connect('DESIGN.splitter.Fl_O2:stat:area', pt+'.splitter.area2')
-    #     prob.model.connect('DESIGN.duct4.Fl_O:stat:area', pt+'.duct4.area')
-    #     prob.model.connect('DESIGN.lpc.Fl_O:stat:area', pt+'.lpc.area')
-    #     prob.model.connect('DESIGN.duct6.Fl_O:stat:area', pt+'.duct6.area')
-    #     prob.model.connect('DESIGN.hpc.Fl_O:stat:area', pt+'.hpc.area')
-    #     prob.model.connect('DESIGN.bld3.Fl_O:stat:area', pt+'.bld3.area')
-    #     prob.model.connect('DESIGN.burner.Fl_O:stat:area', pt+'.burner.area')
-    #     prob.model.connect('DESIGN.hpt.Fl_O:stat:area', pt+'.hpt.area')
-    #     prob.model.connect('DESIGN.duct11.Fl_O:stat:area', pt+'.duct11.area')
-    #     prob.model.connect('DESIGN.lpt.Fl_O:stat:area', pt+'.lpt.area')
-    #     prob.model.connect('DESIGN.duct13.Fl_O:stat:area', pt+'.duct13.area')
-    #     prob.model.connect('DESIGN.byp_bld.Fl_O:stat:area', pt+'.byp_bld.area')
-    #     prob.model.connect('DESIGN.duct15.Fl_O:stat:area', pt+'.duct15.area')
-
-    prob.setup(check=False)
+    # prob.setup(check=['unconnected_inputs'])
+    prob.setup()
 
     # initial guesses
     prob['DESIGN.balance.FAR'] = 0.02261
     prob['DESIGN.balance.W'] = 10.76
-    prob['DESIGN.balance.pt_PR'] = 4.939
+    prob['DESIGN.balance.hpt_PR'] = 4.233
     prob['DESIGN.balance.lpt_PR'] = 1.979
-    prob['DESIGN.balance.hpt_PR'] = 4.236
+    prob['DESIGN.balance.pt_PR'] = 4.919
     prob['DESIGN.fc.balance.Pt'] = 5.666
     prob['DESIGN.fc.balance.Tt'] = 440.0
 
-    # for pt in pts:
-    #     prob[pt+'.thrust_balance.indep'] = 0.02467
-    #     prob[pt+'.core_flow_balance.indep'] = 320.931
-    #     prob[pt+'.byp_flow_balance.indep'] = 5.105
-    #     prob[pt+'.lp_shaft_balance.indep'] = 4666.1
-    #     prob[pt+'.hp_shaft_balance.indep'] = 14705.7
-    #     prob[pt+'.fc.balance.Pt'] = 5.2
-    #     prob[pt+'.fc.balance.Tt'] = 440.0
-    #     prob[pt+'.hpt.PR'] = 3.6200
-    #     prob[pt+'.lpt.PR'] = 4.3645
-    #     prob[pt+'.lpc.map.RlineMap'] = 2.0
-    #     prob[pt+'.hpc.map.RlineMap'] = 2.0
+    for pt in pts:
+        prob[pt+'.balance.FAR'] = 0.02135
+        prob[pt+'.balance.W'] = 10.775
+        prob[pt+'.balance.HP_Nmech'] = 14800.000
+        prob[pt+'.balance.IP_Nmech'] = 12000.000
+        # prob[pt+'.LP_Nmech'] = 12750.000
+        prob[pt+'.hpt.PR'] = 4.233
+        prob[pt+'.lpt.PR'] = 1.979
+        prob[pt+'.pt.PR'] = 4.919
+        prob[pt+'.fc.balance.Pt'] = 5.666
+        prob[pt+'.fc.balance.Tt'] = 440.0
+        prob[pt+'.nozzle.PR'] = 1.1
 
     st = time.time()
 
@@ -442,4 +448,3 @@ if __name__ == "__main__":
 
     print()
     print("time", time.time() - st)
-
