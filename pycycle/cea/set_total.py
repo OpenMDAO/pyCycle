@@ -118,7 +118,7 @@ class SetTotal(om.Group):
                                                     ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['MN', 'V', 'Vsonic', 'area']
                                    )
-
+                
         else:
             self.add_subsystem('flow', EngUnitProps(thermo=thermo, fl_name=fl_name),
                                promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R'),
