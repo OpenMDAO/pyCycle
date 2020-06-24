@@ -40,7 +40,7 @@ class PropsCalcs(ExplicitComponent):
         # partial derivs setup
         self.declare_partials('h', ['n', 'T'])
         self.declare_partials('S', ['n', 'T', 'P'])
-        self.declare_partials('S', 'n_moles', val=R_UNIVERSAL_ENG)
+        self.declare_partials('S', 'n_moles')
         self.declare_partials('Cp', ['n', 'T', 'result_T'])
         self.declare_partials('rho', ['T', 'P', 'n_moles'])
         self.declare_partials('gamma', ['n', 'n_moles', 'T', 'result_T', 'result_P'])
@@ -161,7 +161,7 @@ class PropsCalcs(ExplicitComponent):
         J['S', 'n'][0, _trace] = 0
         J['S', 'T'] = R_UNIVERSAL_ENG*np.sum(nj*dS0_dT)
         J['S', 'P'] = -R_UNIVERSAL_ENG*np.sum(nj/P)
-
+        J['S', 'n_moles'] = R_UNIVERSAL_ENG*np.sum(nj)/n_moles
         J['rho', 'T'] = -P/(sum_nj_R*T**2)*100
         J['rho', 'n_moles'] = -P/(n_moles**2*R_UNIVERSAL_SI*T)*100
         J['rho', 'P'] = 1/(sum_nj_R*T)*100
