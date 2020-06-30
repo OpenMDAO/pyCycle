@@ -13,26 +13,27 @@ class Turbojet(om.Group):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
+        wet_thermo_spec = pyc.species_data.wet_air
+        janaf_thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                    elements=pyc.AIR_MIX))
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
-                                    elements=pyc.AIR_MIX))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec,
+                                    elements=pyc.WET_AIR_MIX))
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
+                                    elements=pyc.WET_AIR_MIX))
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_MIX,),
+                                    thermo_data=wet_thermo_spec, elements=pyc.WET_AIR_MIX,),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                    inflow_elements=pyc.AIR_MIX,
+        self.add_subsystem('burner', pyc.Combustor(design=design,inflow_thermo_data=wet_thermo_spec,
+                                    thermo_data=janaf_thermo_spec, inflow_elements=pyc.WET_AIR_MIX,
                                     air_fuel_elements=pyc.AIR_FUEL_MIX,
                                     fuel_type='JP-7'))
         self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX,),
+                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_MIX,),
                                     promotes_inputs=['Nmech'])
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX))
+                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_MIX))
         self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
@@ -257,3 +258,10 @@ if __name__ == "__main__":
 
     print()
     print("time", time.time() - st)
+
+    print(prob['DESIGN.fc.fs.init_prod_amounts'])
+    print(prob['DESIGN.inlet.Fl_O:tot:n'])
+    print(prob['DESIGN.comp.Fl_O:tot:n'])
+    print(prob['DESIGN.burner.mix_fuel.init_prod_amounts'])
+    print(prob['DESIGN.burner.Fl_O:tot:n'])
+    print(prob['DESIGN.turb.Fl_O:tot:n'])

@@ -19,22 +19,34 @@ class MixFuel(om.ExplicitComponent):
     """
 
     def initialize(self):
+        self.options.declare('inflow_thermo_data', default=None,
+                             desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
-                             desc='thermodynamic data set', recordable=False)
+                             desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set.', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
                              desc='set of elements present in the flow')
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
 
     def setup(self):
+
         thermo_data = self.options['thermo_data']
+
+        if self.options['inflow_thermo_data'] is not None:
+
+            inflow_thermo_data = self.options['inflow_thermo_data']
+
+        else:
+
+            inflow_thermo_data = thermo_data
+
         inflow_elements = self.options['inflow_elements']
         fuel_type = self.options['fuel_type']
 
         self.mixed_elements = inflow_elements.copy()
         self.mixed_elements.update(janaf.reactants[fuel_type])
 
-        inflow_thermo = Thermo(thermo_data, init_reacts=inflow_elements)
+        inflow_thermo = Thermo(inflow_thermo_data, init_reacts=inflow_elements)
         self.inflow_prods = inflow_thermo.products
         self.inflow_num_prods = len(self.inflow_prods)
         self.inflow_wt_mole = inflow_thermo.wt_mole
@@ -189,8 +201,10 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
+        self.options.declare('inflow_thermo_data', default=None,
+                             desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
-                             desc='thermodynamic data set', recordable=False)
+                             desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set.', recordable=False)
         self.options.declare('inflow_elements', default=AIR_MIX,
                              desc='set of elements present in the air flow')
         self.options.declare('air_fuel_elements', default=AIR_FUEL_MIX,
@@ -204,6 +218,14 @@ class Combustor(om.Group):
 
     def setup(self):
         thermo_data = self.options['thermo_data']
+        if self.options['inflow_thermo_data'] is not None:
+            # Set the inflow thermodynamic data package if it is different from the outflow one
+            inflow_thermo_data = self.options['inflow_thermo_data']
+
+        else:
+            # Set the inflow thermodynamic data package if it is the same as the outflow one
+            inflow_thermo_data = thermo_data
+
         inflow_elements = self.options['inflow_elements']
         air_fuel_elements = self.options['air_fuel_elements']
         design = self.options['design']
@@ -213,7 +235,7 @@ class Combustor(om.Group):
         air_fuel_thermo = Thermo(thermo_data, init_reacts=air_fuel_elements)
         self.air_fuel_prods = air_fuel_thermo.products
 
-        air_thermo = Thermo(thermo_data, init_reacts=inflow_elements)
+        air_thermo = Thermo(inflow_thermo_data, init_reacts=inflow_elements)
         self.air_prods = air_thermo.products
 
         self.num_air_fuel_prod = len(self.air_fuel_prods)
@@ -225,8 +247,8 @@ class Combustor(om.Group):
 
         # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
-                           MixFuel(thermo_data=thermo_data, inflow_elements=inflow_elements,
-                                   fuel_type=fuel_type),
+                           MixFuel(inflow_thermo_data=inflow_thermo_data, thermo_data=thermo_data,
+                                    inflow_elements=inflow_elements, fuel_type=fuel_type),
                            promotes=['Fl_I:stat:W','Fl_I:FAR', 'Fl_I:tot:n', 'Fl_I:tot:h', 'Wfuel', 'Wout'])
 
         # Pressure loss

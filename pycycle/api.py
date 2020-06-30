@@ -1,4 +1,4 @@
-from pycycle.constants import (AIR_FUEL_MIX, AIR_MIX, OXYGEN, OXYGEN_METHANE_MIX, 
+from pycycle.constants import (AIR_FUEL_MIX, AIR_MIX, WET_AIR_MIX, OXYGEN, OXYGEN_METHANE_MIX, 
                                OXYGEN_HYDROGEN_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF, 
                                R_UNIVERSAL_SI, R_UNIVERSAL_ENG, g_c, MIN_VALID_CONCENTRATION, 
                                T_STDeng, P_STDeng, P_REF)
