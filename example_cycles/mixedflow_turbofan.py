@@ -546,12 +546,12 @@ if __name__ == "__main__":
     page_viewer('DESIGN')
 
 
-    # for T in [3200, 3100, 3000]:
-    #     prob['T4_OD'] = T
+    for T in [3200, 3100, 3000]:
+        prob['T4_OD'] = T
 
-    #     prob.run_model()
+        prob.run_model()
 
-    #     page_viewer('OD0')
+        page_viewer('OD0')
 
     print()
     print("time", time.time() - st)
