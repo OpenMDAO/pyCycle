@@ -3,6 +3,7 @@ from openmdao.api import Group
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
+from pycycle.elements.war import SetWAR
 from pycycle.constants import AIR_MIX
 
 
@@ -17,10 +18,13 @@ class FlowStart(Group):
 
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
+        self.options.declare('WAR', default=0,
+                              desc='water to air ratio')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
+        WAR = self.options['WAR']
 
         thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
@@ -41,8 +45,12 @@ class FlowStart(Group):
         set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
                                 init_reacts=elements, fl_name="Fl_O:stat")
 
-        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W'),
+        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'init_prod_amounts'),
                            promotes_outputs=('Fl_O:stat:*', ))
+
+        if WAR > 0:
+            set_WAR = SetWAR(thermo_data=thermo_data, WAR=WAR, elements=elements)
+            self.add_subsystem('WAR', set_WAR, promotes_outputs=('init_prod_amounts',))
 
         self.connect('totals.h','exit_static.ht')
         self.connect('totals.S','exit_static.S')

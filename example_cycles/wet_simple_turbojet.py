@@ -10,15 +10,17 @@ class WetTurbojet(om.Group):
     def initialize(self):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
+        self.options.declare('WAR', default=.001, desc='water to air ratio')
 
     def setup(self):
 
         wet_thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
         janaf_thermo_spec = pyc.species_data.janaf #standard species library is called for use in and after burner
         design = self.options['design']
+        WAR = self.options['WAR']
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec,
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec, WAR=WAR,
                                     elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
                                     elements=pyc.WET_AIR_MIX))
@@ -185,7 +187,7 @@ class MPWetTurbojet(om.Group):
         des_vars.add_output('OD1_Fn', 11000.0, units='lbf')
 
         # Create design instance of model
-        self.add_subsystem('DESIGN', WetTurbojet())
+        self.add_subsystem('DESIGN', WetTurbojet(WAR=.001))
 
         # Connect design point inputs to model
         self.connect('alt', 'DESIGN.fc.alt')
@@ -209,7 +211,7 @@ class MPWetTurbojet(om.Group):
         pts = ['OD1']
 
         for pt in pts:
-            self.add_subsystem(pt, WetTurbojet(design=False))
+            self.add_subsystem(pt, WetTurbojet(design=False, WAR=.001))
 
             self.connect('burn:dPqP', pt+'.burner.dPqP')
             self.connect('nozz:Cv', pt+'.nozz.Cv')

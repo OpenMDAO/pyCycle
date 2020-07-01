@@ -246,7 +246,7 @@ element_wts = {
 }
 
 reactants = { # used to compute the correct amounts of each product for an initial condition
-  'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319)]), #percentage by volume
+  'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319), ('H2O', 1)]), #percentage by volume. Note the actual amount of H2O is irrelevant and will be set by WAR
   # 'air': {'N': 1.5616, 'O':.41959, 'Ar': .00936, 'C': .00032},
   'H2': OrderedDict([('H2', 1.00)]), 
 }
