@@ -39,6 +39,12 @@ class SetWAR(om.ExplicitComponent):
         self.original_init_reacts = thermo_data.init_prod_amounts
         thermo = Thermo(thermo_data, self.original_init_reacts) #call Thermo function with incorrect ratios to get the number of products in the output
         shape = len(thermo.products)
+
+        #make sure provided elements and data contain the same compounds
+        num_elements = len(set(elements.keys()))
+        num_init_prods = len(set(self.original_init_reacts.keys()))
+        num_intersection = len(set(elements.keys()).intersection(set(self.original_init_reacts.keys())))
+        deviations = 2*num_intersection - num_elements - num_init_prods
         
         if 'H2O' not in elements:
             raise ValueError('The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.')
@@ -46,7 +52,9 @@ class SetWAR(om.ExplicitComponent):
         if 'H2O' not in self.original_init_reacts:
             raise ValueError(f'H2O must be present in `{thermo_data}`.init_prod_amounts to have a nonzero WAR. The provided thermo_data has no H2O present.')
 
-        
+        if deviations != 0:
+            raise ValueError('The compounds present in the provided elements must be the same as the compounds present in the init_prod_amounts of the provided thermo data, and are not')
+
         self.add_input('WAR', val=WAR, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
         
         self.add_output('init_prod_amounts', shape=(shape,), val=thermo.init_prod_amounts,
