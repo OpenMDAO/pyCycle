@@ -7,7 +7,7 @@ class WetPropulsor(om.Group):
 
     def initialize(self):
         self.options.declare('design', types=bool, default=True)
-        self.options.declare('WAR', default=.001, desc='water to air ratio')
+        self.options.declare('WAR', default=.001, desc='water to air ratio by mass (specific humidity)')
 
     def setup(self):
 

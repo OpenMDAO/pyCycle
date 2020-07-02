@@ -19,7 +19,7 @@ class FlowStart(Group):
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('WAR', default=0,
-                              desc='water to air ratio')
+                              desc='water to air ratio by mass (specific humidity)')
 
     def setup(self):
         thermo_data = self.options['thermo_data']

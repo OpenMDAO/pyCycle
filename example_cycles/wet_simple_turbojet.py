@@ -10,7 +10,7 @@ class WetTurbojet(om.Group):
     def initialize(self):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
-        self.options.declare('WAR', default=.001, desc='water to air ratio')
+        self.options.declare('WAR', default=.001, desc='water to air ratio by mass (specific humidity)')
 
     def setup(self):
 

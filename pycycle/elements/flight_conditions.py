@@ -15,7 +15,7 @@ class FlightConditions(om.Group):
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('WAR', default=0,
-                              desc='water to air ratio')
+                              desc='water to air ratio by mass (specific humidity)')
 
     def setup(self):
         thermo_data = self.options['thermo_data']

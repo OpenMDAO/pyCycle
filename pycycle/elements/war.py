@@ -26,7 +26,7 @@ class SetWAR(om.ExplicitComponent):
         self.options.declare('thermo_data', default=wet_air, 
                             desc='thermodynamic data set')
         self.options.declare('WAR', default=0.0001,
-                            desc='water to air ratio')
+                            desc='water to air ratio by mass (specific humidity)')
         self.options.declare('elements', default=WET_AIR_MIX,
                               desc='set of elements present in the flow')
 
