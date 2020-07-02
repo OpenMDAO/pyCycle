@@ -27,15 +27,12 @@ class SetWAR(ExplicitComponent):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.wet_air, 
                             desc='thermodynamic data set')
-        self.options.declare('WAR', default=0.0001,
-                            desc='water to air ratio by mass (specific humidity)')
         self.options.declare('elements', default=WET_AIR_MIX,
                               desc='set of elements present in the flow')
 
     def setup(self):
 
         thermo_data = self.options['thermo_data']
-        WAR = self.options['WAR']
         elements = self.options['elements']
 
         self.original_init_reacts = thermo_data.init_prod_amounts
@@ -47,7 +44,24 @@ class SetWAR(ExplicitComponent):
         num_init_prods = len(set(self.original_init_reacts.keys()))
         num_intersection = len(set(elements.keys()).intersection(set(self.original_init_reacts.keys())))
         deviations = 2*num_intersection - num_elements - num_init_prods 
+
+        if deviations != 0: #raises an error if the compounds present in elements are not the same compounds present in the init_prod_amounts of the thermo data
+            raise ValueError('The compounds present in the provided elements must be the same as the compounds present in the init_prod_amounts of the provided thermo data, and are not')
+
+
+        self.add_input('WAR', val=0.0, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
         
+        self.add_output('init_prod_amounts', shape=(shape,), val=thermo.init_prod_amounts,
+                       desc="stoichiometric ratios by mass of the initial compounds present in the flow, scaled to desired WAR")
+
+        self.declare_partials('init_prod_amounts', 'WAR')
+
+    def compute(self, inputs, outputs):
+
+        WAR = inputs['WAR']
+        thermo_data = self.options['thermo_data']
+        elements = self.options['elements']
+
         if WAR > 0:
             if 'H2O' not in elements:
                 raise ValueError('The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.')
@@ -62,21 +76,6 @@ class SetWAR(ExplicitComponent):
         else:
             raise ValueError(f'Must specify a non-negative WAR. The given WAR is  `{WAR}`.')
 
-        if deviations != 0: #raises an error if the compounds present in elements are not the same compounds present in the init_prod_amounts of the thermo data
-            raise ValueError('The compounds present in the provided elements must be the same as the compounds present in the init_prod_amounts of the provided thermo data, and are not')
-
-
-        self.add_input('WAR', val=WAR, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
-        
-        self.add_output('init_prod_amounts', shape=(shape,), val=thermo.init_prod_amounts,
-                       desc="stoichiometric ratios by mass of the initial compounds present in the flow, scaled to desired WAR")
-
-        self.declare_partials('init_prod_amounts', 'WAR')
-
-    def compute(self, inputs, outputs):
-
-        WAR = inputs['WAR']
-        thermo_data = self.options['thermo_data']
 
         if WAR > 1e-15:
 
@@ -154,7 +153,6 @@ class FlowStart(Group):
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
-        WAR = self.options['WAR']
 
         thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
@@ -162,8 +160,8 @@ class FlowStart(Group):
 
         # inputs
 
-        set_WAR = SetWAR(thermo_data=thermo_data, WAR=WAR, elements=elements)
-        self.add_subsystem('WAR', set_WAR, promotes_outputs=('init_prod_amounts',))
+        set_WAR = SetWAR(thermo_data=thermo_data, elements=elements)
+        self.add_subsystem('WAR', set_WAR, promotes_inputs=('WAR',), promotes_outputs=('init_prod_amounts',))
         
         set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
                           thermo_data=thermo_data,
@@ -241,7 +239,11 @@ if __name__ == "__main__":
     prob = Problem()
     prob.model = Group()
 
-    WAR = prob.model.add_subsystem('WAR', SetWAR(thermo_data=species_data.wet_air, WAR=.1, elements=WET_AIR_MIX), promotes=['*'])
+    des_vars = prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
+
+    des_vars.add_output('WAR', .0001),
+
+    prob.model.add_subsystem('WAR', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
 
     prob.setup(force_alloc_complex=True)
 

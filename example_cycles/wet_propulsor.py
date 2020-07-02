@@ -7,16 +7,14 @@ class WetPropulsor(om.Group):
 
     def initialize(self):
         self.options.declare('design', types=bool, default=True)
-        self.options.declare('WAR', default=.001, desc='water to air ratio by mass (specific humidity)')
 
     def setup(self):
 
         thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
         design = self.options['design']
-        WAR = self.options['WAR']
 
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.WET_AIR_MIX, WAR=WAR))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                                  elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
 
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
         self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,
@@ -105,11 +103,12 @@ class MPWetPropulsor(om.Group):
         des_vars.add_output('des:inlet_MN', .6)
         des_vars.add_output('des:FPR', 1.2)
         des_vars.add_output('des:eff', 0.96)
+        des_vars.add_output('des:WAR', .001)
 
         des_vars.add_output('pwr_target', -2600., units='kW')
 
 
-        design = self.add_subsystem('design', WetPropulsor(design=True, WAR=.001))
+        design = self.add_subsystem('design', WetPropulsor(design=True))
 
         self.connect('des:alt', 'design.fc.alt')
         self.connect('des:MN', 'design.fc.MN')
@@ -117,15 +116,18 @@ class MPWetPropulsor(om.Group):
         self.connect('des:FPR', 'design.fan.PR')
         self.connect('pwr_target', ['design.pwr_target', 'off_design.pwr_target'])
         self.connect('des:eff', 'design.fan.eff')
+        self.connect('des:WAR', 'design.fc.WAR')
 
 
         des_vars.add_output('OD:alt', 10000, units='m')
         des_vars.add_output('OD:MN', 0.72)
+        des_vars.add_output('OD:WAR', .001)
 
-        od = self.add_subsystem('off_design', WetPropulsor(design=False, WAR=.001))
+        od = self.add_subsystem('off_design', WetPropulsor(design=False))
 
         self.connect('OD:alt', 'off_design.fc.alt')
         self.connect('OD:MN', 'off_design.fc.MN')
+        self.connect('OD:WAR', 'off_design.fc.WAR')
 
         # need to pass some design values to the OD point
         # prob.model.connect('design.inlet:ram_recovery', 'off_design.inlet.ram_recovery')
