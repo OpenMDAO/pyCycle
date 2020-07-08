@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from pycycle.cea.thermo_data import co2_co_o2
 from pycycle.cea.thermo_data import janaf
+from pycycle.cea.thermo_data import wet_air
 
 #from ad.admath import log
 from numpy import log

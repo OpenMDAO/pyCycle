@@ -141,7 +141,7 @@ class PsResid(om.ImplicitComponent):
                 MN = 5.
 
         V = MN*Vsonic
-
+        
         return MN, Vsonic, V
 
     def solve_nonlinear(self, inputs, outputs):
