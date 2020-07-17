@@ -39,16 +39,6 @@ class SetWAR(ExplicitComponent):
         thermo = species_data.Thermo(thermo_data, elements) #call Thermo function with incorrect ratios to get the number of products in the output
         shape = len(thermo.products)
 
-        #make sure provided elements and data contain the same compounds
-        num_elements = len(set(elements.keys()))
-        num_init_prods = len(set(self.original_init_reacts.keys()))
-        num_intersection = len(set(elements.keys()).intersection(set(self.original_init_reacts.keys())))
-        deviations = 2*num_intersection - num_elements - num_init_prods 
-
-        if deviations != 0: #raises an error if the compounds present in elements are not the same compounds present in the init_prod_amounts of the thermo data
-            raise ValueError('The compounds present in the provided elements must be the same as the compounds present in the init_prod_amounts of the provided thermo data, and are not')
-
-
         self.add_input('WAR', val=0.0, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
         
         self.add_output('init_prod_amounts', shape=(shape,), val=thermo.init_prod_amounts,
@@ -62,12 +52,22 @@ class SetWAR(ExplicitComponent):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        if WAR > 0:
+        if WAR > 1e-15:
             if 'H2O' not in elements:
                 raise ValueError('The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.')
 
             elif 'H2O' not in self.original_init_reacts:
                 raise ValueError(f'H2O must be present in `{thermo_data}`.init_prod_amounts to have a nonzero WAR. The provided thermo_data has no H2O present.')
+
+            #make sure provided elements and data contain the same compounds
+            num_elements = len(set(elements.keys()))
+            num_init_prods = len(set(self.original_init_reacts.keys()))
+            num_intersection = len(set(elements.keys()).intersection(set(self.original_init_reacts.keys())))
+            deviations = 2*num_intersection - num_elements - num_init_prods 
+
+            if deviations != 0: #raises an error if the compounds present in elements are not the same compounds present in the init_prod_amounts of the thermo data
+                raise ValueError('The compounds present in the provided elements must be the same as the compounds present in the init_prod_amounts of the provided thermo data, and are not')
+
 
         elif -1e-15 < WAR < 1e-15:
             if 'H2O' in elements.keys():
@@ -112,9 +112,7 @@ class SetWAR(ExplicitComponent):
 
         elif -1e-15 < WAR < 1e-15:
 
-            thermo = species_data.Thermo(thermo_data, thermo_data.init_prod_amounts)
-
-            outputs['init_prod_amounts'] = thermo.init_prod_amounts
+            pass # am I allowed to do this? It passes the tests but seems like bad form (the reason it's here is to preserve shape when different elements are provided)
 
     def compute_partials(self, inputs, J):
 

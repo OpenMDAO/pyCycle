@@ -109,6 +109,8 @@ from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, combustor, flow_start
 from pycycle.cea import species_data
+from pycycle.cea.set_total import SetTotal
+from pycycle.cea.set_static import SetStatic
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 
 
@@ -145,14 +147,31 @@ class Tests(unittest.TestCase):
         p.model.connect('burner:h_in', 'mix_fuel.Fl_I:tot:h')
         p.model.connect('clean_n', 'mix_fuel.Fl_I:tot:n')
 
-        p.model.add_subsystem(
-            'burner_flow',
-            flow_start.FlowStart(
-                thermo_data=species_data.janaf,
-                elements=AIR_FUEL_MIX))
-        p.model.connect('mix_fuel.init_prod_amounts', 'burner_flow.init_prod_amounts')
-        p.model.connect('Tt_primary', 'burner_flow.T')
-        p.model.connect('Pt_in', 'burner_flow.P')
+        ## Essentially setting up a flow start without the WAR. This is necessary because MixFuel outputs init_prod_amounts, as does WAR
+        set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
+                          thermo_data=species_data.janaf,
+                          init_reacts=AIR_FUEL_MIX)
+
+        params = ('T','P', 'init_prod_amounts')
+
+        p.model.add_subsystem('totals', set_TP, promotes_inputs=params,
+                           promotes_outputs=('Fl_O:tot:*',))
+
+        # if self.options['statics']:
+        set_stat_MN = SetStatic(mode="MN", thermo_data=species_data.janaf,
+                                init_reacts=AIR_FUEL_MIX, fl_name="Fl_O:stat")
+        # set_stat_MN.set_input_defaults('W', val=1.0, units='kg/s')
+
+        p.model.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'init_prod_amounts'),
+                           promotes_outputs=('Fl_O:stat:*', ))
+
+        p.model.connect('totals.h','exit_static.ht')
+        p.model.connect('totals.S','exit_static.S')
+        p.model.connect('Fl_O:tot:P','exit_static.guess:Pt')
+        p.model.connect('totals.gamma', 'exit_static.guess:gamt')
+        p.model.connect('mix_fuel.init_prod_amounts', 'init_prod_amounts')
+        p.model.connect('Tt_primary', 'T')
+        p.model.connect('Pt_in', 'P')
 
         self.prob = p
 
@@ -202,7 +221,7 @@ class Tests(unittest.TestCase):
         p.model.connect('Tt_primary', 'row.Tt_primary')
         p.model.connect('Tt_cool', 'row.Tt_cool')
 
-        p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
+        p.model.connect('Fl_O:tot:h', 'row.ht_primary')
         p.model.connect('ht_cool', 'row.ht_cool')
 
         p.model.connect('mix_fuel.init_prod_amounts', 'row.n_primary')
