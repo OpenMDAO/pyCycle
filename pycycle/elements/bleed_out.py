@@ -93,6 +93,11 @@ class BleedOut(om.Group):
                               desc='Switch between on-design and off-design calculation.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',
                               default=[])
+        
+        self.default_des_od_conns = [
+            # (design src, off-design target)
+            ('Fl_O:stat:area', 'area')
+        ]
 
     def setup(self):
         thermo_data = self.options['thermo_data']

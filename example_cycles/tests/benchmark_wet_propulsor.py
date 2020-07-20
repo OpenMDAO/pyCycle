@@ -23,6 +23,9 @@ class WetPropulsorTestCase(unittest.TestCase):
 
         prob.setup(check=False)
 
+        prob.set_val('design.fan.PR', 1.2)
+        prob.set_val('design.fan.eff', 0.96)
+
         prob.model.design.nonlinear_solver.options['atol'] = 1e-6
         prob.model.design.nonlinear_solver.options['rtol'] = 1e-6
 
@@ -33,8 +36,9 @@ class WetPropulsorTestCase(unittest.TestCase):
     		
 
     	# parameters
-        prob['des:MN'] = .8
-        prob['OD:MN'] = .8
+
+        prob['design.fc.MN'] = .8
+        prob['off_design.fc.MN'] = .8
 
     	# initial guess
         prob['design.balance.W'] = 200.

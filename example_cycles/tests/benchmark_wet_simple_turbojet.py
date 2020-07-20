@@ -22,6 +22,10 @@ class WetSimpleTurbojetTestCase(unittest.TestCase):
 
         prob.setup(check=False)
 
+        prob.set_val('DESIGN.comp.PR', 13.5),
+        prob.set_val('DESIGN.comp.eff', 0.83),
+        prob.set_val('DESIGN.turb.eff', 0.86),
+
         # Set initial guesses for balances
         prob['DESIGN.balance.FAR'] = 0.0175506829934
         prob['DESIGN.balance.W'] = 168.453135137

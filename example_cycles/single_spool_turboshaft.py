@@ -4,7 +4,7 @@ import openmdao.api as om
 
 import pycycle.api as pyc
 
-class Turboshaft(om.Group):
+class SingleSpoolTurboshaft(pyc.Cycle):
 
     def initialize(self):
         self.options.declare('design', default=True,
@@ -16,36 +16,36 @@ class Turboshaft(om.Group):
         design = self.options['design']
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
+        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
                                     elements=pyc.AIR_MIX))
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
                                     elements=pyc.AIR_MIX))
-        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
+        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
                                     thermo_data=thermo_spec, elements=pyc.AIR_MIX, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                     inflow_elements=pyc.AIR_MIX,
                                     air_fuel_elements=pyc.AIR_FUEL_MIX,
                                     fuel_type='JP-7'))
-        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
+        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
                                     thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
+        self.pyc_add_element('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
                                     thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
+        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
                                     thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX))
-        self.add_subsystem('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
+        self.pyc_add_element('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
+        self.pyc_add_element('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])
+        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         # Connect flow stations
-        pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
-        pyc.connect_flow(self, 'inlet.Fl_O', 'comp.Fl_I')
-        pyc.connect_flow(self, 'comp.Fl_O', 'burner.Fl_I')
-        pyc.connect_flow(self, 'burner.Fl_O', 'turb.Fl_I')
-        pyc.connect_flow(self, 'turb.Fl_O', 'pt.Fl_I')
-        pyc.connect_flow(self, 'pt.Fl_O', 'nozz.Fl_I')
+        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
+        self.pyc_connect_flow('inlet.Fl_O', 'comp.Fl_I')
+        self.pyc_connect_flow('comp.Fl_O', 'burner.Fl_I')
+        self.pyc_connect_flow('burner.Fl_O', 'turb.Fl_I')
+        self.pyc_connect_flow('turb.Fl_O', 'pt.Fl_I')
+        self.pyc_connect_flow('pt.Fl_O', 'nozz.Fl_I')
 
         # Connect turbomachinery elements to shaft
         self.connect('comp.trq', 'HP_shaft.trq_0')
@@ -67,11 +67,11 @@ class Turboshaft(om.Group):
         balance = self.add_subsystem('balance', om.BalanceComp())
         if design:
 
-            balance.add_balance('W', val=27.0, units='lbm/s', eq_units=None)
+            balance.add_balance('W', val=27.0, units='lbm/s', eq_units=None, rhs_name='nozz_PR_target')
             self.connect('balance.W', 'inlet.Fl_I:stat:W')
             self.connect('nozz.PR', 'balance.lhs:W')
 
-            balance.add_balance('FAR', eq_units='degR', lower=1e-4, val=.017)
+            balance.add_balance('FAR', eq_units='degR', lower=1e-4, val=.017, rhs_name='T4_target')
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
@@ -79,13 +79,13 @@ class Turboshaft(om.Group):
             self.connect('balance.turb_PR', 'turb.PR')
             self.connect('HP_shaft.pwr_net', 'balance.lhs:turb_PR')
 
-            balance.add_balance('pt_PR', val=3.0, lower=1.001, upper=8, eq_units='hp')
+            balance.add_balance('pt_PR', val=3.0, lower=1.001, upper=8, eq_units='hp', rhs_name='pwr_target')
             self.connect('balance.pt_PR', 'pt.PR')
             self.connect('LP_shaft.pwr_net', 'balance.lhs:pt_PR')
 
         else:
 
-            balance.add_balance('FAR', eq_units='hp', lower=1e-4, val=.3)
+            balance.add_balance('FAR', eq_units='hp', lower=1e-4, val=.3, rhs_name='pwr_target')
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('LP_shaft.pwr_net', 'balance.lhs:FAR')
 
@@ -160,122 +160,101 @@ def viewer(prob, pt, file=sys.stdout):
     pyc.print_shaft(prob, shaft_full_names, file=file)
 
 
+
+
+
+class MPSingleSpool(pyc.MPCycle):
+
+    def setup(self):
+
+        # Create design instance of model
+        self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft())
+        self.pyc_add_cycle_param('burner.dPqP', .03)
+        self.pyc_add_cycle_param('nozz.Cv', 0.99)
+
+        od_pts = ['OD', 'OD2']
+
+        for pt in od_pts:
+            self.pyc_add_pnt(pt, SingleSpoolTurboshaft(design=False))
+
+        self.pyc_connect_des_od('comp.s_PR', 'comp.s_PR')
+        self.pyc_connect_des_od('comp.s_Wc', 'comp.s_Wc')
+        self.pyc_connect_des_od('comp.s_eff', 'comp.s_eff')
+        self.pyc_connect_des_od('comp.s_Nc', 'comp.s_Nc')
+
+        self.pyc_connect_des_od('turb.s_PR', 'turb.s_PR')
+        self.pyc_connect_des_od('turb.s_Wp', 'turb.s_Wp')
+        self.pyc_connect_des_od('turb.s_eff', 'turb.s_eff')
+        self.pyc_connect_des_od('turb.s_Np', 'turb.s_Np')
+
+        self.pyc_connect_des_od('pt.s_PR', 'pt.s_PR')
+        self.pyc_connect_des_od('pt.s_Wp', 'pt.s_Wp')
+        self.pyc_connect_des_od('pt.s_eff', 'pt.s_eff')
+        self.pyc_connect_des_od('pt.s_Np', 'pt.s_Np')
+
+        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
+        self.pyc_connect_des_od('comp.Fl_O:stat:area', 'comp.area')
+        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
+        self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
+        self.pyc_connect_des_od('pt.Fl_O:stat:area', 'pt.area')
+
+        self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        self.set_input_defaults('DESIGN.HP_Nmech', 8070.0, units='rpm')
+        self.set_input_defaults('DESIGN.LP_Nmech', 5000.0, units='rpm')
+
+        self.set_input_defaults('DESIGN.inlet.MN', 0.60)
+        self.set_input_defaults('DESIGN.comp.MN', 0.20)
+        self.set_input_defaults('DESIGN.burner.MN', 0.20)
+        self.set_input_defaults('DESIGN.turb.MN', 0.4)
+
 if __name__ == "__main__":
 
     import time
-    from openmdao.api import Problem, IndepVarComp
-    from openmdao.utils.units import convert_units as cu
 
     prob = om.Problem()
 
-    des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
+    prob.model = MPSingleSpool()
 
-    # Design point inputs
-    des_vars.add_output('alt', 0.0, units='ft'),
-    des_vars.add_output('MN', 0.000001),
-    des_vars.add_output('T4max', 2370.0, units='degR'),
-    # des_vars.add_output('Fn_des', 11800.0, units='lbf'),
-    des_vars.add_output('pwr_des', 4000.0, units='hp')
-    des_vars.add_output('nozz_PR', 1.2)
-    des_vars.add_output('comp:PRdes', 13.5),
-    des_vars.add_output('comp:effDes', 0.83),
-    des_vars.add_output('burn:dPqP', 0.03),
-    des_vars.add_output('turb:effDes', 0.86),
-    des_vars.add_output('pt:effDes', 0.9),
-    des_vars.add_output('nozz:Cv', 0.99),
-    des_vars.add_output('HP_shaft:Nmech', 8070.0, units='rpm'),
-    des_vars.add_output('LP_shaft:Nmech', 5000.0, units='rpm'),
-    des_vars.add_output('inlet:MN_out', 0.60),
-    des_vars.add_output('comp:MN_out', 0.20),
-    des_vars.add_output('burner:MN_out', 0.20),
-    des_vars.add_output('turb:MN_out', 0.4),
-    des_vars.add_output('pt:MN_out', 0.5),
-
-    # Off-design (point 1) inputs
-    des_vars.add_output('OD1_MN', 0.000001),
-    des_vars.add_output('OD1_alt', 0.0, units='ft'),
-    des_vars.add_output('OD1_pwr', 3500.0, units='hp')
-    des_vars.add_output('OD1_LP_Nmech', 5000., units='rpm')
-
-    # Create design instance of model
-    prob.model.add_subsystem('DESIGN', Turboshaft())
-
-    # Connect design point inputs to model
-    prob.model.connect('alt', 'DESIGN.fc.alt')
-    prob.model.connect('MN', 'DESIGN.fc.MN')
-    # prob.model.connect('Fn_des', 'DESIGN.balance.rhs:W')
-    prob.model.connect('T4max', 'DESIGN.balance.rhs:FAR')
-    prob.model.connect('pwr_des', 'DESIGN.balance.rhs:pt_PR')
-    prob.model.connect('nozz_PR', 'DESIGN.balance.rhs:W')
-
-    prob.model.connect('comp:PRdes', 'DESIGN.comp.PR')
-    prob.model.connect('comp:effDes', 'DESIGN.comp.eff')
-    prob.model.connect('burn:dPqP', 'DESIGN.burner.dPqP')
-    prob.model.connect('turb:effDes', 'DESIGN.turb.eff')
-    prob.model.connect('pt:effDes', 'DESIGN.pt.eff')
-    prob.model.connect('nozz:Cv', 'DESIGN.nozz.Cv')
-    prob.model.connect('HP_shaft:Nmech', 'DESIGN.HP_Nmech')
-    prob.model.connect('LP_shaft:Nmech', 'DESIGN.LP_Nmech')
-
-    prob.model.connect('inlet:MN_out', 'DESIGN.inlet.MN')
-    prob.model.connect('comp:MN_out', 'DESIGN.comp.MN')
-    prob.model.connect('burner:MN_out', 'DESIGN.burner.MN')
-    prob.model.connect('turb:MN_out', 'DESIGN.turb.MN')
-
-    # Connect off-design and required design inputs to model
-    pts = ['OD1']
-
-    for pt in pts:
-        prob.model.add_subsystem(pt, Turboshaft(design=False))
-
-        prob.model.connect('burn:dPqP', pt+'.burner.dPqP')
-        prob.model.connect('nozz:Cv', pt+'.nozz.Cv')
-
-        prob.model.connect(pt+'_alt', pt+'.fc.alt')
-        prob.model.connect(pt+'_MN', pt+'.fc.MN')
-        prob.model.connect(pt+'_LP_Nmech', pt+'.LP_Nmech')
-        prob.model.connect(pt+'_pwr', pt+'.balance.rhs:FAR')
-
-        prob.model.connect('DESIGN.comp.s_PR', pt+'.comp.s_PR')
-        prob.model.connect('DESIGN.comp.s_Wc', pt+'.comp.s_Wc')
-        prob.model.connect('DESIGN.comp.s_eff', pt+'.comp.s_eff')
-        prob.model.connect('DESIGN.comp.s_Nc', pt+'.comp.s_Nc')
-
-        prob.model.connect('DESIGN.turb.s_PR', pt+'.turb.s_PR')
-        prob.model.connect('DESIGN.turb.s_Wp', pt+'.turb.s_Wp')
-        prob.model.connect('DESIGN.turb.s_eff', pt+'.turb.s_eff')
-        prob.model.connect('DESIGN.turb.s_Np', pt+'.turb.s_Np')
-
-        prob.model.connect('DESIGN.pt.s_PR', pt+'.pt.s_PR')
-        prob.model.connect('DESIGN.pt.s_Wp', pt+'.pt.s_Wp')
-        prob.model.connect('DESIGN.pt.s_eff', pt+'.pt.s_eff')
-        prob.model.connect('DESIGN.pt.s_Np', pt+'.pt.s_Np')
-
-        prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
-        prob.model.connect('DESIGN.comp.Fl_O:stat:area', pt+'.comp.area')
-        prob.model.connect('DESIGN.burner.Fl_O:stat:area', pt+'.burner.area')
-        prob.model.connect('DESIGN.turb.Fl_O:stat:area', pt+'.turb.area')
-        prob.model.connect('DESIGN.pt.Fl_O:stat:area', pt+'.pt.area')
-
-        # prob.model.connect(pt+'_T4', pt+'.balance.rhs:FAR')
-        # prob.model.connect(pt+'_pwr', pt+'.balance.rhs:FAR')
-        prob.model.connect('DESIGN.nozz.Throat:stat:area', pt+'.balance.rhs:W')
-
+    od_pts = ['OD', 'OD2']
+    od_MNs = [0.1, 0.000001]
+    od_alts =[0.0, 0.0]
+    od_pwrs =[3500.0, 3500.0]
+    od_nmechs =[5000., 5000.]
 
     prob.setup(check=False)
+
+    #Values for initial conditions
+    prob.set_val('DESIGN.fc.alt', 0.0, units='ft')
+    prob.set_val('DESIGN.fc.MN', 0.000001)
+    prob.set_val('DESIGN.balance.T4_target', 2370.0, units='degR')
+    prob.set_val('DESIGN.balance.pwr_target', 4000.0, units='hp')
+    prob.set_val('DESIGN.balance.nozz_PR_target', 1.2)
+
+    ##Values that will go away when set_input_defaults is fixed
+    prob.set_val('DESIGN.comp.PR', 13.5)
+    prob.set_val('DESIGN.comp.eff', 0.83)
+    prob.set_val('DESIGN.turb.eff', 0.86)
+    prob.set_val('DESIGN.pt.eff', 0.9)
 
     # Set initial guesses for balances
     prob['DESIGN.balance.FAR'] = 0.0175506829934
     prob['DESIGN.balance.W'] = 27.265
     prob['DESIGN.balance.turb_PR'] = 3.8768
-    prob['DESIGN.balance.pt_PR'] = 2.8148
-    prob['DESIGN.fc.balance.Pt'] = 14.6955113159
+    prob['DESIGN.balance.pt_PR'] = 2.
+    prob['DESIGN.fc.balance.Pt'] = 14.69551131598148
     prob['DESIGN.fc.balance.Tt'] = 518.665288153
 
-    for pt in pts:
+    for i,pt in enumerate(od_pts):
+
+        prob.set_val(pt+'.fc.alt', od_alts[i], units='ft')
+        prob.set_val(pt+'.fc.MN', od_MNs[i])
+        prob.set_val(pt+'.LP_Nmech', od_nmechs[i], units='rpm')
+        prob.set_val(pt+'.balance.pwr_target', od_pwrs[i], units='hp')
+
         prob[pt+'.balance.W'] = 27.265
         prob[pt+'.balance.FAR'] = 0.0175506829934
-        # prob[pt+'.balance.Nmech'] = 8070.0
+        prob[pt+'.balance.HP_Nmech'] = 8070.0
         prob[pt+'.fc.balance.Pt'] = 15.703
         prob[pt+'.fc.balance.Tt'] = 558.31
         prob[pt+'.turb.PR'] = 3.8768
@@ -287,7 +266,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
 
-    for pt in ['DESIGN']+pts:
+    for pt in ['DESIGN']+od_pts:
         viewer(prob, pt)
 
     print()

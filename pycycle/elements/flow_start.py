@@ -124,8 +124,8 @@ class FlowStart(Group):
 
         elif use_WAR == False:
             if 'H2O' in elements.keys():
-                raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified')
 
+                raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.')
 
         thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
@@ -146,9 +146,10 @@ class FlowStart(Group):
                            promotes_outputs=('Fl_O:tot:*',))
 
 
-        # if self.options['statics']: 
+        # if self.options['statics']:
         set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
                                 init_reacts=elements, fl_name="Fl_O:stat")
+        set_stat_MN.set_input_defaults('W', val=1.0, units='kg/s')
 
         self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'init_prod_amounts'),
                            promotes_outputs=('Fl_O:stat:*', ))

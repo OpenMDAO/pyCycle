@@ -1,0 +1,64 @@
+\documentclass{article}
+
+\usepackage[latin1]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows, positioning, calc}
+
+%%%<
+\usepackage{verbatim}
+\usepackage[active,tightpage]{preview}
+\PreviewEnvironment{tikzpicture}
+\setlength\PreviewBorder{5pt}%
+%%%>
+
+\begin{comment}
+:Title: Simple flow chart
+:Tags: Diagrams
+
+With PGF/TikZ you can draw flow charts with relative ease. This flow chart from [1]_
+outlines an algorithm for identifying the parameters of an autonomous underwater vehicle model. 
+
+Note that relative node
+placement has been used to avoid placing nodes explicitly. This feature was
+introduced in PGF/TikZ >= 1.09.
+
+.. [1] Bossley, K.; Brown, M. & Harris, C. Neurofuzzy identification of an autonomous underwater vehicle `International Journal of Systems Science`, 1999, 30, 901-913 
+
+
+\end{comment}
+
+
+\begin{document}
+\pagestyle{empty}
+
+
+% Define block styles
+
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+    text width=8em, text centered, font=\LARGE, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+
+    
+\begin{tikzpicture}[node distance = 2cm, auto]
+    % Place nodes
+    \node [block] (fc) {Flight Conditions};
+    \node [block] [block, right=2em of fc ] (inlet) {Inlet};
+    \node [block, right=2em of inlet ] (hpc) {Compressor};
+    \node [block, right=2em of hpc] (burner) {Burner};
+    \node [block, right=2em of burner] (hpt) {Turbine};
+    \node [block, right=2em of hpt] (nozzle) {Nozzle};
+    \node (inletnozzle)[block, below= of $(inlet)!0.5!(nozzle)$] (shaft) {Shaft};
+  
+    % Draw edges
+    \path [line] (fc) |- (inlet);
+    \path [line] (inlet) |- (hpc);
+    \path [line] (hpc) |- (burner);
+    \path [line] (burner) |- (hpt);
+    \path [line] (hpt) |- (nozzle);
+    \path [line] (hpc) |- (shaft);
+    \path [line] (hpt) |- (shaft);
+
+\end{tikzpicture}
+
+
+\end{document}

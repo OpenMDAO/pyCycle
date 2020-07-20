@@ -3,7 +3,7 @@ import openmdao.api as om
 import pycycle.api as pyc
 
 
-class WetPropulsor(om.Group):
+class WetPropulsor(pyc.Cycle):
 
     def initialize(self):
         self.options.declare('design', types=bool, default=True)
@@ -13,14 +13,14 @@ class WetPropulsor(om.Group):
         thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
         design = self.options['design']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.WET_AIR_MIX, use_WAR=True))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
+                                                  elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
 
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
-        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
-        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
+        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
@@ -50,9 +50,9 @@ class WetPropulsor(om.Group):
             self.add_subsystem('balance', balance,
                                promotes_inputs=[('rhs:Nmech', 'pwr_target')])
 
-        pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I')
-        pyc.connect_flow(self, 'inlet.Fl_O', 'fan.Fl_I')
-        pyc.connect_flow(self, 'fan.Fl_O', 'nozz.Fl_I')
+        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I')
+        self.pyc_connect_flow('inlet.Fl_O', 'fan.Fl_I')
+        self.pyc_connect_flow('fan.Fl_O', 'nozz.Fl_I')
 
 
         self.connect('fc.Fl_O:stat:P', 'nozz.Ps_exhaust')
@@ -93,53 +93,34 @@ def viewer(prob, pt):
 
     pyc.print_nozzle(prob, [f'{pt}.nozz'])
 
-class MPWetPropulsor(om.Group):
+class MPWetPropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        des_vars = self.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
-        des_vars.add_output('des:alt', 10000., units="m")
-        des_vars.add_output('des:MN', .72)
-        des_vars.add_output('des:inlet_MN', .6)
-        des_vars.add_output('des:FPR', 1.2)
-        des_vars.add_output('des:eff', 0.96)
-        des_vars.add_output('des:WAR', .001)
+        design = self.pyc_add_pnt('design', WetPropulsor(design=True))
 
-        des_vars.add_output('pwr_target', -2600., units='kW')
+        od = self.pyc_add_pnt('off_design', WetPropulsor(design=False))
 
+        self.pyc_add_cycle_param('pwr_target', -2600., units='kW')
 
-        design = self.add_subsystem('design', WetPropulsor(design=True))
+        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
 
-        self.connect('des:alt', 'design.fc.alt')
-        self.connect('des:MN', 'design.fc.MN')
-        self.connect('des:inlet_MN', 'design.inlet.MN')
-        self.connect('des:FPR', 'design.fan.PR')
-        self.connect('pwr_target', ['design.pwr_target', 'off_design.pwr_target'])
-        self.connect('des:eff', 'design.fan.eff')
-        self.connect('des:WAR', 'design.fc.WAR')
+        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
+        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
+        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
+        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
+        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
 
+        self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
-        des_vars.add_output('OD:alt', 10000, units='m')
-        des_vars.add_output('OD:MN', 0.72)
-        des_vars.add_output('OD:WAR', .001)
+        self.set_input_defaults('design.fc.alt', 10000., units="m")
+        self.set_input_defaults('design.fc.MN', .72)
+        self.set_input_defaults('design.inlet.MN', .6)
+        self.set_input_defaults('design.fc.WAR', .001)
 
-        od = self.add_subsystem('off_design', WetPropulsor(design=False))
-
-        self.connect('OD:alt', 'off_design.fc.alt')
-        self.connect('OD:MN', 'off_design.fc.MN')
-        self.connect('OD:WAR', 'off_design.fc.WAR')
-
-        # need to pass some design values to the OD point
-        # prob.model.connect('design.inlet:ram_recovery', 'off_design.inlet.ram_recovery')
-        self.connect('design.inlet.Fl_O:stat:area', 'off_design.inlet.area')
-
-        self.connect('design.fan.s_PR', 'off_design.fan.s_PR')
-        self.connect('design.fan.s_Wc', 'off_design.fan.s_Wc')
-        self.connect('design.fan.s_eff', 'off_design.fan.s_eff')
-        self.connect('design.fan.s_Nc', 'off_design.fan.s_Nc')
-        self.connect('design.fan.Fl_O:stat:area', 'off_design.fan.area')
-
-        self.connect('design.nozz.Throat:stat:area', 'off_design.balance.rhs:W')
+        self.set_input_defaults('off_design.fc.alt', 10000, units='m')
+        self.set_input_defaults('off_design.fc.MN', 0.72)
+        self.set_input_defaults('off_design.fc.WAR', .001)
 
 if __name__ == "__main__":
     import time
@@ -158,6 +139,9 @@ if __name__ == "__main__":
 
     prob.setup(check=False)
 
+    prob.set_val('design.fan.PR', 1.2)
+    prob.set_val('design.fan.eff', 0.96)
+
     prob.model.design.nonlinear_solver.options['atol'] = 1e-6
     prob.model.design.nonlinear_solver.options['rtol'] = 1e-6
 
@@ -166,8 +150,8 @@ if __name__ == "__main__":
     prob.model.off_design.nonlinear_solver.options['maxiter'] = 10
 
     # parameters
-    prob['des:MN'] = .8
-    prob['OD:MN'] = .8
+    prob['design.fc.MN'] = .8
+    prob['off_design.fc.MN'] = .8
 
     # initial guess
     prob['design.balance.W'] = 200.

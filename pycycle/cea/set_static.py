@@ -67,6 +67,7 @@ class SetStatic(om.Group):
                            promotes_inputs=p_inputs,
                            promotes_outputs=p_outputs)
 
+        self.set_input_defaults('area', units='m**2', val=1.)
         # self.set_order(['statics', 'flow', 'flow_static'])
 
 if __name__ == "__main__":

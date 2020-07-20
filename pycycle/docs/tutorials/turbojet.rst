@@ -9,7 +9,7 @@ By "single spool", we mean that there is a one spinning shaft that connects a si
 
 The relative simplicity that is an inherent feature of the single spool turbojet makes it a good place to start learning how to model the performance of jet engines. 
 
-.. figure:: turbojet.png
+.. figure:: images/turbojet_elements.png
    :align: center
    :width: 80%
    :alt: element diagram for the turbojet tutorial model
@@ -26,7 +26,8 @@ Every pyCycle model is built up from set of OpenMDAO groups that we call **Eleme
 This is our term for "something that performs a thermodynamic operation". 
 Examples of elements include: :code:`Inlet`, :code:`Compressor`, :code:`Nozzle`. 
 Each box in the above flow diagram for a turbojet represents one Element. 
-pyCycle ships with a :ref:`library of pre-built elements<element_ref>` for you to use, and you can also write your own additional ones as needed. 
+pyCycle ships with a :ref:`library of pre-built elements<element_ref>` for you to use, 
+but you could also write your own as needed. 
 
 Cycle 
 *****

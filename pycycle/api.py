@@ -38,3 +38,6 @@ from pycycle.connect_flow import connect_flow
 
 from pycycle.viewers import print_bleed, print_burner, print_compressor, print_flow_station, \
                             print_mixer, print_nozzle, print_shaft, print_turbine
+
+
+from pycycle.mp_cycle import MPCycle, Cycle
