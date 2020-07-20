@@ -160,6 +160,12 @@ class Duct(om.Group):
                               desc='Mach number exponent for dPqP_MN calculations.'
                                    '0 means it has no effect. Only has impact in off-design')
 
+        self.default_des_od_conns = [
+            # (design src, off-design target)
+            ('Fl_O:stat:area', 'area')
+        ]
+
+
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
@@ -237,6 +243,9 @@ class Duct(om.Group):
                                promotes=['*'])
 
         self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
+
+        # if not design: 
+        #     self.set_input_defaults('area', val=1, units='in**2')
 
 
 if __name__ == "__main__":

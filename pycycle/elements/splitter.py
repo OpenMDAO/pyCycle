@@ -23,6 +23,14 @@ class BPRcalc(om.ExplicitComponent):
 
         self.declare_partials('*', '*')
 
+        self.default_des_od_conns = [
+            # (design src, off-design target)
+            ('Fl_O1:stat:area', 'area1'), 
+            ('Fl_O2:stat:area', 'area2'), 
+        ]    
+
+
+
     def compute(self, inputs, outputs):
         BPR = inputs['BPR']
         outputs['W1'] = inputs['W_in']/(BPR+1)

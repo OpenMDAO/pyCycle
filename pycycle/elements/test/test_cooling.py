@@ -109,6 +109,8 @@ from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, combustor, flow_start
 from pycycle.cea import species_data
+from pycycle.cea.set_total import SetTotal
+from pycycle.cea.set_static import SetStatic
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 
 

@@ -3,7 +3,7 @@ import openmdao.api as om
 import pycycle.api as pyc
 
 
-class Propulsor(om.Group):
+class Propulsor(pyc.Cycle):
 
     def initialize(self):
         self.options.declare('design', types=bool, default=True)
@@ -13,14 +13,14 @@ class Propulsor(om.Group):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
+        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
                                                   elements=pyc.AIR_MIX))
 
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_MIX,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_MIX,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
+        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
@@ -50,9 +50,9 @@ class Propulsor(om.Group):
             self.add_subsystem('balance', balance,
                                promotes_inputs=[('rhs:Nmech', 'pwr_target')])
 
-        pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I')
-        pyc.connect_flow(self, 'inlet.Fl_O', 'fan.Fl_I')
-        pyc.connect_flow(self, 'fan.Fl_O', 'nozz.Fl_I')
+        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I')
+        self.pyc_connect_flow('inlet.Fl_O', 'fan.Fl_I')
+        self.pyc_connect_flow('fan.Fl_O', 'nozz.Fl_I')
 
 
         self.connect('fc.Fl_O:stat:P', 'nozz.Ps_exhaust')
@@ -94,76 +94,54 @@ def viewer(prob, pt):
     pyc.print_nozzle(prob, [f'{pt}.nozz'])
 
 
+class MPpropulsor(pyc.MPCycle):
+
+    def setup(self):
+
+        design = self.pyc_add_pnt('design', Propulsor(design=True))
+        od = self.pyc_add_pnt('off_design', Propulsor(design=False))
+
+        self.pyc_add_cycle_param('pwr_target', 100.)
+        self.pyc_use_default_des_od_conns()
+
+        self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        self.set_input_defaults('design.fc.alt', 10000, units='m')
+        self.set_input_defaults('off_design.fc.alt', 10000, units='m') #12000
+
+
 if __name__ == "__main__":
     import time
 
     import numpy as np
-    np.set_printoptions(precision=5)
-
-    from openmdao.api import Problem
-    from openmdao.utils.units import convert_units as cu
 
     prob = om.Problem()
-
-    des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
-    des_vars.add_output('des:alt', 10000., units="m")
-    des_vars.add_output('des:MN', .72)
-    des_vars.add_output('des:inlet_MN', .6)
-    des_vars.add_output('des:FPR', 1.2)
-    des_vars.add_output('des:eff', 0.96)
-
-    des_vars.add_output('pwr_target', -2600., units='kW')
-
-
-    design = prob.model.add_subsystem('design', Propulsor(design=True))
-
-    prob.model.connect('des:alt', 'design.fc.alt')
-    prob.model.connect('des:MN', 'design.fc.MN')
-    prob.model.connect('des:inlet_MN', 'design.inlet.MN')
-    prob.model.connect('des:FPR', 'design.fan.PR')
-    prob.model.connect('pwr_target', ['design.pwr_target', 'off_design.pwr_target'])
-    # prob.model.connect('pwr_target', 'design.pwr_target')
-    prob.model.connect('des:eff', 'design.fan.eff')
-
-
-    des_vars.add_output('OD:alt', 10000, units='m')
-    des_vars.add_output('OD:MN', 0.72)
-
-    od = prob.model.add_subsystem('off_design', Propulsor(design=False))
-
-    prob.model.connect('OD:alt', 'off_design.fc.alt')
-    prob.model.connect('OD:MN', 'off_design.fc.MN')
-
-    # need to pass some design values to the OD point
-    # prob.model.connect('design.inlet:ram_recovery', 'off_design.inlet.ram_recovery')
-    prob.model.connect('design.inlet.Fl_O:stat:area', 'off_design.inlet.area')
-
-    prob.model.connect('design.fan.s_PR', 'off_design.fan.s_PR')
-    prob.model.connect('design.fan.s_Wc', 'off_design.fan.s_Wc')
-    prob.model.connect('design.fan.s_eff', 'off_design.fan.s_eff')
-    prob.model.connect('design.fan.s_Nc', 'off_design.fan.s_Nc')
-    prob.model.connect('design.fan.Fl_O:stat:area', 'off_design.fan.area')
-
-    prob.model.connect('design.nozz.Throat:stat:area', 'off_design.balance.rhs:W')
-
+    prob.model = MPpropulsor()
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=2)
 
     prob.setup(check=False)
+    prob.final_setup()
 
-    design.nonlinear_solver.options['atol'] = 1e-6
-    design.nonlinear_solver.options['rtol'] = 1e-6
+    prob.model.design.nonlinear_solver.options['atol'] = 1e-6
+    prob.model.design.nonlinear_solver.options['rtol'] = 1e-6
 
-    od.nonlinear_solver.options['atol'] = 1e-6
-    od.nonlinear_solver.options['rtol'] = 1e-6
-    od.nonlinear_solver.options['maxiter'] = 10
+    prob.model.off_design.nonlinear_solver.options['atol'] = 1e-6
+    prob.model.off_design.nonlinear_solver.options['rtol'] = 1e-6
 
-    # parameters
-    prob['des:MN'] = .8
-    prob['OD:MN'] = .8
+    prob['design.fc.MN'] = 0.8
+    prob['design.inlet.MN'] = 0.6#
+    prob['design.fan.PR'] = 1.2#
+    prob['pwr_target'] = -3486.657 # -2600
+    prob['design.fan.eff'] = 0.96#
 
-    # initial guess
+    prob['off_design.fc.MN'] = 0.8#
+
+    ########################
+    # initial guesses
+    ########################
+
     prob['design.balance.W'] = 200.
 
     prob['off_design.balance.W'] = 406.790
