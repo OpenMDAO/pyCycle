@@ -14,7 +14,7 @@ class WetPropulsor(om.Group):
         design = self.options['design']
 
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                                  elements=pyc.WET_AIR_MIX, use_WAR=True))#WET_AIR_MIX contains standard dry air compounds as well as H2O
 
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
         self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,

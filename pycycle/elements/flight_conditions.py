@@ -14,15 +14,22 @@ class FlightConditions(om.Group):
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
+        self.options.declare('use_WAR', default=False, values=[True, False], 
+                              desc='If True, includes WAR calculation')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
+        use_WAR = self.options['use_WAR']
 
         self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
 
         conv = self.add_subsystem('conv', om.Group(), promotes=['*'])
-        conv.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements), promotes=['Fl_O:*', 'MN', 'W', 'WAR'])
+        if use_WAR == True:
+            proms = ['Fl_O:*', 'MN', 'W', 'WAR']
+        else:
+            proms = ['Fl_O:*', 'MN', 'W']
+        conv.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements, use_WAR=use_WAR), promotes=proms)
         balance = conv.add_subsystem('balance', om.BalanceComp())
         balance.add_balance('Tt', val=500.0, lower=1e-4, units='degR', desc='Total temperature', eq_units='degR')
         balance.add_balance('Pt', val=14.696, lower=1e-4, units='psi', desc='Total pressure', eq_units='psi')

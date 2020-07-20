@@ -19,7 +19,7 @@ class WetTurbojet(om.Group):
 
         # Add engine elements
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec,
-                                    elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                    elements=pyc.WET_AIR_MIX, use_WAR=True))#WET_AIR_MIX contains standard dry air compounds as well as H2O
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
                                     elements=pyc.WET_AIR_MIX))
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
