@@ -42,7 +42,7 @@ class MixFuel(om.ExplicitComponent):
         fuel_type = self.options['fuel_type']
 
         self.mixed_elements = inflow_elements.copy()
-        self.mixed_elements.update(janaf.reactants[fuel_type])
+        self.mixed_elements.update(thermo_data.reactants[fuel_type]) #adds the fuel elements to the mix outflow
 
         inflow_thermo = Thermo(inflow_thermo_data, init_reacts=inflow_elements)
         self.inflow_prods = inflow_thermo.products
@@ -74,7 +74,7 @@ class MixFuel(om.ExplicitComponent):
         self.add_output('Wfuel', shape=1, units="lbm/s", desc="total fuel massflow out")
 
         for i, r in enumerate(self.air_fuel_prods):
-            self.init_fuel_amounts_base[i] = janaf.reactants[fuel_type].get(r, 0) * janaf.products[r]['wt']
+            self.init_fuel_amounts_base[i] = thermo_data.reactants[fuel_type].get(r, 0) * thermo_data.products[r]['wt']
 
         # create a mapping between the composition indices of the inflow and outflow arrays
         self.in_out_flow_idx_map = [self.air_fuel_prods.index(prod) for prod in self.inflow_prods]
