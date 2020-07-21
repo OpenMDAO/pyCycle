@@ -4,9 +4,9 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
 
@@ -23,6 +23,8 @@ class TestSetStaticMN(unittest.TestCase):
 
     def test_case_MN(self):
 
+        thermo = Thermo(janaf)
+
         p = Problem()
 
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
@@ -31,8 +33,9 @@ class TestSetStaticMN(unittest.TestCase):
         indeps.add_output('W', val=1.5, units='lbm/s')
         indeps.add_output('MN', val=1.5, units=None)
 
-        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
-        p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf))
+        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0'])
+        p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf), promotes=['b0'])
+        p.model.set_input_defaults('b0', thermo.b0)
 
         p.model.connect('T', 'set_total_TP.T')
         p.model.connect('P', ['set_total_TP.P', 'set_static_MN.guess:Pt'])
@@ -95,14 +98,14 @@ class TestSetStaticMN(unittest.TestCase):
             # print("rhos", rhos_computed, rhos)
             # print()
 
-            assert_rel_error(self, MN_computed, MN, tol)
-            assert_rel_error(self, gams_computed, gams, tol)
-            assert_rel_error(self, Ps_computed, Ps, tol)
-            assert_rel_error(self, Ts_computed, Ts, tol)
-            assert_rel_error(self, hs_computed, hs, tol)
-            assert_rel_error(self, rhos_computed, rhos, tol)
-            assert_rel_error(self, V_computed, V, tol)
-            assert_rel_error(self, A_computed, A, tol)
+            assert_near_equal(MN_computed, MN, tol)
+            assert_near_equal(gams_computed, gams, tol)
+            assert_near_equal(Ps_computed, Ps, tol)
+            assert_near_equal(Ts_computed, Ts, tol)
+            assert_near_equal(hs_computed, hs, tol)
+            assert_near_equal(rhos_computed, rhos, tol)
+            assert_near_equal(V_computed, V, tol)
+            assert_near_equal(A_computed, A, tol)
 
             # if MN > 1.95:
             #     p.model.list_states()
@@ -113,5 +116,4 @@ if __name__ == "__main__":
     import scipy
 
     np.seterr(all='raise')
-    scipy.seterr(all='raise')
     unittest.main()

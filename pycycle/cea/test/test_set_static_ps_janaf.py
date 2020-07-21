@@ -4,10 +4,10 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.units import convert_units as cu
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
 
@@ -24,6 +24,8 @@ class TestSetStaticPs(unittest.TestCase):
 
     def test_case_Ps(self):
 
+        thermo = Thermo(janaf)
+
         p = Problem()
 
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
@@ -32,8 +34,9 @@ class TestSetStaticPs(unittest.TestCase):
         indeps.add_output('Ps', val=13.0, units='psi')
         indeps.add_output('W', val=1., units='lbm/s')
 
-        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
-        p.model.add_subsystem('set_static_Ps', SetStatic(mode='Ps', thermo_data=janaf))
+        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0'])
+        p.model.add_subsystem('set_static_Ps', SetStatic(mode='Ps', thermo_data=janaf), promotes=['b0'])
+        p.model.set_input_defaults('b0', thermo.b0)
 
         p.model.connect('set_total_TP.flow:S', 'set_static_Ps.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_Ps.ht')
@@ -90,14 +93,14 @@ class TestSetStaticPs(unittest.TestCase):
             # print("rhos", rhos_computed, rhos)
             # print()
 
-            assert_rel_error(self, MN_computed, MN, tol)
-            assert_rel_error(self, gams_computed, gams, tol)
-            assert_rel_error(self, Ps_computed, Ps, tol)
-            assert_rel_error(self, Ts_computed, Ts, tol)
-            assert_rel_error(self, hs_computed, hs, tol)
-            assert_rel_error(self, rhos_computed, rhos, tol)
-            assert_rel_error(self, V_computed, V, tol)
-            assert_rel_error(self, A_computed, A, tol)
+            assert_near_equal(MN_computed, MN, tol)
+            assert_near_equal(gams_computed, gams, tol)
+            assert_near_equal(Ps_computed, Ps, tol)
+            assert_near_equal(Ts_computed, Ts, tol)
+            assert_near_equal(hs_computed, hs, tol)
+            assert_near_equal(rhos_computed, rhos, tol)
+            assert_near_equal(V_computed, V, tol)
+            assert_near_equal(A_computed, A, tol)
 
         p.check_partials(includes=['set_static_Ps.statics.ps_calc'], compact_print=True)
 

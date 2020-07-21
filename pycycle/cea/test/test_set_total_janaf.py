@@ -11,8 +11,11 @@ class _TestJanafThermo(unittest.TestCase):
 
     def test_std_day(self):
 
+        thermo = species_data.Thermo(species_data.janaf)
+
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+        top.model.set_input_defaults('b0', thermo.b0)
         indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
         indeps.add_output('T', 287.778, units='degK')
         indeps.add_output('P', 1.02069, units='bar')
@@ -24,8 +27,11 @@ class _TestJanafThermo(unittest.TestCase):
 
     def test_mid_temp(self):
 
+        thermo = species_data.Thermo(species_data.janaf)
+
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+        top.model.set_input_defaults('b0', thermo.b0)
         indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
         indeps.add_output('T', 1500, units='degK')
         indeps.add_output('P', 1.02069, units='bar')
@@ -41,9 +47,16 @@ class _TestJanafThermo(unittest.TestCase):
 class TestSetTotalEquivilence(unittest.TestCase):
 
     def setUp(self):
+
+        thermo = species_data.Thermo(species_data.janaf)
+        
         self.tp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='T'))
         self.hp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='h'))
         self.sp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='S'))
+
+        self.tp_set.model.set_input_defaults('b0', thermo.b0)
+        self.hp_set.model.set_input_defaults('b0', thermo.b0)
+        self.sp_set.model.set_input_defaults('b0', thermo.b0)
 
         indeps = self.tp_set.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
         indeps.add_output('T', 518., units="degR")

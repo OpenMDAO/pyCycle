@@ -4,7 +4,7 @@ import numpy as np
 
 from openmdao.api import Problem, IndepVarComp
 
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea import species_data
@@ -20,6 +20,7 @@ class SetTotalTestCase(unittest.TestCase):
         # 4000k
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="T")
+        p.model.set_input_defaults('b0', thermo.b0)
         r = p.model
         r.add_subsystem(
             'n_init',
@@ -33,28 +34,20 @@ class SetTotalTestCase(unittest.TestCase):
         p.set_solver_print(level=2)
         p.setup(check=False)
 
-        # from openmdao.api import view_tree
-        # view_tree(p)
         p.run_model()
 
-        # p.check_partial_derivatives()
-
-        # goal_concentrations = np.array([0.61976,0.07037,0.30988]) # original
-        # cea mole fractions
         expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
 
         n = p['n']
         n_moles = p['n_moles']
         concentrations = n / n_moles
 
-        # print(expected_concentrations)
-        # print(concentrations)
-        assert_rel_error(self, concentrations, expected_concentrations, 1e-4)
+        assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.0329313730421
 
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.19054696779, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.19054696779, 1e-4)
 
         # 1500K
         p['T'] = 1500  # degK
@@ -68,8 +61,8 @@ class SetTotalTestCase(unittest.TestCase):
         concentrations = n / n_moles
 
         expected_n_moles = 0.022726185333
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.16380, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.16380, 1e-4)
 
     def test_set_total_hp(self):
 
@@ -79,6 +72,7 @@ class SetTotalTestCase(unittest.TestCase):
         # 4000k
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="h")
+        p.model.set_input_defaults('b0', thermo.b0)
         p.model.suppress_solver_output = True
 
         r = p.model
@@ -106,12 +100,12 @@ class SetTotalTestCase(unittest.TestCase):
         n_moles = p['n_moles']
         concentrations = n / n_moles
 
-        assert_rel_error(self, concentrations, expected_concentrations, 1e-4)
+        assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.0329281722301
 
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.19039688581, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.19039688581, 1e-4)
 
         # 1500K
         p['h'] = -1801.35537381
@@ -129,11 +123,11 @@ class SetTotalTestCase(unittest.TestCase):
         # print(expected_concentrations)
         # print(concentrations)
         # print(p['T'])
-        assert_rel_error(self, concentrations, expected_concentrations, 1e-4)
+        assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.022726185333
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.16379012007, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.16379012007, 1e-4)
 
     def test_set_total_sp(self):
 
@@ -143,6 +137,7 @@ class SetTotalTestCase(unittest.TestCase):
         # 4000k
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="S")
+        p.model.set_input_defaults('b0', thermo.b0)
         p.model.suppress_solver_output = True
         r = p.model
         r.add_subsystem(
@@ -177,12 +172,12 @@ class SetTotalTestCase(unittest.TestCase):
         n = p['n']
         n_moles = p['n_moles']
         concentrations = n / n_moles
-        assert_rel_error(self, concentrations, expected_concentrations, 1e-4)
+        assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.0329313730421
 
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.19054696779, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.19054696779, 1e-4)
 
         # 1500K
         p['S'] = 1.5852424435
@@ -195,11 +190,11 @@ class SetTotalTestCase(unittest.TestCase):
         n_moles = p['n_moles']
         concentrations = n / n_moles
 
-        assert_rel_error(self, concentrations, expected_concentrations, 1e-4)
+        assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.022726185333
-        assert_rel_error(self, n_moles, expected_n_moles, 1e-4)
-        assert_rel_error(self, p['gamma'], 1.16381209181, 1e-4)
+        assert_near_equal(n_moles, expected_n_moles, 1e-4)
+        assert_near_equal(p['gamma'], 1.16381209181, 1e-4)
 
         # check = p.check_partial_derivatives()
 

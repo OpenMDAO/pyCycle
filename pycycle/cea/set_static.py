@@ -36,18 +36,18 @@ class SetStatic(om.Group):
         # have to promote things differently depending on which mode we are
         if mode == 'Ps':
             self.add_subsystem('statics', statics,
-                               promotes_inputs=[('P', 'Ps'), 'S', 'ht', 'W', 'init_prod_amounts'],
+                               promotes_inputs=[('P', 'Ps'), 'S', 'ht', 'W', 'b0'],
                                promotes_outputs=['MN', 'V', 'Vsonic', 'area',
                                                  'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
         elif mode == 'MN':
             self.add_subsystem('statics', statics,
-                               promotes_inputs=['MN', 'S', 'ht', 'W', 'guess:*', 'init_prod_amounts'],
+                               promotes_inputs=['MN', 'S', 'ht', 'W', 'guess:*', 'b0'],
                                promotes_outputs=['V', 'Vsonic', 'area',
                                                  'Ps', 'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
 
         else:
             self.add_subsystem('statics', statics,
-                               promotes_inputs=['area', 'S', 'ht', 'W', 'guess:*', 'init_prod_amounts'],
+                               promotes_inputs=['area', 'S', 'ht', 'W', 'guess:*', 'b0'],
                                promotes_outputs=['V', 'Vsonic', 'MN',
                                                  'Ps', 'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
 
@@ -72,8 +72,26 @@ class SetStatic(om.Group):
 
 if __name__ == "__main__":
 
+    thermo=species_data.Thermo(species_data.janaf)
+
+    # p = om.Problem()
+    # p.model = SetStatic(mode='area', thermo_data=species_data.janaf)
+    # p.model.set_input_defaults('b0', thermo.b0)
+    # p.model.set_input_defaults('S', 1., units="cal/(g*degK)")
+    # p.model.set_input_defaults('W', 1., units='kg/s')
+    # p.setup(force_alloc_complex=True)
+    # p.run_model()
+    # p.check_partials(method='cs', compact_print=True)
 
     p = om.Problem()
-    indeps = p.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
-    indeps.add_output('T', 1500, units="degK")
-    indeps.add_output('P', 1.034210, units="bar")
+    # indeps = p.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
+    # indeps.add_output('T', 1500, units="degK")
+    # indeps.add_output('P', 1.034210, units="bar")
+
+    p.model = SetStatic(mode='Ps', thermo_data=species_data.janaf)
+    p.model.set_input_defaults('S', 1., units="cal/(g*degK)")
+    p.model.set_input_defaults('W', 1., units="kg/s")
+    p.model.set_input_defaults('b0', thermo.b0)
+    p.model.set_input_defaults('Ps', 1.034210, units="bar")
+    p.setup()
+    p.run_model()

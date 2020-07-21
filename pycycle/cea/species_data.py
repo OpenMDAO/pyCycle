@@ -141,6 +141,8 @@ class Thermo(object):
         self.element_wt = np.array(element_wt)
         self.aij = np.array(aij)
 
+        self.b0 = np.sum(self.aij*self.init_prod_amounts, axis=1) #moles of each element per kg of mixture (right?)
+
         # pre-computed constants used in calculations
         aij_prod = np.empty((self.num_element,self.num_element, self.num_prod))
         for i in range(self.num_element):
@@ -158,7 +160,13 @@ class Thermo(object):
 
         self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
 
+
+
+
     def get_elements(self, thermo_data_module, reactants):
+        ##########Note: right now this is returning non-useful b0 values
+        # instead of the actual b0 values that will come from init_prod_amounts.
+        # This should be dealt with.
 
         elements = set()
         products = thermo_data_module.products
@@ -176,13 +184,13 @@ class Thermo(object):
             row = [products[react]['elements'].get(e,0) for react in reactants]
             aij.append(row)
 
-        b_values = np.zeros((len(elements)))
+        b_values = np.zeros((len(elements))) #moles of each element based on provided reactant abundances
 
         for i, element in enumerate(elements):
             for j, reactant in enumerate(reactants):
                 b_values[i] += aij[i][j]*reactants[reactant]
 
-        return(elements, b_values) #returns a list of the included elements, along with the sum of their atomic ratios
+        return(elements, b_values) 
 
 
     def build_coeff_table(self, Tt):
@@ -240,4 +248,5 @@ if __name__ == "__main__":
     print('\nSJ', SJ)
     print('\nCpJ', CpJ)
     print('\nn', n, '\n')
-    print(thermo.elements)
+    print(thermo.b0)
+    print(thermo.get_elements(janaf, janaf.init_prod_amounts))
