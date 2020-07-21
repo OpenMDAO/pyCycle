@@ -254,6 +254,7 @@ reactants = { # used to compute the correct amounts of each product for an initi
 
 
 init_prod_amounts = reactants['air'].copy() # initial value used to set the atomic fractions in the mixture
+default_elements = ['Ar', 'C', 'H', 'N', 'O']
 
 
 # tot_amount = 0

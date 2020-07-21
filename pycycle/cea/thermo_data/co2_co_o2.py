@@ -55,3 +55,5 @@ init_prod_amounts = OrderedDict([ # initial value used to set the atomic fractio
 element_wts = {
   'C':12.01, 'O': 16.0,
 }
+
+default_elements = ['C', 'O']

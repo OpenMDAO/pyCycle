@@ -15,10 +15,11 @@ class SetTotalTestCase(unittest.TestCase):
     def test_set_total_tp(self):
 
         thermo = species_data.Thermo(species_data.co2_co_o2)
+        init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k
         p = Problem()
-        p.model = SetTotal(thermo_data=species_data.co2_co_o2, mode="T")
+        p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="T")
         r = p.model
         r.add_subsystem(
             'n_init',
@@ -73,10 +74,11 @@ class SetTotalTestCase(unittest.TestCase):
     def test_set_total_hp(self):
 
         thermo = species_data.Thermo(species_data.co2_co_o2)
+        init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k
         p = Problem()
-        p.model = SetTotal(thermo_data=species_data.co2_co_o2, mode="h")
+        p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="h")
         p.model.suppress_solver_output = True
 
         r = p.model
@@ -136,10 +138,11 @@ class SetTotalTestCase(unittest.TestCase):
     def test_set_total_sp(self):
 
         thermo = species_data.Thermo(species_data.co2_co_o2)
+        init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k
         p = Problem()
-        p.model = SetTotal(thermo_data=species_data.co2_co_o2, mode="S")
+        p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="S")
         p.model.suppress_solver_output = True
         r = p.model
         r.add_subsystem(
