@@ -46,7 +46,8 @@ class SpeciesDataTestCase(unittest.TestCase):
         assert_near_equal(proportions2, expected_proportions2, 1e-4)
 
     def test_values(self):
-        thermo = species_data.Thermo(thermo_data_module=species_data.janaf)
+        thermo = species_data.Thermo(thermo_data_module=species_data.janaf, init_reacts=species_data.janaf.init_prod_amounts, elements=species_data.janaf.default_elements)
+        # thermo = species_data.Thermo(thermo_data_module=species_data.janaf)
 
         T = np.ones(len(thermo.products))*800
         H0 = thermo.H0(T)

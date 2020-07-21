@@ -18,6 +18,7 @@ class Thermo(object):
         self.element_wt = None
         self.aij = None
         self.products = None
+        self.elements = None
         self.temp_ranges = None
         self.valid_temp_range = None
         self.wt_mole = None # array of mole weights
@@ -41,9 +42,7 @@ class Thermo(object):
             else:
                 elements = set(thermo_data_module.default_elements)
 
-        self.elements = sorted(elements)
-
-        self.set_data(thermo_data_module=thermo_data_module, elements=elements)
+        self.set_data(thermo_data_module, init_reacts, elements)
 
     def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
         Tt = Tt[0]
@@ -94,8 +93,6 @@ class Thermo(object):
         self.thermo_data = thermo_data_module
         self.prod_data = thermo_data_module.products
 
-        # elements = set()
-
         if init_reacts is None:
             init_reacts = thermo_data_module.init_prod_amounts
 
@@ -110,14 +107,10 @@ class Thermo(object):
 
         init_reacts = full_init_react
 
-        # for name in init_reacts: # figure out which elements are present
-        #     if init_reacts[name] > 0:
-        #         elements.update(self.prod_data[name]['elements'])
-
         init_prod_amounts = [init_reacts[name] for name in init_reacts
                              if elements.issuperset(self.prod_data[name]['elements'])]
 
-        # self.elements = sorted(elements)
+        self.elements = sorted(elements)
         self.init_prod_amounts = np.array(init_prod_amounts)
         self.init_prod_amounts = self.init_prod_amounts/np.sum(self.init_prod_amounts) # normalize to 1
 
@@ -228,32 +221,7 @@ class Thermo(object):
 
 if __name__ == "__main__":
 
-    # thermo = Thermo(janaf, janaf.init_prod_amounts)
-
-    # T = np.ones(len(thermo.products))*800
-    # H0 = thermo.H0(T)
-    # S0 = thermo.S0(T)
-    # Cp0 = thermo.Cp0(T)
-
-    # HJ = thermo.H0_applyJ(T, 1.)
-    # SJ = thermo.S0_applyJ(T, 1)
-    # CpJ = thermo.Cp0_applyJ(T, 1)
-    # n = thermo.init_prod_amounts
-    # print('\nT', T)
-    # print('\nH0', H0)
-    # print('\nS0', S0)
-    # print('\nCp0', Cp0)
-    # print('\nHJ', HJ)
-    # print('\nSJ', SJ)
-    # print('\nCpJ', CpJ)
-    # print('\nn', n, '\n')
-    # print(thermo.elements)
-    
-    # elements1 = {'O'}
-    # thermo1 = Thermo(thermo_data_module=co2_co_o2, elements=elements1)
-    # print(thermo1.products)
-
-    thermo = Thermo(co2_co_o2)
+    thermo = Thermo(janaf, janaf.init_prod_amounts)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)
@@ -264,7 +232,6 @@ if __name__ == "__main__":
     SJ = thermo.S0_applyJ(T, 1)
     CpJ = thermo.Cp0_applyJ(T, 1)
     n = thermo.init_prod_amounts
-    
     print('\nT', T)
     print('\nH0', H0)
     print('\nS0', S0)
@@ -274,21 +241,3 @@ if __name__ == "__main__":
     print('\nCpJ', CpJ)
     print('\nn', n, '\n')
     print(thermo.elements)
-
-    T_actual = np.array([800., 800., 800.])
-    H0_actual = np.array([-14.33638055, -55.73109232, 2.38109781])
-    S0_actual = np.array([27.33539665, 30.96900291, 28.37546079])
-    Cp0_actual = np.array([3.83668584, 6.18585395, 4.05857378])
-    HJ_actual = np.array([0.02271633, 0.07739618, 0.00209684])
-    SJ_actual = np.array([0.00479586, 0.00773232, 0.00507322])
-    CpJ_actual = np.array([0.00084916, 0.00205624, 0.00081963])
-    n_actual = np.array([0., 0.02272211, 0.])
-
-    print('T diff', T - T_actual)
-    print('H0 diff', H0 - H0_actual)
-    print('S0 diff', S0 - S0_actual)
-    print('Cp0 diff', Cp0 - Cp0_actual)
-    print('HJ diff', HJ - HJ_actual)
-    print('SJ diff', SJ - SJ_actual)
-    print('CpJ diff', CpJ - CpJ_actual)
-    print('n diff', n - n_actual)

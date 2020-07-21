@@ -56,4 +56,4 @@ element_wts = {
   'C':12.01, 'O': 16.0,
 }
 
-default_elements = ['C', 'O']
+default_elements = {'C', 'O'}
