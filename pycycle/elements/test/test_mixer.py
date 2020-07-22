@@ -46,7 +46,7 @@ class MixerTestcase(unittest.TestCase):
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
         p.set_solver_print(level=-1)
 
-        p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+        p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
 
         p.setup()
         p['mixer.balance.P_tot'] = 17
@@ -86,7 +86,7 @@ class MixerTestcase(unittest.TestCase):
 
         p.set_solver_print(level=-1)
 
-        p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+        p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
 
         p.setup()
         p.run_model()
@@ -132,7 +132,7 @@ class MixerTestcase(unittest.TestCase):
 
             if designed_stream == 1:
                 thermo = Thermo(janaf, AIR_FUEL_MIX)
-                p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+                p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
             else:
                 thermo = Thermo(janaf, AIR_MIX)
                 p.model.mixer.set_input_defaults('Fl_I2:tot:b0', thermo.b0)

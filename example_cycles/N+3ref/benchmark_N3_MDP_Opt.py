@@ -11,7 +11,7 @@ from N3_MDP_Opt import N3_MDP_Opt_model
 
 class N3MDPOptTestCase(unittest.TestCase):
 
-    def zbenchmark_case1(self):
+    def benchmark_case1(self):
 
         prob = N3_MDP_Opt_model()
         prob.setup(check=False)

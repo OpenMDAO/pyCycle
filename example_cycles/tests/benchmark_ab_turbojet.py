@@ -73,7 +73,7 @@ class DesignTestCase(unittest.TestCase):
             self.prob[pt+'.turb.PR'] = PR_guess[i]
 
 
-    def zbenchmark_case1(self):
+    def benchmark_case1(self):
         np.seterr(divide='raise')
 
         self.prob.run_model()

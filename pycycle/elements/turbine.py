@@ -214,7 +214,7 @@ class Bleeds(om.ExplicitComponent):
                         desc='turbine exit mass flow rate')
         self.add_output('n_out', shape=self.n_main_flow_prods,
                         desc='turbine exit flow composition')
-        self.add_output('b0_out', val=np.sum(self.aij*np.ones(self.n_main_flow_prods), axis=1))
+        self.add_output('b0_out', val=main_flow_thermo.b0)
 
         # bleed inputs and outputs
         for BN in bleeds:

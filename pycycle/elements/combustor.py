@@ -73,7 +73,7 @@ class MixFuel(om.ExplicitComponent):
         self.add_output('init_prod_amounts', shape=n_prods, desc='initial product amounts')
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
         self.add_output('Wfuel', shape=1, units="lbm/s", desc="total fuel massflow out")
-        self.add_output('b0_out', val=np.sum(air_fuel_thermo.aij*np.ones(self.num_prod), axis=1))
+        self.add_output('b0_out', val=air_fuel_thermo.b0)
 
         for i, r in enumerate(self.air_fuel_prods):
             self.init_fuel_amounts_base[i] = janaf.reactants[fuel_type].get(r, 0) * janaf.products[r]['wt']

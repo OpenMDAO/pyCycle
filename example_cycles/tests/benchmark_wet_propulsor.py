@@ -12,7 +12,7 @@ from example_cycles.wet_propulsor import MPWetPropulsor
 class WetPropulsorTestCase(unittest.TestCase): 
 
 
-    def zbenchmark_case1(self): 
+    def benchmark_case1(self): 
 
         prob = om.Problem()
 

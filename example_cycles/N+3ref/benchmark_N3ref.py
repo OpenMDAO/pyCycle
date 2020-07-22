@@ -11,7 +11,7 @@ from N3ref import N3ref_model
 
 class N3MDPVerifTestCase(unittest.TestCase):
 
-    def zbenchmark_case1(self):
+    def benchmark_case1(self):
 
         prob = N3ref_model()
         prob.setup(check=False)

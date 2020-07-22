@@ -11,7 +11,7 @@ from N3_SPD import N3_SPD_model
 
 class N3MDPOptTestCase(unittest.TestCase):
 
-    def zbenchmark_case1(self):
+    def benchmark_case1(self):
 
         prob = N3_SPD_model()
         prob.setup(check=False)

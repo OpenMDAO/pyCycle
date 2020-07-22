@@ -54,7 +54,7 @@ class MixFlow(om.ExplicitComponent):
         self.add_output('n_mix', val=np.zeros(n_flow1_prods), desc='species composition for flow out')
         self.add_output('W_mix', val=0.0, units='kg/s', desc='mass flow for flow out')
         self.add_output('impulse_mix', val=0., units='N', desc='impulse of the outgoing flow')
-        self.add_output('b0_mix', val=np.sum(self.aij*np.ones(n_flow1_prods), axis=1))
+        self.add_output('b0_mix', val=flow1_thermo.b0)
 
 
         ################################################################################
@@ -303,7 +303,7 @@ class Mixer(om.Group):
                                     init_reacts=flow1_elements,
                                     fl_name="Fl_I1_calc:stat")
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
-                                   promotes_inputs=[('b0', 'Fl_I1:stat:b0'), ('S', 'Fl_I1:tot:S'),
+                                   promotes_inputs=[('b0', 'Fl_I1:tot:b0'), ('S', 'Fl_I1:tot:S'),
                                                     ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'), ('Ps', 'Fl_I2:stat:P')],
                                    promotes_outputs=['Fl_I1_calc:stat*'])
 

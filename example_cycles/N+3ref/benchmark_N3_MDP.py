@@ -11,7 +11,7 @@ from N3_MDP import N3_MDP_model
 
 class N3MDPTestCase(unittest.TestCase):
 
-    def zbenchmark_case1(self):
+    def benchmark_case1(self):
 
         prob = N3_MDP_model()
 

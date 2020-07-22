@@ -12,7 +12,7 @@ from example_cycles.wet_simple_turbojet import MPWetTurbojet
 class WetSimpleTurbojetTestCase(unittest.TestCase): 
 
 
-    def zbenchmark_case1(self): 
+    def benchmark_case1(self): 
 
         prob = om.Problem()
 
