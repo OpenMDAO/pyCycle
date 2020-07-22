@@ -18,7 +18,7 @@ pyCycle is built on top of OpenMDAO, and thus depends on it. Here is the OpenMDA
 
 
 pyCycle 3.0.0 -- 2.80 >= OpenMDAO <=3.1.1
-pyCycle 3.1.0 -- 3.20 >= OpenMDAO
+pyCycle 3.2.0 -- 3.20 >= OpenMDAO
 
 
 ## Citation
@@ -54,9 +54,9 @@ Select one of those tags (e.g. 3.0.0)
 
     git checkout 3.0.0
 
-or for pyCycle V3.1.0: 
+or for pyCycle V3.2.0: 
 
-    git checkout 3.1.0
+    git checkout 3.2.0
 
 Use pip to install: 
 
