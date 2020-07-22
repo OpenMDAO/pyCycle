@@ -207,13 +207,11 @@ if __name__ == "__main__":
 
     prob.setup(check=False)
 
-    #initial conditions
+    #Define the design point
     prob.set_val('DESIGN.fc.alt', 0, units='ft')
     prob.set_val('DESIGN.fc.MN', 0.000001)
     prob.set_val('DESIGN.balance.Fn_target', 11800.0, units='lbf')
     prob.set_val('DESIGN.balance.T4_target', 2370.0, units='degR') 
-
-    #Values that will go away when set_input_defaults is fixed
     prob.set_val('DESIGN.comp.PR', 13.5) 
     prob.set_val('DESIGN.comp.eff', 0.83)
     prob.set_val('DESIGN.turb.eff', 0.86)
