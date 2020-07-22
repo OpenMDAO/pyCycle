@@ -111,6 +111,10 @@ def viewer(prob, pt, file=sys.stdout):
     print a report of all the relevant cycle properties
     """
 
+    summary_data = (prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'], prob[pt+'.inlet.Fl_O:stat:W'], 
+                    prob[pt+'.perf.Fn'], prob[pt+'.perf.Fg'], prob[pt+'.inlet.F_ram'],
+                    prob[pt+'.perf.OPR'], prob[pt+'.perf.TSFC'])
+
     print(file=file, flush=True)
     print(file=file, flush=True)
     print(file=file, flush=True)
@@ -119,7 +123,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("----------------------------------------------------------------------------", file=file, flush=True)
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC  ", file=file, flush=True)
-    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC']), file=file, flush=True)
+    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %summary_data, file=file, flush=True)
 
 
     fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'comp.Fl_O', 'burner.Fl_O',
@@ -200,8 +204,6 @@ if __name__ == "__main__":
     prob = om.Problem()
 
     prob.model = mp_turbojet = MPTurbojet()
-
-   
 
     prob.setup(check=False)
 
