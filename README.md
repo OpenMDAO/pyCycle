@@ -41,6 +41,23 @@ If you use pyCycle, please cite this paper:
 
 ## Installation 
 
-clone this repo, then use pip to install: 
+clone this repo, and checkout the specific version you want to run: 
+
+    git clone git@github.com:OpenMDAO/pyCycle.git
+    cd pyCycle
+
+You can see a list of all versions in the repo via: 
+
+    git tag
+
+Select one of those tags (e.g. 3.0.0)
+
+    git checkout 3.0.0
+
+or for pyCycle V3.1.0: 
+
+    git checkout 3.1.0
+
+Use pip to install: 
 
     pip install pyCycle
