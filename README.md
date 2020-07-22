@@ -12,6 +12,15 @@ We suggest you look in the examples folder for some indications of how to run th
 Also, you can should [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/pdf) which goes into a lot of detail that is very relevant. 
 
 
+# OpenMDAO Version Compatibility
+----------------------------------
+pyCycle is built on top of OpenMDAO, and thus depends on it. Here is the OpenMDAO version you need for the specific versions of pyCycle
+
+
+pyCycle 3.0.0 -- 2.80 >= OpenMDAO <=3.1.1
+pyCycle 3.1.0 -- 3.20 >= OpenMDAO
+
+
 ## Citation
 
 If you use pyCycle, please cite this paper: 
