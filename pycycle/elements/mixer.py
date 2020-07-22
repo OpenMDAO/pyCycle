@@ -41,6 +41,8 @@ class MixFlow(om.ExplicitComponent):
         flow2_thermo = Thermo(thermo_data, init_reacts=self.flow2_elements)
         n_flow2_prods = len(flow2_thermo.products)
         self.flow2_wt_mole = flow2_thermo.wt_mole
+        self.aij = flow1_thermo.aij
+
         self.add_input('Fl_I2:tot:h', val=0.0, units='J/kg', desc='total enthalpy for flow 2')
         self.add_input('Fl_I2:tot:n', val=np.zeros(n_flow2_prods), desc='species composition for flow 2')
         self.add_input('Fl_I2:stat:W', val=0.0, units='kg/s', desc='mass flow for flow 2')
@@ -52,6 +54,7 @@ class MixFlow(om.ExplicitComponent):
         self.add_output('n_mix', val=np.zeros(n_flow1_prods), desc='species composition for flow out')
         self.add_output('W_mix', val=0.0, units='kg/s', desc='mass flow for flow out')
         self.add_output('impulse_mix', val=0., units='N', desc='impulse of the outgoing flow')
+        self.add_output('b0_mix', val=np.sum(self.aij*np.ones(n_flow1_prods), axis=1))
 
 
         ################################################################################
@@ -78,6 +81,9 @@ class MixFlow(om.ExplicitComponent):
         self.declare_partials('n_mix', ['Fl_I1:stat:W', 'Fl_I2:stat:W'])
         self.declare_partials('impulse_mix', ['Fl_I1:stat:P', 'Fl_I1:stat:area', 'Fl_I1:stat:W', 'Fl_I1:stat:V',
                                               'Fl_I2:stat:P', 'Fl_I2:stat:area', 'Fl_I2:stat:W', 'Fl_I2:stat:V'])
+
+        self.declare_partials('b0_mix', ['Fl_I1:tot:n', 'Fl_I2:tot:n'])
+        self.declare_partials('b0_mix', ['Fl_I1:stat:W', 'Fl_I2:stat:W'])
 
         self.set_check_partial_options('*', method='cs')
 
@@ -112,6 +118,7 @@ class MixFlow(om.ExplicitComponent):
 
         # convert back to molar units
         outputs['n_mix'] = Fl_O_n_mass/self.flow1_wt_mole
+        outputs['b0_mix'] = np.sum(self.aij*outputs['n_mix'], axis=1)
 
     def compute_partials(self, inputs, J):
 
@@ -169,6 +176,11 @@ class MixFlow(om.ExplicitComponent):
         dnout_mass_q_dW2 = W1*(n2_mass_hat-n1_mass_hat)/Wmix**2
         J['n_mix', 'Fl_I1:stat:W'] = dnout_mole_q_dnout_mass.dot(dnout_mass_q_dW1)
         J['n_mix', 'Fl_I2:stat:W'] = dnout_mole_q_dnout_mass.dot(dnout_mass_q_dW2)
+
+        J['b0_mix', 'Fl_I1:tot:n'] = np.matmul(self.aij,J['n_mix','Fl_I1:tot:n'])
+        J['b0_mix', 'Fl_I2:tot:n'] = np.matmul(self.aij,J['n_mix','Fl_I2:tot:n'])
+        J['b0_mix', 'Fl_I1:stat:W'] = np.matmul(self.aij,J['n_mix', 'Fl_I1:stat:W'])
+        J['b0_mix', 'Fl_I2:stat:W'] = np.matmul(self.aij,J['n_mix', 'Fl_I2:stat:W'])
 
 
 class AreaSum(om.ExplicitComponent):
@@ -274,13 +286,13 @@ class Mixer(om.Group):
         flow1_elements = self.options['Fl_I1_elements']
         flow1_thermo = Thermo(thermo_data, init_reacts=flow1_elements)
         n_flow1_prods = len(flow1_thermo.products)
-        in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods)
+        in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods, num_elements=len(flow1_thermo.elements))
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
         flow2_elements = self.options['Fl_I2_elements']
         flow2_thermo = Thermo(thermo_data, init_reacts=flow2_elements)
         n_flow2_prods = len(flow2_thermo.products)
-        in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods)
+        in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods, num_elements=len(flow2_thermo.elements))
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
 
@@ -291,7 +303,7 @@ class Mixer(om.Group):
                                     init_reacts=flow1_elements,
                                     fl_name="Fl_I1_calc:stat")
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
-                                   promotes_inputs=[('init_prod_amounts', 'Fl_I1:stat:n'), ('S', 'Fl_I1:tot:S'),
+                                   promotes_inputs=[('b0', 'Fl_I1:stat:b0'), ('S', 'Fl_I1:tot:S'),
                                                     ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'), ('Ps', 'Fl_I2:stat:P')],
                                    promotes_outputs=['Fl_I1_calc:stat*'])
 
@@ -303,7 +315,7 @@ class Mixer(om.Group):
                                     init_reacts=flow2_elements,
                                     fl_name="Fl_I2_calc:stat")
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
-                                   promotes_inputs=[('init_prod_amounts', 'Fl_I2:tot:n'), ('S', 'Fl_I2:tot:S'),
+                                   promotes_inputs=[('b0', 'Fl_I2:tot:b0'), ('S', 'Fl_I2:tot:S'),
                                                     ('ht', 'Fl_I2:tot:h'), ('W', 'Fl_I2:stat:W'), ('Ps', 'Fl_I1:stat:P')],
                                    promotes_outputs=['Fl_I2_calc:stat:*'])
 
@@ -317,7 +329,7 @@ class Mixer(om.Group):
                                         init_reacts=flow1_elements,
                                         fl_name="Fl_I1_calc:stat")
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
-                                    promotes_inputs=[('init_prod_amounts', 'Fl_I1:tot:n'), ('S', 'Fl_I1:tot:S'),
+                                    promotes_inputs=[('b0', 'Fl_I1:tot:b0'), ('S', 'Fl_I1:tot:S'),
                                                      ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'),
                                                      ('guess:Pt', 'Fl_I1:tot:P'), ('guess:gamt', 'Fl_I1:tot:gamma')],
                                     promotes_outputs=['Fl_I1_calc:stat*'])
@@ -326,7 +338,7 @@ class Mixer(om.Group):
                                         init_reacts=flow2_elements,
                                         fl_name="Fl_I2_calc:stat")
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
-                                    promotes_inputs=[('init_prod_amounts', 'Fl_I2:tot:n'), ('S', 'Fl_I2:tot:S'),
+                                    promotes_inputs=[('b0', 'Fl_I2:tot:b0'), ('S', 'Fl_I2:tot:S'),
                                                      ('ht', 'Fl_I2:tot:h'), ('W', 'Fl_I2:stat:W'),
                                                      ('guess:Pt', 'Fl_I2:tot:P'), ('guess:gamt', 'Fl_I2:tot:gamma')],
                                     promotes_outputs=['Fl_I2_calc:stat*'])
@@ -368,7 +380,7 @@ class Mixer(om.Group):
         out_tot = SetTotal(thermo_data=thermo_data, mode='h', init_reacts=self.options['Fl_I1_elements'],
                         fl_name="Fl_O:tot")
         conv.add_subsystem('out_tot', out_tot, promotes_outputs=['Fl_O:tot:*'])
-        self.connect('mix_flow.n_mix', 'out_tot.init_prod_amounts')
+        self.connect('mix_flow.b0_mix', 'out_tot.b0')
         self.connect('mix_flow.ht_mix', 'out_tot.h')
         # note: gets Pt from the balance comp
 
@@ -376,7 +388,7 @@ class Mixer(om.Group):
                              init_reacts=self.options['Fl_I1_elements'],
                              fl_name="Fl_O:stat")
         conv.add_subsystem('out_stat', out_stat, promotes_outputs=['Fl_O:stat:*'], promotes_inputs=['area', ])
-        self.connect('mix_flow.n_mix', 'out_stat.init_prod_amounts')
+        self.connect('mix_flow.b0_mix', 'out_stat.b0')
         self.connect('mix_flow.W_mix','out_stat.W')
         conv.connect('Fl_O:tot:S', 'out_stat.S')
         self.connect('mix_flow.ht_mix', 'out_stat.ht')

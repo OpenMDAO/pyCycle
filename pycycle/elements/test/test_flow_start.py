@@ -3,7 +3,7 @@ import unittest
 import os
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf
 from pycycle.elements.flow_start import FlowStart
@@ -81,77 +81,77 @@ class FlowStartTestCase(unittest.TestCase):
                     h_map['MN']])
             npss = data[h_map['Pt']]
             pyc = self.prob['fl_start.Fl_O:tot:P']
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['Tt']]
             pyc = self.prob['fl_start.Fl_O:tot:T']
             rel_err = abs(npss - pyc) / npss
             print('Tt:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['W']]
             pyc = self.prob['fl_start.Fl_O:stat:W']
             rel_err = abs(npss - pyc) / npss
             print('W:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['ht']]
             pyc = self.prob['fl_start.Fl_O:tot:h']
             rel_err = abs(npss - pyc) / npss
             print('ht:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['s']]
             pyc = self.prob['fl_start.Fl_O:tot:S']
             rel_err = abs(npss - pyc) / npss
             print('S:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['rhot']]
             pyc = self.prob['fl_start.Fl_O:tot:rho']
             rel_err = abs(npss - pyc) / npss
             print('rhot:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['gamt']]
             pyc = self.prob['fl_start.Fl_O:tot:gamma']
             rel_err = abs(npss - pyc) / npss
             print('gamt:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['MN']]
             pyc = self.prob['fl_start.Fl_O:stat:MN']
             rel_err = abs(npss - pyc) / npss
             print('MN:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['Ps']]
             pyc = self.prob['fl_start.Fl_O:stat:P']
             rel_err = abs(npss - pyc) / npss
             print('Ps:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['Ts']]
             pyc = self.prob['fl_start.Fl_O:stat:T']
             rel_err = abs(npss - pyc) / npss
             print('Ts:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['hs']]
             pyc = self.prob['fl_start.Fl_O:stat:h']
             rel_err = abs(npss - pyc) / npss
             print('hs:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['rhos']]
             pyc = self.prob['fl_start.Fl_O:stat:rho']
             rel_err = abs(npss - pyc) / npss
             print('rhos:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['gams']]
             pyc = self.prob['fl_start.Fl_O:stat:gamma']
             rel_err = abs(npss - pyc) / npss
             print('gams:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['V']]
             pyc = self.prob['fl_start.Fl_O:stat:V']
             rel_err = abs(npss - pyc) / npss
             print('V:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             npss = data[h_map['A']]
             pyc = self.prob['fl_start.Fl_O:stat:area']
             rel_err = abs(npss - pyc) / npss
             print('A:', npss, pyc, rel_err)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             print()
 
 if __name__ == "__main__":

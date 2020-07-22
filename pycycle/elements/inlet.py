@@ -101,9 +101,10 @@ class Inlet(om.Group):
         gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
         num_prod = len(gas_prods)
+        num_element = len(gas_thermo.elements)
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform inlet engineering calculations
@@ -116,7 +117,7 @@ class Inlet(om.Group):
         real_flow = SetTotal(thermo_data=thermo_data, mode="T", init_reacts=elements, fl_name="Fl_O:tot")
 
         self.add_subsystem('real_flow', real_flow,
-                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('init_prod_amounts', 'Fl_I:tot:n')],
+                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('b0', 'Fl_I:tot:b0')],
                            promotes_outputs=['Fl_O:*'])
         self.connect("calcs_inlet.Pt_out", "real_flow.P")
 
@@ -126,7 +127,7 @@ class Inlet(om.Group):
             if design:
                 #   Calculate static properties
                 self.add_subsystem('out_stat', SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat"),
-                                   promotes_inputs=[('init_prod_amounts', 'Fl_I:tot:n'), ('W', 'Fl_I:stat:W'), 'MN'],
+                                   promotes_inputs=[('b0', 'Fl_I:tot:b0'), ('W', 'Fl_I:stat:W'), 'MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
@@ -138,7 +139,7 @@ class Inlet(om.Group):
                 # Calculate static properties
                 out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements,
                                          fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']

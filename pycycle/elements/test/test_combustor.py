@@ -7,8 +7,6 @@ import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
 
-from openmdao.utils.assert_utils import assert_rel_error
-
 from pycycle.elements.combustor import Combustor
 
 from pycycle.elements.test.util import check_element_partials

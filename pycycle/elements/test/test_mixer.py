@@ -14,12 +14,15 @@ from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
 from pycycle.elements.test.util import check_element_partials
+from pycycle.cea.species_data import Thermo, janaf
 
 
 class MixerTestcase(unittest.TestCase):
 
     def test_mix_same(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
+
+        thermo = Thermo(janaf)
 
         p = Problem()
 
@@ -43,6 +46,8 @@ class MixerTestcase(unittest.TestCase):
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
         p.set_solver_print(level=-1)
 
+        p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+
         p.setup()
         p['mixer.balance.P_tot'] = 17
         p.run_model()
@@ -53,6 +58,8 @@ class MixerTestcase(unittest.TestCase):
 
     def test_mix_diff(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
+
+        thermo = Thermo(janaf)
 
         p = Problem()
 
@@ -79,6 +86,8 @@ class MixerTestcase(unittest.TestCase):
 
         p.set_solver_print(level=-1)
 
+        p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+
         p.setup()
         p.run_model()
         tol = 2e-7
@@ -87,6 +96,7 @@ class MixerTestcase(unittest.TestCase):
         assert_rel_error(self, p['mixer.ER'], 1.1333333333, tolerance=tol)
 
     def _build_problem(self, designed_stream=1, complex=False):
+
             p = Problem()
 
             des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
@@ -119,6 +129,13 @@ class MixerTestcase(unittest.TestCase):
 
             connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
             connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
+
+            if designed_stream == 1:
+                thermo = Thermo(janaf, AIR_FUEL_MIX)
+                p.model.mixer.set_input_defaults('Fl_I1:stat:b0', thermo.b0)
+            else:
+                thermo = Thermo(janaf, AIR_MIX)
+                p.model.mixer.set_input_defaults('Fl_I2:tot:b0', thermo.b0)
 
             p.setup(force_alloc_complex=complex)
 

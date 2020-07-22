@@ -16,10 +16,13 @@ class FlowIn(om.ExplicitComponent):
                               desc='thermodynamic data set')
         self.options.declare('num_prods', default=0,
                               desc='concentrations of products in mixture')
+        self.options.declare('num_elements', default=0,
+                              desc='number of elements in the flow')
 
     def setup(self):
         fl_name = self.options['fl_name']
         num_prods = self.options['num_prods']
+        num_elements = self.options['num_elements']
 
         self.add_output('foo', val=1.,
             desc="dummy output that is NOT used for anything other than to keep the framework happy. ")
@@ -47,6 +50,7 @@ class FlowIn(om.ExplicitComponent):
         self.add_input('%s:stat:n'%fl_name, val=np.zeros(num_prods), desc='concentrations of products in mixture')
         # self.add_input('%s:stat:n_moles'%fl_name, val=1.0, desc='moles/gram of gas')
         self.add_input('%s:stat:R'%fl_name, val=1.0, desc='static gas constant', units='Btu/(lbm*degR)')
+        self.add_input('%s:tot:b0'%fl_name, val=np.ones(num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
 
         # TODO takes these out of static (keep them top level)
         self.add_input('%s:stat:V'%fl_name, val=1.0, desc='Velocity', units='ft/s')

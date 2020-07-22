@@ -109,9 +109,10 @@ class BleedOut(om.Group):
         gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
         num_prod = len(gas_prods)
+        num_element = len(gas_thermo.elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Bleed flow calculations

@@ -2,7 +2,7 @@ import unittest
 import numpy as np 
 
 import openmdao.api as om
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 
 from pycycle.cea.species_data import janaf
@@ -29,9 +29,9 @@ class CFDStartTestCase(unittest.TestCase):
 
 
         tol = 1e-4
-        assert_rel_error(self, p['Fl_O:tot:P'], 15.24202341, tol) # psi
-        assert_rel_error(self, p.get_val('Fl_O:stat:P', units='kPa'), 100, tol)
-        assert_rel_error(self, p.get_val('Fl_O:stat:MN'), 0.26744049, tol)
+        assert_near_equal(p['Fl_O:tot:P'], 15.24202341, tol) # psi
+        assert_near_equal(p.get_val('Fl_O:stat:P', units='kPa'), 100, tol)
+        assert_near_equal(p.get_val('Fl_O:stat:MN'), 0.26744049, tol)
 
 
 if __name__ == "__main__": 

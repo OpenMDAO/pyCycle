@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.inlet import Inlet
@@ -50,6 +50,8 @@ class InletTestCase(unittest.TestCase):
 
     def setUp(self):
 
+        thermo = Thermo(janaf)
+
         self.prob = Problem()
         self.prob.model = Group()
 
@@ -81,6 +83,8 @@ class InletTestCase(unittest.TestCase):
         self.prob.model.connect("W", "flow_start.W")
         self.prob.model.connect("V", "inlet.Fl_I:stat:V")
 
+        self.prob.model.inlet.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
 
@@ -110,11 +114,11 @@ class InletTestCase(unittest.TestCase):
 
             tol = 1e-4
             # rel_err = abs(pt_computed - pt) / pt_computed
-            assert_rel_error(self, pt_computed, pt, tol)
-            assert_rel_error(self, ht_computed, ht, tol)
-            assert_rel_error(self, Fram_computed, Fram, tol)
-            assert_rel_error(self, ps_computed, ps, tol)
-            assert_rel_error(self, ts_computed, ts, tol)
+            assert_near_equal(pt_computed, pt, tol)
+            assert_near_equal(ht_computed, ht, tol)
+            assert_near_equal(Fram_computed, Fram, tol)
+            assert_near_equal(ps_computed, ps, tol)
+            assert_near_equal(ts_computed, ts, tol)
 
             check_element_partials(self, self.prob)
 

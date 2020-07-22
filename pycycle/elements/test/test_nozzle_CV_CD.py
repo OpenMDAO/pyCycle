@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.connect_flow import connect_flow
 from pycycle.constants import AIR_MIX
 from pycycle.elements.flow_start import FlowStart
@@ -20,6 +20,8 @@ from pycycle.elements.test.util import check_element_partials
 class NozzleTestCase(unittest.TestCase):
 
     def setup_helper(self, NozzType, LossType):
+
+        thermo = Thermo(janaf)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -52,6 +54,8 @@ class NozzleTestCase(unittest.TestCase):
             self.prob.model.connect("Cfg", "nozzle.Cfg")
 
         # self.prob.model.connect("area_targ", "compressor.area")
+
+        self.prob.model.nozzle.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         self.prob.set_solver_print(level=2)
         self.prob.setup(check=False)
@@ -99,7 +103,7 @@ class NozzleTestCase(unittest.TestCase):
         tol = 5e-4
         rel_err = abs(npss - pyc) / npss
         print(name, npss, pyc, rel_err)
-        assert_rel_error(self, npss, pyc, tol)
+        assert_near_equal(npss, pyc, tol)
 
     def run_helper(self):
         for i, data in enumerate(self.ref_data):

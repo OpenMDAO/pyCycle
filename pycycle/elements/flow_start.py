@@ -140,7 +140,7 @@ class FlowStart(Group):
                           thermo_data=thermo_data,
                           init_reacts=elements)
 
-        params = ('T','P', 'init_prod_amounts')
+        params = ('T','P', 'b0')
 
         self.add_subsystem('totals', set_TP, promotes_inputs=params,
                            promotes_outputs=('Fl_O:tot:*',))
@@ -151,13 +151,15 @@ class FlowStart(Group):
                                 init_reacts=elements, fl_name="Fl_O:stat")
         set_stat_MN.set_input_defaults('W', val=1.0, units='kg/s')
 
-        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'init_prod_amounts'),
+        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'b0'),
                            promotes_outputs=('Fl_O:stat:*', ))
 
         self.connect('totals.h','exit_static.ht')
         self.connect('totals.S','exit_static.S')
         self.connect('Fl_O:tot:P','exit_static.guess:Pt')
         self.connect('totals.gamma', 'exit_static.guess:gamt')
+
+        self.set_input_defaults('b0', thermo.b0)
 
 
 if __name__ == "__main__": 

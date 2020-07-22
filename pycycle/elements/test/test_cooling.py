@@ -104,7 +104,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, combustor, flow_start
@@ -152,7 +152,7 @@ class Tests(unittest.TestCase):
             flow_start.FlowStart(
                 thermo_data=species_data.janaf,
                 elements=AIR_FUEL_MIX))
-        p.model.connect('mix_fuel.init_prod_amounts', 'burner_flow.init_prod_amounts')
+        p.model.connect('mix_fuel.b0_out', 'burner_flow.b0')
         p.model.connect('Tt_primary', 'burner_flow.T')
         p.model.connect('Pt_in', 'burner_flow.P')
 
@@ -177,7 +177,7 @@ class Tests(unittest.TestCase):
         p.run_model()
 
         tol = 1e-4
-        assert_rel_error(self, p['W_cool'], 4.44635, tol)
+        assert_near_equal(p['W_cool'], 4.44635, tol)
         # assert_rel_error(self, p['Pt_out'], 4.44635, tol) # TODO: set this
         # assert_rel_error(self, p['ht_out'], 4.44635, tol)
 
@@ -217,10 +217,10 @@ class Tests(unittest.TestCase):
         p.run_model()
 
         tol = 3e-4
-        assert_rel_error(self, p['row.W_cool'], 4.44635, tol)
+        assert_near_equal(p['row.W_cool'], 4.44635, tol)
         # first row mass flow is primary + cooling
-        assert_rel_error(self, p['row.W_out'], 66.60, tol)
-        assert_rel_error(self, p['row.Fl_O:tot:T'], 3299.28, tol)
+        assert_near_equal(p['row.W_out'], 66.60, tol)
+        assert_near_equal(p['row.Fl_O:tot:T'], 3299.28, tol)
 
     def test_turbine_cooling(self):
         """test the flow calculations and final temperatures for multiple rows"""
@@ -260,15 +260,15 @@ class Tests(unittest.TestCase):
 
         tol = 3e-4
 
-        assert_rel_error(self, p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
-        assert_rel_error(self, p['turb_cool.row_1.Fl_O:tot:T'], 2846.45, tol)
-        assert_rel_error(self, p['turb_cool.row_2.Fl_O:tot:T'], 2821.58, tol)
-        assert_rel_error(self, p['turb_cool.row_3.Fl_O:tot:T'], 2412.12, tol)
+        assert_near_equal(p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
+        assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2846.45, tol)
+        assert_near_equal(p['turb_cool.row_2.Fl_O:tot:T'], 2821.58, tol)
+        assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2412.12, tol)
 
-        assert_rel_error(self, p['turb_cool.row_0.W_cool'], 4.44635, tol)
-        assert_rel_error(self, p['turb_cool.row_1.W_cool'][0], 2.3002, tol)
-        assert_rel_error(self, p['turb_cool.row_2.W_cool'], 1.71, tol)
-        assert_rel_error(self, p['turb_cool.row_3.W_cool'][0], 0.91966, tol)
+        assert_near_equal(p['turb_cool.row_0.W_cool'], 4.44635, tol)
+        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.3002, tol)
+        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.71, tol)
+        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91966, tol)
 
         np.set_printoptions(precision=5)
         check = p.check_partials(includes=['turb_cool.row_0.cooling_calcs',

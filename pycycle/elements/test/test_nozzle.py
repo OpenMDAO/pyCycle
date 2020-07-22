@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
 from pycycle.constants import AIR_MIX
@@ -30,6 +30,8 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class NozzleTestCase(unittest.TestCase):
 
     def test_case1(self):
+
+        thermo = Thermo(janaf)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -65,6 +67,8 @@ class NozzleTestCase(unittest.TestCase):
         # self.prob.model.connect('MN', 'nozzle.Fl_I:stat:MN')
         self.prob.model.connect('Ps_exhaust', 'nozzle.Ps_exhaust')
         # self.prob.model.connect('set_tp.props.tp2props.flow_prods', 'compressor.Fl_I:flow_prods')
+
+        self.prob.model.nozzle.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         self.prob.setup(check=False)
 
@@ -130,12 +134,12 @@ class NozzleTestCase(unittest.TestCase):
             # Used for all
             tol = 5.e-3
 
-            assert_rel_error(self, MN_computed, MN, tol)
+            assert_near_equal(MN_computed, MN, tol)
 
             # print "bar", Fg_computed, Fg
-            assert_rel_error(self, Fg_computed, Fg, tol)
-            assert_rel_error(self, V_computed, V, tol)
-            assert_rel_error(self, Pt_computed, Pt, tol)
+            assert_near_equal(Fg_computed, Fg, tol)
+            assert_near_equal(V_computed, V, tol)
+            assert_near_equal(Pt_computed, Pt, tol)
 
             # print "foo", PR_computed, PR
             # print("Fg_comp ", Fg_computed)
@@ -152,8 +156,8 @@ class NozzleTestCase(unittest.TestCase):
             # print("W_in ", self.prob['nozzle.perf_calcs.W_in'])
             # print("W ", self.prob['nozzle.Fl_O:stat:W'])
 
-            assert_rel_error(self, PR_computed, PR, tol)
-            assert_rel_error(self, Ath_computed, Ath, tol)
+            assert_near_equal(PR_computed, PR, tol)
+            assert_near_equal(Ath_computed, Ath, tol)
 
             check_element_partials(self, self.prob)
 

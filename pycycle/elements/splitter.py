@@ -100,10 +100,12 @@ class Splitter(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        num_prod = species_data.Thermo(thermo_data, init_reacts=elements).num_prod
+        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        num_prod = thermo.num_prod
+        num_element = len(thermo.elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes_inputs=('Fl_I:*',))
 
         # Split the flows
@@ -113,7 +115,7 @@ class Splitter(om.Group):
         real_flow1 = SetTotal(thermo_data=thermo_data, mode='T',
                              init_reacts=elements, fl_name="Fl_O1:tot")
         self.add_subsystem('real_flow1', real_flow1,
-                           promotes_inputs=(('init_prod_amounts', 'Fl_I:tot:n'),
+                           promotes_inputs=(('b0', 'Fl_I:tot:b0'),
                                             ('P', 'Fl_I:tot:P'),
                                             ('T', 'Fl_I:tot:T')),
                            promotes_outputs=('Fl_O1:tot:*', ))
@@ -121,7 +123,7 @@ class Splitter(om.Group):
         # Set Fl_out2 totals based on T, P
         real_flow2 = SetTotal(thermo_data=thermo_data, mode='T',
                              init_reacts=elements, fl_name="Fl_O2:tot")
-        self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('init_prod_amounts', 'Fl_I:tot:n'),
+        self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('b0', 'Fl_I:tot:b0'),
                                             ('P', 'Fl_I:tot:P'),
                                             ('T', 'Fl_I:tot:T')),
                            promotes_outputs=('Fl_O2:tot:*', ))
@@ -130,7 +132,7 @@ class Splitter(om.Group):
             if design:
             #   Calculate static properties
                 out1_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O1:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('MN','MN1')]
                 prom_out = ['Fl_O1:stat:*']
                 self.add_subsystem('out1_stat', out1_stat, promotes_inputs=prom_in,
@@ -142,7 +144,7 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O2:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('MN','MN2')]
                 prom_out = ['Fl_O2:stat:*']
                 self.add_subsystem('out2_stat', out2_stat, promotes_inputs=prom_in,
@@ -156,7 +158,7 @@ class Splitter(om.Group):
             else:
                 # Calculate static properties
                 out1_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O1:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('area','area1')]
                 prom_out = ['Fl_O1:stat:*']
                 self.add_subsystem('out1_stat', out1_stat, promotes_inputs=prom_in,
@@ -168,7 +170,7 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O2:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('area','area2')]
                 prom_out = ['Fl_O2:stat:*']
                 self.add_subsystem('out2_stat', out2_stat, promotes_inputs=prom_in,

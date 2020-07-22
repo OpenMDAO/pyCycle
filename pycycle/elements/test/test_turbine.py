@@ -6,9 +6,9 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.connect_flow import connect_flow
 from pycycle.constants import AIR_MIX
 from pycycle.elements.turbine import Turbine
@@ -50,6 +50,8 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class TurbineTestCase(unittest.TestCase):
 
     def setUp(self):
+
+        thermo = Thermo(janaf)
         self.prob = Problem()
         self.prob.model = Group()
 
@@ -79,6 +81,8 @@ class TurbineTestCase(unittest.TestCase):
         self.prob.model.connect("MN", "turbine.MN")
         self.prob.model.connect("Nmech", "turbine.Nmech")
         self.prob.model.connect('eff','turbine.eff')
+
+        self.prob.model.turbine.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
@@ -114,77 +118,77 @@ class TurbineTestCase(unittest.TestCase):
             npss = data[h_map['EffDes']]
             pyc  = self.prob['eff'][0]
             print('EffDes:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_I.s']]
             pyc  = self.prob['flow_start.Fl_O:tot:S'][0]
             print('Fl_I.s:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_I.Tt']]
             pyc  = self.prob['flow_start.Fl_O:tot:T'][0]
             print('Fl_I.Tt:', npss, pyc)
-            assert_rel_error(self, npss, pyc , tol)
+            assert_near_equal(npss, pyc , tol)
 
             npss = data[h_map['Fl_I.ht']]
             pyc  = self.prob['flow_start.Fl_O:tot:h'][0]
             print('Fl_I.ht:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_I.W']]
             pyc  = self.prob['flow_start.Fl_O:stat:W'][0]
             print('Fl_I.W:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.MN']]
             pyc  = self.prob['MN'][0]
             print('Fl_O.MN:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.Pt']]
             pyc  = self.prob['turbine.Fl_O:tot:P'][0]
             print('Fl_O.Pt:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.ht']]
             pyc  = self.prob['turbine.Fl_O:tot:h'][0]
             print('Fl_O.ht:', npss, pyc)
-            assert_rel_error(self, npss, pyc, tol)
+            assert_near_equal(npss, pyc, tol)
 
             npss = data[h_map['Fl_O.Tt']]
             pyc  = self.prob['turbine.Fl_O:tot:T'][0]
             print('Fl_O.Tt:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.ht']] - data[h_map['Fl_I.ht']]
             pyc  = self.prob['turbine.Fl_O:tot:h'][0] -self.prob['flow_start.Fl_O:tot:h'][0]
             print('Fl_O.ht - Fl_I.ht:', npss, pyc)
-            assert_rel_error(self, npss , pyc ,tol)
+            assert_near_equal(npss , pyc ,tol)
 
             npss = data[h_map['Fl_O.s']]
             pyc  = self.prob['turbine.Fl_O:tot:S'][0]
             print('Fl_O.s:', npss, pyc)
-            assert_rel_error(self, npss, pyc, tol)
+            assert_near_equal(npss, pyc, tol)
 
             npss = data[h_map['Power']]
             pyc  = self.prob['turbine.power'][0]
             print('Power:', npss, pyc)
-            assert_rel_error(self, npss, pyc , tol)
+            assert_near_equal(npss, pyc , tol)
 
             npss = data[h_map['Fl_O.Ps']]
             pyc  = self.prob['turbine.Fl_O:stat:P'][0]
             print('Fl_O.Ps:', npss, pyc)
-            assert_rel_error(self, npss , pyc , tol)
+            assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.Ts']]
             pyc  = self.prob['turbine.Fl_O:stat:T'][0]
             print('Fl_O.Ts:', npss, pyc)
-            assert_rel_error(self, npss, pyc, tol)
+            assert_near_equal(npss, pyc, tol)
 
             npss = data[h_map['effPoly']]
             pyc  = self.prob['turbine.eff_poly'][0]
             print('effPoly:', npss, pyc)
-            assert_rel_error(self, npss, pyc, tol)
+            assert_near_equal(npss, pyc, tol)
 
             check_element_partials(self, self.prob, tol=1e-4)
 

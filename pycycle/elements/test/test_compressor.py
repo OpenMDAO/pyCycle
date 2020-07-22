@@ -3,11 +3,11 @@ import unittest
 import os
 
 from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.constants import AIR_MIX
 from pycycle.connect_flow import connect_flow
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
 
@@ -48,6 +48,8 @@ class CompressorTestCase(unittest.TestCase):
 
     def setUp(self):
 
+        thermo = Thermo(janaf)
+
         self.prob = Problem()
 
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
@@ -68,6 +70,8 @@ class CompressorTestCase(unittest.TestCase):
         self.prob.model.add_subsystem('compressor', Compressor(design=True, elements=AIR_MIX))
 
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
+
+        self.prob.model.compressor.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -111,48 +115,48 @@ class CompressorTestCase(unittest.TestCase):
             npss = data[h_map['comp.Fl_O.Pt']]
             pyc = self.prob['compressor.Fl_O:tot:P'][0]
             print('Pt out:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.Fl_O.Tt']]
             pyc = self.prob['compressor.Fl_O:tot:T'][0]
             # print('foo test:', self.prob['compressor.enth_rise.ht_out'][0], data[h_map['start.Fl_O.ht']])
             print('Tt out:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.Fl_O.ht']] - data[h_map['start.Fl_O.ht']]
             pyc = self.prob['compressor.Fl_O:tot:h'] - self.prob['flow_start.Fl_O:tot:h']
             print('delta h:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['start.Fl_O.s']]
             pyc = self.prob['flow_start.Fl_O:tot:S'][0]
             print('S in:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.Fl_O.s']]
             pyc = self.prob['compressor.Fl_O:tot:S'][0]
             print('S out:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.pwr']]
             pyc = self.prob['compressor.power'][0]
             print('Power:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['Fl_O.Ps']]
             pyc = self.prob['compressor.Fl_O:stat:P'][0]
             print('Ps out:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['Fl_O.Ts']]
             pyc = self.prob['compressor.Fl_O:stat:T'][0]
             print('Ts out:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.effPoly']]
             pyc = self.prob['compressor.eff_poly'][0]
             print('effPoly:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
             print("")
 
             check_element_partials(self, self.prob,tol = 5e-5)

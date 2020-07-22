@@ -6,9 +6,9 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
@@ -53,6 +53,8 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case1(self):
 
+        thermo = Thermo(janaf)
+
         self.prob = Problem()
         self.prob.model = Group()
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
@@ -73,6 +75,8 @@ class DuctTestCase(unittest.TestCase):
         self.prob.model.connect("W", "flow_start.W")
         self.prob.model.connect("MN", ["duct.MN", "flow_start.MN"])
         self.prob.model.connect("dPqP_des", "duct.dPqP")
+
+        self.prob.model.duct.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
@@ -104,15 +108,17 @@ class DuctTestCase(unittest.TestCase):
             ts_computed = self.prob['duct.Fl_O:stat:T']
 
             tol = 2.0e-2
-            assert_rel_error(self, pt_computed, pt, tol)
-            assert_rel_error(self, ht_computed, ht, tol)
-            assert_rel_error(self, ps_computed, ps, tol)
-            assert_rel_error(self, ts_computed, ts, tol)
+            assert_near_equal(pt_computed, pt, tol)
+            assert_near_equal(ht_computed, ht, tol)
+            assert_near_equal(ps_computed, ps, tol)
+            assert_near_equal(ts_computed, ts, tol)
 
             check_element_partials(self, self.prob)
 
 
     def test_case_with_dPqP_MN(self):
+
+        thermo = Thermo(janaf)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -145,6 +151,9 @@ class DuctTestCase(unittest.TestCase):
         self.prob.model.connect("duct_des.Fl_O:stat:area", "duct_OD.area")
         self.prob.model.connect("dPqP_des", "duct_des.dPqP")
 
+        self.prob.model.duct_des.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+        self.prob.model.duct_OD.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
@@ -175,10 +184,10 @@ class DuctTestCase(unittest.TestCase):
         ts_computed = self.prob['duct_OD.Fl_O:stat:T']
 
         tol = 1.0e-4
-        assert_rel_error(self, pt_computed, 8.84073152, tol)
-        assert_rel_error(self, ht_computed, ht, tol)
-        assert_rel_error(self, ps_computed, 8.26348914, tol)
-        assert_rel_error(self, ts_computed, ts, tol)
+        assert_near_equal(pt_computed, 8.84073152, tol)
+        assert_near_equal(ht_computed, ht, tol)
+        assert_near_equal(ps_computed, 8.26348914, tol)
+        assert_near_equal(ts_computed, ts, tol)
 
         check_element_partials(self, self.prob)
 
