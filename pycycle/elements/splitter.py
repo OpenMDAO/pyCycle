@@ -189,6 +189,8 @@ class Splitter(om.Group):
             self.connect('split_calc.W1', 'split_calc_W1')
             self.connect('split_calc.W2', 'split_calc_W2')
 
+        self.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+
 
 if __name__ == "__main__":
 

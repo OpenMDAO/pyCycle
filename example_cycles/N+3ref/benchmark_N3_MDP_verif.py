@@ -11,7 +11,7 @@ from N3_MDP_verif import N3_MDP_verif_model
 
 class N3MDPVerifTestCase(unittest.TestCase):
 
-    def benchmark_case1(self):
+    def zbenchmark_case1(self):
 
         OD_statics = True
         prob = N3_MDP_verif_model(OD_statics)

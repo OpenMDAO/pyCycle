@@ -205,6 +205,5 @@ if __name__ == "__main__":
     import scipy as sp
 
     np.seterr(all='raise')
-    sp.seterr(all='raise')
 
     unittest.main()

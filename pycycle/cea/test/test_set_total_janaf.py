@@ -4,7 +4,7 @@ from openmdao.api import Problem, IndepVarComp
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
 
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 
 class _TestJanafThermo(unittest.TestCase):
@@ -23,7 +23,7 @@ class _TestJanafThermo(unittest.TestCase):
 
         top.run_model()
 
-        assert_rel_error(self, top['gamma'], 1.40023310084, 1e-4)
+        assert_near_equal(top['gamma'], 1.40023310084, 1e-4)
 
     def test_mid_temp(self):
 
@@ -40,8 +40,8 @@ class _TestJanafThermo(unittest.TestCase):
 
         top.run_model()
 
-        assert_rel_error(self, top['gamma'], 1.30444205736, 1e-4)  # 1.30444
-        assert_rel_error(self, top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
+        assert_near_equal(top['gamma'], 1.30444205736, 1e-4)  # 1.30444
+        assert_near_equal(top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
 
 
 class TestSetTotalEquivilence(unittest.TestCase):
@@ -94,7 +94,7 @@ class TestSetTotalEquivilence(unittest.TestCase):
         print("hP")
         hp_set.run_model()
 
-        assert_rel_error(self, hp_set['flow:T'], tp_set['T'], 1e-4)
+        assert_near_equal(hp_set['flow:T'], tp_set['T'], 1e-4)
 
         sp_set['S'] = tp_set['flow:S']
         sp_set['P'] = tp_set['flow:P']
@@ -102,7 +102,7 @@ class TestSetTotalEquivilence(unittest.TestCase):
         # sp_set.solver.iprint=1
         print("SP")
         sp_set.run_model()
-        assert_rel_error(self, sp_set['flow:T'], tp_set['T'], 1e-4)
+        assert_near_equal(sp_set['flow:T'], tp_set['T'], 1e-4)
 
     def test_set_total_equivilence(self):
 

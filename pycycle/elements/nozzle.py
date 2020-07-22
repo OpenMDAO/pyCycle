@@ -450,6 +450,8 @@ class Nozzle(om.Group):
             newton.linesearch.options['iprint'] = -1
             self.linear_solver = om.DirectSolver(assemble_jac=True)
 
+        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
+
     def configure(self):
         newton = self.staticMN.statics.chem_eq.nonlinear_solver
         # newton.options['atol'] = 1e-6

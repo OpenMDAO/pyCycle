@@ -4,7 +4,7 @@ import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
 
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.props_rhs import PropsRHS
 from pycycle.cea.props_calcs import PropsCalcs
@@ -48,9 +48,9 @@ class PropsRHSTestCase(unittest.TestCase):
                                 [0.02272211, 0.04544422, 0.]])
 
         tol = 1e-5
-        assert_rel_error(self, p['rhs_T'], goal_rhs_T, tol)
-        assert_rel_error(self, p['rhs_P'], goal_rhs_P, tol)
-        assert_rel_error(self, p['lhs_TP'], goal_lhs_TP, tol)
+        assert_near_equal(p['rhs_T'], goal_rhs_T, tol)
+        assert_near_equal(p['rhs_P'], goal_rhs_P, tol)
+        assert_near_equal(p['lhs_TP'], goal_lhs_TP, tol)
 
         # p.check_partial_derivatives()
 
@@ -87,11 +87,11 @@ class PropsCalcsTestCase(unittest.TestCase):
         p.run_model()
 
         tol = 1e-4
-        assert_rel_error(self, p['Cp'], 0.579647062532, tol)
-        assert_rel_error(self, p['gamma'], 1.19039, tol)
-        assert_rel_error(self, p['h'], 340.324938088, tol)
-        assert_rel_error(self, p['S'], 2.35850919305, tol)
-        assert_rel_error(self, p['rho'], 9.44448e-5, tol)
+        assert_near_equal(p['Cp'], 0.579647062532, tol)
+        assert_near_equal(p['gamma'], 1.19039, tol)
+        assert_near_equal(p['h'], 340.324938088, tol)
+        assert_near_equal(p['S'], 2.35850919305, tol)
+        assert_near_equal(p['rho'], 9.44448e-5, tol)
 
         p['T'] = 1500.
         p['n'] = np.array([8.15344274e-06, 2.27139552e-02, 4.07672137e-06])
@@ -100,11 +100,11 @@ class PropsCalcsTestCase(unittest.TestCase):
         p['n_moles'] = 0.022726185333
         p.run_model()
 
-        assert_rel_error(self, p['Cp'], 0.322460071411, tol)
-        assert_rel_error(self, p['gamma'], 1.16380, tol)
-        assert_rel_error(self, p['h'], -1801.35777129, tol)
-        assert_rel_error(self, p['S'], 1.58630171846, tol)
-        assert_rel_error(self, p['rho'], 0.0003648856, tol)
+        assert_near_equal(p['Cp'], 0.322460071411, tol)
+        assert_near_equal(p['gamma'], 1.16380, tol)
+        assert_near_equal(p['h'], -1801.35777129, tol)
+        assert_near_equal(p['S'], 1.58630171846, tol)
+        assert_near_equal(p['rho'], 0.0003648856, tol)
 
 
 if __name__ == "__main__":

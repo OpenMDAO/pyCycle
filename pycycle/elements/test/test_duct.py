@@ -76,8 +76,6 @@ class DuctTestCase(unittest.TestCase):
         self.prob.model.connect("MN", ["duct.MN", "flow_start.MN"])
         self.prob.model.connect("dPqP_des", "duct.dPqP")
 
-        self.prob.model.duct.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
 
@@ -150,10 +148,6 @@ class DuctTestCase(unittest.TestCase):
         self.prob.model.connect("duct_des.s_dPqP", "duct_OD.s_dPqP")
         self.prob.model.connect("duct_des.Fl_O:stat:area", "duct_OD.area")
         self.prob.model.connect("dPqP_des", "duct_des.dPqP")
-
-        self.prob.model.duct_des.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-        self.prob.model.duct_OD.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)

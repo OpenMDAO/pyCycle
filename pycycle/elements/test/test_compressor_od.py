@@ -70,8 +70,6 @@ class CompressorODTestCase(unittest.TestCase):
 
         self.prob.model.linear_solver = DirectSolver(assemble_jac=True)
 
-        self.prob.model.compressor.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)

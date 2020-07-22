@@ -82,8 +82,6 @@ class TurbineTestCase(unittest.TestCase):
         self.prob.model.connect("Nmech", "turbine.Nmech")
         self.prob.model.connect('eff','turbine.eff')
 
-        self.prob.model.turbine.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
 

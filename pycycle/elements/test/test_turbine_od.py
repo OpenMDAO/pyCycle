@@ -112,8 +112,6 @@ class TurbineODTestCase(unittest.TestCase):
         self.prob.model.connect("burner_MN", "burner.MN")
         self.prob.model.connect("burner_FAR", "burner.Fl_I:FAR")
 
-        self.prob.model.turbine.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
         # self.prob.print_all_convergence(1)

@@ -68,8 +68,6 @@ class NozzleTestCase(unittest.TestCase):
         self.prob.model.connect('Ps_exhaust', 'nozzle.Ps_exhaust')
         # self.prob.model.connect('set_tp.props.tp2props.flow_prods', 'compressor.Fl_I:flow_prods')
 
-        self.prob.model.nozzle.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.setup(check=False)
 
         # 4 cases to check against

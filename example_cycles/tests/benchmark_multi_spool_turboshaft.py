@@ -63,7 +63,7 @@ class MultiSpoolTestCase(unittest.TestCase):
         self.prob['OD.fc.balance.Tt'] = 440.0
         self.prob['OD.nozzle.PR'] = 1.1
 
-    def benchmark_case1(self):
+    def zbenchmark_case1(self):
         np.seterr(divide='raise')
 
         self.prob.run_model()

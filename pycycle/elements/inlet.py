@@ -158,6 +158,8 @@ class Inlet(om.Group):
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='in**2') 
 
+        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
+
 
 if __name__ == "__main__":
 

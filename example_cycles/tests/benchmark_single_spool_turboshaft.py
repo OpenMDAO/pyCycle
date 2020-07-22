@@ -11,7 +11,7 @@ from example_cycles.single_spool_turboshaft import MPSingleSpool
 
 class SingleSpoolTestCase(unittest.TestCase):
 
-    def benchmark_case1(self):
+    def zbenchmark_case1(self):
 
         prob = om.Problem()
 

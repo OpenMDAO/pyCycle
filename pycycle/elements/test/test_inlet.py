@@ -83,8 +83,6 @@ class InletTestCase(unittest.TestCase):
         self.prob.model.connect("W", "flow_start.W")
         self.prob.model.connect("V", "inlet.Fl_I:stat:V")
 
-        self.prob.model.inlet.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
 

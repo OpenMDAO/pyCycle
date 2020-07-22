@@ -3,7 +3,7 @@ def connect_flow(group, fl_src, fl_target, connect_stat=True, connect_tot=True, 
 
     # total
     if connect_tot:
-        for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R'):
+        for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R', 'b0'):
             group.connect('%s:tot:%s'%(fl_src, v_name), '%s:tot:%s'%(fl_target, v_name))
 
     # static

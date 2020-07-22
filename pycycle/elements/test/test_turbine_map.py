@@ -4,7 +4,7 @@ import os
 
 from openmdao.api import Problem, IndepVarComp
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.turbine_map import TurbineMap
 from pycycle.maps.lpt2269 import LPT2269
@@ -120,28 +120,28 @@ class TurbineMapTestCase(unittest.TestCase):
         npss = data[h_map['turb.s_NpDes']]
         pyc = self.prob['s_Np'][0]
         print('s_NpDes:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.NpMap']]
         pyc = self.prob['NpMap'][0]
         print('NpMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.s_PRdes']]
         pyc = self.prob['s_PR'][0]
         print('s_PRdes:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         # check outputs of readMap
         npss = data[h_map['turb.effMap']]
         pyc = self.prob['effMap'][0]
         print('effMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.WpMap']]
         pyc = self.prob['WpMap'][0]
         print('WpMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         # # check outputs of scaledOutput
         # npss = data[h_map['turb.eff']]
@@ -204,41 +204,41 @@ class TurbineMapODTestCase(unittest.TestCase):
             npss = data[h_map['turb.PRmap']]
             pyc = self.prob['PRmap'][0]
             print('PRmap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['turb.NpMap']]
             pyc = self.prob['NpMap'][0]
             print('NpMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of readMap
             npss = data[h_map['turb.effMap']]
             pyc = self.prob['effMap'][0]
             print('effMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['turb.WpMap']]
             pyc = self.prob['WpMap'][0]
             print('WpMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of scaledOutput
             npss = data[h_map['turb.eff']]
             pyc = self.prob['eff'][0]
             print('eff:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check top level outputs
             npss = data[h_map['turb.PR']]
             pyc = self.prob['PR'][0]
             print('PR:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check to make sure balance is converged
-            assert_rel_error(self, self.prob['Np'], self.prob['scaledOutput.Np'], tol)
+            assert_near_equal(self.prob['Np'], self.prob['scaledOutput.Np'], tol)
             print('Np balance:',self.prob['Np'][0], self.prob['scaledOutput.Np'][0])
 
-            assert_rel_error(self, self.prob['Wp'], self.prob['scaledOutput.Wp'], tol)
+            assert_near_equal(self.prob['Wp'], self.prob['scaledOutput.Wp'], tol)
             print('Wp balance:',self.prob['Wp'][0], self.prob['scaledOutput.Wp'][0])
             print()
 

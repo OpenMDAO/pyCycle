@@ -3,7 +3,7 @@ import unittest
 import os
 
 from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.shaft import Shaft
 
@@ -77,12 +77,12 @@ class ShaftTestCase(unittest.TestCase):
             pwrNet_comp = self.top['pwr_net']
 
             tol = 1.0e-4
-            assert_rel_error(self, trqIn_comp, trqIn, tol)
-            assert_rel_error(self, trqOut_comp, trqOut, tol)
-            assert_rel_error(self, trqNet_comp, trqNet, tol)
-            assert_rel_error(self, pwrIn_comp, pwrIn, tol)
-            assert_rel_error(self, pwrOut_comp, pwrOut, tol)
-            assert_rel_error(self, pwrNet_comp, pwrNet, tol)
+            assert_near_equal(trqIn_comp, trqIn, tol)
+            assert_near_equal(trqOut_comp, trqOut, tol)
+            assert_near_equal(trqNet_comp, trqNet, tol)
+            assert_near_equal(pwrIn_comp, pwrIn, tol)
+            assert_near_equal(pwrOut_comp, pwrOut, tol)
+            assert_near_equal(pwrNet_comp, pwrNet, tol)
 
             check_element_partials(self, self.top)
 

@@ -7,7 +7,7 @@ import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
 
-from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
 from pycycle.elements.mixer import Mixer
@@ -52,9 +52,9 @@ class MixerTestcase(unittest.TestCase):
         p['mixer.balance.P_tot'] = 17
         p.run_model()
         tol = 2e-7
-        assert_rel_error(self, p['mixer.Fl_O:stat:area'], 2*p['start1.Fl_O:stat:area'], tolerance=tol)
-        assert_rel_error(self, p['mixer.Fl_O:tot:P'], p['des_vars.P'], tolerance=tol)
-        assert_rel_error(self, p['mixer.ER'], 1, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 2*p['start1.Fl_O:stat:area'], tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], p['des_vars.P'], tolerance=tol)
+        assert_near_equal(p['mixer.ER'], 1, tolerance=tol)
 
     def test_mix_diff(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
@@ -91,9 +91,9 @@ class MixerTestcase(unittest.TestCase):
         p.setup()
         p.run_model()
         tol = 2e-7
-        assert_rel_error(self, p['mixer.Fl_O:stat:area'], 653.2652635, tolerance=tol)
-        assert_rel_error(self, p['mixer.Fl_O:tot:P'], 15.94216641, tolerance=tol)
-        assert_rel_error(self, p['mixer.ER'], 1.1333333333, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 653.2652635, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.94216641, tolerance=tol)
+        assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
 
     def _build_problem(self, designed_stream=1, complex=False):
 
@@ -149,9 +149,9 @@ class MixerTestcase(unittest.TestCase):
         p.run_model()
 
         tol = 5e-7
-        assert_rel_error(self, p['mixer.Fl_O:stat:area'], 2636.58258193, tolerance=tol)
-        assert_rel_error(self, p['mixer.Fl_O:tot:P'], 8.88271201, tolerance=tol)
-        assert_rel_error(self, p['mixer.ER'], 1.06198157, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.58258193, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.88271201, tolerance=tol)
+        assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
         p = self._build_problem(designed_stream=2)
 
@@ -159,9 +159,9 @@ class MixerTestcase(unittest.TestCase):
 
         p.run_model()
 
-        # assert_rel_error(self, p['mixer.Fl_O:stat:area'], 3290.1586448, tolerance=tol)
-        # assert_rel_error(self, p['mixer.Fl_O:tot:P'], 8.91898798, tolerance=tol)
-        # assert_rel_error(self, p['mixer.ER'], 1.06198157, tolerance=tol)
+        # assert_near_equal(p['mixer.Fl_O:stat:area'], 3290.1586448, tolerance=tol)
+        # assert_near_equal(p['mixer.Fl_O:tot:P'], 8.91898798, tolerance=tol)
+        # assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
     def test_mixer_partials(self):
 

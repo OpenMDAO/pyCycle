@@ -55,8 +55,6 @@ class NozzleTestCase(unittest.TestCase):
 
         # self.prob.model.connect("area_targ", "compressor.area")
 
-        self.prob.model.nozzle.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
         self.prob.set_solver_print(level=2)
         self.prob.setup(check=False)
 

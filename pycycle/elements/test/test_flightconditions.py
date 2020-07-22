@@ -3,7 +3,7 @@ import unittest
 import os
 
 import openmdao.api as om
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf
 from pycycle.elements.flight_conditions import FlightConditions
@@ -84,10 +84,10 @@ class FlightConditionsTestCase(unittest.TestCase):
             # print()
 
             tol = 1e-4
-            assert_rel_error(self, Pt_c, Pt, tol)
-            assert_rel_error(self, Ps_c, Ps, tol)
-            assert_rel_error(self, Tt_c, Tt, tol)
-            assert_rel_error(self, Ps_c, Ps, tol)
+            assert_near_equal(Pt_c, Pt, tol)
+            assert_near_equal(Ps_c, Ps, tol)
+            assert_near_equal(Tt_c, Tt, tol)
+            assert_near_equal(Ps_c, Ps, tol)
 
             check_element_partials(self, self.prob, depth=3)
 
