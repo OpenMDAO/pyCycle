@@ -2,20 +2,21 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.props_rhs import PropsRHS
 from pycycle.cea.props_calcs import PropsCalcs
 from pycycle.cea import species_data
+from pycycle import constants
 
 
 class PropsRHSTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        self.thermo = species_data.Thermo(species_data.co2_co_o2)
+        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
 
         p = self.prob = Problem()
         p.model = Group()
@@ -23,15 +24,14 @@ class PropsRHSTestCase(unittest.TestCase):
 
         p.model.add_subsystem('props_rhs', PropsRHS(thermo=self.thermo),
                               promotes=['T', 'n', 'b0', 'rhs_T', 'rhs_P', 'lhs_TP', 'n_moles'])
-        p.model.add_subsystem('T', IndepVarComp('T', 4000., units='degK'), promotes=['*'])
-        p.model.add_subsystem('P', IndepVarComp('P', 1.034210, units='bar'), promotes=['*'])
+        p.model.set_input_defaults('T', 4000., units='degK')
 
         n = np.array([0.02040741, 0.0023147, 0.0102037])
-        p.model.add_subsystem('n', IndepVarComp('n', n), promotes=['*'])
+        p.model.set_input_defaults('n', n)
 
         b = np.array([0.02272211, 0.04544422])
-        p.model.add_subsystem('b0', IndepVarComp('b0', b), promotes=['*'])
-        p.model.add_subsystem('n_moles_desvar', IndepVarComp('n_moles', 0.03292581), promotes=['*'])
+        p.model.set_input_defaults('b0', b)
+        p.model.set_input_defaults('n_moles', 0.03292581)
 
         p.setup(check=False)
         p['n_moles'] = 0.03292581
@@ -59,24 +59,25 @@ class PropsCalcsTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        self.thermo = species_data.Thermo(species_data.co2_co_o2)
+        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
 
         p = self.prob = Problem()
         p.model = Group()
         p.model.suppress_solver_output = True
 
         p.model.add_subsystem('props', PropsCalcs(thermo=self.thermo), promotes=['*'])
-        p.model.add_subsystem('T', IndepVarComp('T', 4000., units='degK'), promotes=['*'])
-        p.model.add_subsystem('P', IndepVarComp('P', 1.034210, units='bar'), promotes=['*'])
+
+        p.model.set_input_defaults('T', 4000., units='degK')
+        p.model.set_input_defaults('P', 1.034210, units='bar')
 
         n = np.array([0.02040741, 0.0023147, 0.0102037])
-        p.model.add_subsystem('n', IndepVarComp('n', n), promotes=['*'])
+        p.model.set_input_defaults('n', n)
 
         result_T = np.array([-1.74791977, 1.81604241, -0.24571810])
-        p.model.add_subsystem('r_T', IndepVarComp('result_T', result_T), promotes=['*'])
+        p.model.set_input_defaults('result_T', result_T)
 
         result_P = np.array([0.48300853, 0.48301125, -0.01522548])
-        p.model.add_subsystem('r_P', IndepVarComp('result_P', result_P), promotes=['*'])
+        p.model.set_input_defaults('result_P', result_P)
 
         p.setup(check=False)
         p['n_moles'] = 0.03292581

@@ -14,6 +14,7 @@ from pycycle.connect_flow import connect_flow
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.axi5 import AXI5
+from pycycle import constants
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -22,7 +23,7 @@ class CompressorODTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
 
         self.prob = Problem()
 

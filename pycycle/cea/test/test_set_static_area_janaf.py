@@ -12,6 +12,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
+from pycycle import constants
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 data_path = os.path.join(fpath, 'NPSS_Static_CEA_Data.csv')
@@ -26,54 +27,43 @@ class TestSetStaticArea(unittest.TestCase):
 
     def test_case_Area(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
 
         p = Problem()
 
+        #the rest of the indep var comp can be removed once set_input_defaults is fixed to allow overwriting
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
-        indeps.add_output('T', val=518., units='degR')
-        indeps.add_output('P', val=14.7, units='psi')
         indeps.add_output('W', val=1.5, units='lbm/s')
         indeps.add_output('area', val=np.inf, units='inch**2')
 
-        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes_inputs=['b0'])
-        p.model.add_subsystem('set_static_A', SetStatic(mode='area', thermo_data=janaf), promotes_inputs=['b0'])
+        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes_inputs=['b0', 'P'])
+        p.model.add_subsystem('set_static_A', SetStatic(mode='area', thermo_data=janaf), promotes_inputs=['b0', ('guess:Pt', 'P')])
         p.model.set_input_defaults('b0', thermo.b0)
+        p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
 
-        p.model.connect('T', 'set_total_TP.T')
-        p.model.connect('P', ['set_total_TP.P', 'set_static_A.guess:Pt'])
+        p.model.set_input_defaults('P', val=14.7, units='psi')
 
         p.model.connect('set_total_TP.flow:S', 'set_static_A.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_A.ht')
-        # p.model.connect('P', 'set_static_A.P')
         p.model.connect('W', 'set_static_A.W')
         p.model.connect('area', 'set_static_A.area')
         p.model.connect('set_total_TP.flow:gamma', 'set_static_A.guess:gamt')
-        #p.model.connect('set_total_TP.flow:n', 'set_static_A.n_guess')
 
         p.set_solver_print(level=-1)
         p.setup(check=False)
 
-        # from openmdao.api import view_model
-        # view_model(p)
-        # exit(0)
-
         # 4 cases to check against
         for i, data in enumerate(ref_data):
 
-            p['T'] = data[h_map['Tt']]
+            p['set_total_TP.T'] = data[h_map['Tt']]
             p['P'] = data[h_map['Pt']]
 
             p['area'] = data[h_map['A']]
-            # p['set_static_A.Ps'] = data[h_map['Ps']]
             p['W'] = data[h_map['W']]
 
             if i is 5:  # supersonic case
                 p['set_static_A.guess:MN'] = 3.
 
-            # print("###################################")
-            # print(p['T'], p['P'], p['area'], p['W'])
-            # print("###################################")
             p.run_model()
 
             # check outputs

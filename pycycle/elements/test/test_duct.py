@@ -12,6 +12,7 @@ from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
+from pycycle import constants
 
 from pycycle.elements.test.util import check_element_partials
 from pycycle.connect_flow import connect_flow
@@ -53,7 +54,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case1(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -116,7 +117,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case_with_dPqP_MN(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
 
         self.prob = Problem()
         self.prob.model = Group()

@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.inlet import Inlet
 from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_MIX, janaf_init_prod_amounts
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -50,7 +50,7 @@ class InletTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, janaf_init_prod_amounts)
 
         self.prob = Problem()
         self.prob.model = Group()

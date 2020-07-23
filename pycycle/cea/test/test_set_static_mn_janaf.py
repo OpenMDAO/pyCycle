@@ -9,6 +9,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
+from pycycle import constants
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 data_path = os.path.join(fpath, 'NPSS_Static_CEA_Data.csv')
@@ -23,7 +24,7 @@ class TestSetStaticMN(unittest.TestCase):
 
     def test_case_MN(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
 
         p = Problem()
 

@@ -5,13 +5,14 @@ from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
 
 from openmdao.utils.assert_utils import assert_near_equal
+from pycycle import constants
 
 
 class _TestJanafThermo(unittest.TestCase):
 
     def test_std_day(self):
 
-        thermo = species_data.Thermo(species_data.janaf)
+        thermo = species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
 
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
@@ -27,7 +28,7 @@ class _TestJanafThermo(unittest.TestCase):
 
     def test_mid_temp(self):
 
-        thermo = species_data.Thermo(species_data.janaf)
+        thermo = species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
 
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
@@ -48,7 +49,7 @@ class TestSetTotalEquivilence(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = species_data.Thermo(species_data.janaf)
+        thermo = species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
         
         self.tp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='T'))
         self.hp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='h'))

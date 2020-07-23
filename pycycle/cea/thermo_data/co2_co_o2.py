@@ -46,14 +46,14 @@ products = OrderedDict([
     })
 ])
 
-init_prod_amounts = OrderedDict([ # initial value used to set the atomic fractions in the mixture
-    ('CO', 0),
-    ('CO2', 1),
-    ('O2', 0),
-])
+# init_prod_amounts = OrderedDict([ # initial value used to set the atomic fractions in the mixture
+#     ('CO', 0),
+#     ('CO2', 1),
+#     ('O2', 0),
+# ])
 
 element_wts = {
   'C':12.01, 'O': 16.0,
 }
 
-default_elements = {'C', 'O'}
+# default_elements = {'C':0.02272237, 'O':0.04544473}

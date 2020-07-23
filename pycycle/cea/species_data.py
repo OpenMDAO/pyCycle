@@ -11,10 +11,11 @@ from pycycle.cea.thermo_data import wet_air
 from numpy import log
 class Thermo(object):
     """Compute H, S, Cp given a species and temperature"""
-    def __init__(self, thermo_data_module, init_reacts=None, elements=None):
+    def __init__(self, thermo_data_module, init_reacts=None, init_elements=None):
 
         self.a = None
         self.a_T = None
+        self.b0 = None
         self.element_wt = None
         self.aij = None
         self.products = None
@@ -24,25 +25,43 @@ class Thermo(object):
         self.wt_mole = None # array of mole weights
         self.init_prod_amounts = None # concentrations (sum to 1)
         self.thermo_data_module = thermo_data_module
+        self.prod_data = self.thermo_data_module.products
         self.init_reacts = init_reacts
+        self.init_elements = init_elements
         self.temp_base = None # array of lowest end of lowest temperature range
 
-        if elements is not None:
+        if init_elements is not None and init_reacts is None:
+
+            self.elements = set(init_elements.keys())
+
             valid_elements = set()
-            for compound in thermo_data_module.products.keys():
-                valid_elements.update(thermo_data_module.products[compound]['elements'].keys())
-            
-            for element in elements:
+
+            for compound in self.prod_data.keys():
+                valid_elements.update(self.prod_data[compound]['elements'].keys())
+                
+            for element in self.elements:
                 if element not in valid_elements:
-                    raise ValueError(f'The provided element `{element}` is not a valid element in the provided thermo data.')
+                    if element in self.prod_data.keys():
+                        raise ValueError(f'The provided element `{element}` is a product in your provided thermo data, but is not an element.')
+                    else:
+                        raise ValueError(f'The provided element `{element}` is not used in any products in your thermo data.')
 
+            self.products = [name for name, prod_data in self.prod_data.items()
+                         if self.elements.issuperset(prod_data['elements'])]
+        
+        elif init_elements is None and init_reacts is not None:
+            self.get_elements(init_reacts) #sets self.elements
+
+            self.products = [name for name, prod_data in self.prod_data.items()
+                         if self.elements.issuperset(prod_data['elements'])]
+        
+        elif init_elements is None and init_reacts is None:
+                raise ValueError('You have not provided elements or initial reactants (init_reacts). In order to set thermodynamic data, one of the two must be provided.')
+        
         else:
-            if init_reacts is not None:
-                elements = set(self.get_elements(thermo_data_module, init_reacts)[0])
-            else:
-                elements = set(thermo_data_module.default_elements)
-
-        self.set_data(thermo_data_module, init_reacts, elements)
+            raise ValueError('You have provided both elements and initial reactants (init_reacts). In order to set thermodynamic data, you must only provide one or the other.')       
+        
+        self.set_data(init_reacts)
 
     def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
         Tt = Tt[0]
@@ -87,37 +106,13 @@ class Thermo(object):
         a_T = self.a_T
         return vec*(-2*a_T[0]/Tt**3 - a_T[1]/Tt**2 + a_T[3] + 2.*a_T[4]*Tt + 3.*a_T[5]*Tt**2 + 4.*a_T[6]*Tt**3)
 
-    def set_data(self, thermo_data_module, init_reacts=None, elements=None):
+    def set_data(self, init_reacts):
         """computes the relevant quantities, given the recatant data"""
 
-        self.thermo_data = thermo_data_module
-        self.prod_data = thermo_data_module.products
+        ### setting up object attributes ###
+        element_list = sorted(self.elements)
 
-        if init_reacts is None:
-            init_reacts = thermo_data_module.init_prod_amounts
-
-        #expand the init_reacts out to include all products, not just those provided
-        full_init_react = OrderedDict()
-        for p in self.prod_data:
-            # initial amounts need to be given in mass ratios
-            if p in init_reacts:
-                full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
-            else:
-                full_init_react[p] = 0.
-
-        init_reacts = full_init_react
-
-        init_prod_amounts = [init_reacts[name] for name in init_reacts
-                             if elements.issuperset(self.prod_data[name]['elements'])]
-
-        self.elements = sorted(elements)
-        self.init_prod_amounts = np.array(init_prod_amounts)
-        self.init_prod_amounts = self.init_prod_amounts/np.sum(self.init_prod_amounts) # normalize to 1
-
-        self.products = [name for name, prod_data in self.prod_data.items()
-                         if elements.issuperset(prod_data['elements'])]
-
-        self.num_element = len(self.elements)
+        self.num_element = len(element_list)
         self.num_prod = len(self.products)
 
         self.a = np.zeros((self.num_prod, 10))
@@ -126,24 +121,20 @@ class Thermo(object):
         element_wt = []
         aij = []
 
-        for e in self.elements:
-            element_wt.append(thermo_data_module.element_wts[e])
+        for e in element_list:
+            element_wt.append(self.thermo_data_module.element_wts[e])
 
             row = [self.prod_data[r]['elements'].get(e,0) for r in self.products]
             aij.append(row)
+
+        self.element_wt = np.array(element_wt)
+        self.aij = np.array(aij)
 
         self.wt_mole = np.empty(self.num_prod)
         for i,r in enumerate(self.products):
             self.wt_mole[i] = self.prod_data[r]['wt']
 
-        self.init_prod_amounts /= self.wt_mole
-
-        self.element_wt = np.array(element_wt)
-        self.aij = np.array(aij)
-
-        self.b0 = np.sum(self.aij*self.init_prod_amounts, axis=1) #moles of each element per kg of mixture (right?)
-
-        # pre-computed constants used in calculations
+        #### pre-computed constants used in calculations ###
         aij_prod = np.empty((self.num_element,self.num_element, self.num_prod))
         for i in range(self.num_element):
             for j in range(self.num_element):
@@ -158,39 +149,69 @@ class Thermo(object):
                 j = np.mod(k,self.num_element)
                 self.aij_prod_deriv[k][l] = self.aij_prod[i][j][l]
 
+        if init_reacts is not None:
+
+            #expand the init_reacts out to include all products, not just those provided
+            full_init_react = OrderedDict()
+            for p in self.prod_data:
+                # initial amounts need to be given in mass ratios
+                if p in init_reacts:
+                    full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
+                else:
+                    full_init_react[p] = 0.
+
+            init_reacts = full_init_react
+
+            init_prod_amounts = [init_reacts[name] for name in init_reacts
+                                 if self.elements.issuperset(self.prod_data[name]['elements'])]
+
+            self.init_prod_amounts = np.array(init_prod_amounts)
+            self.init_prod_amounts = self.init_prod_amounts/np.sum(self.init_prod_amounts) # normalize to 1
+
+            self.init_prod_amounts /= self.wt_mole
+
+            self.b0 = np.sum(self.aij*self.init_prod_amounts, axis=1) #moles of each element per kg of mixture (right?)
+
+        else:
+
+            mag = 0.05582884488692894 #value for b0 magnitude that will help with convergence 
+
+            self.b0 = list(self.init_elements.values()) #unscaled
+            self.b0 = self.b0/np.linalg.norm(self.b0) #scale to 1
+            self.b0 = self.b0*mag #scale to desired magnitude
+
+            self.init_prod_amounts = -np.ones(self.num_prod) #set attribute to a nonsensical value
+
         self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
 
+    def get_elements(self, reactants):#note, reactants is assumed to be a dictionary
 
-
-
-    def get_elements(self, thermo_data_module, reactants):
-        ##########Note: right now this is returning non-useful b0 values
-        # instead of the actual b0 values that will come from init_prod_amounts.
-        # This should be dealt with.
-
-        elements = set()
-        products = thermo_data_module.products
+        self.elements = set()
 
         for name in reactants: # figure out which elements are present
             if reactants[name] > 0:
-                elements.update(products[name]['elements'])
+                self.elements.update(self.prod_data[name]['elements'])
 
-        elements = sorted(elements)
+        return
+
+    def get_b0(self, reactants):#note, reactants is assumed to be a dictionary
+
+        element_list = sorted(self.elements)
 
         aij = []
 
-        for e in elements:
+        for e in element_list:
 
-            row = [products[react]['elements'].get(e,0) for react in reactants]
+            row = [self.prod_data[react]['elements'].get(e,0) for react in reactants]
             aij.append(row)
 
-        b_values = np.zeros((len(elements))) #moles of each element based on provided reactant abundances
+        b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
 
-        for i, element in enumerate(elements):
+        for i, element in enumerate(element_list):
             for j, reactant in enumerate(reactants):
                 b_values[i] += aij[i][j]*reactants[reactant]
 
-        return(elements, b_values) 
+        return(b_values)
 
 
     def build_coeff_table(self, Tt):
@@ -229,7 +250,7 @@ class Thermo(object):
 
 if __name__ == "__main__":
 
-    thermo = Thermo(janaf, janaf.init_prod_amounts)
+    thermo = Thermo(co2_co_o2, init_elements=co2_co_o2.default_elements)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)
@@ -240,6 +261,7 @@ if __name__ == "__main__":
     SJ = thermo.S0_applyJ(T, 1)
     CpJ = thermo.Cp0_applyJ(T, 1)
     n = thermo.init_prod_amounts
+    b0 = thermo.b0
     print('\nT', T)
     print('\nH0', H0)
     print('\nS0', S0)
@@ -247,6 +269,5 @@ if __name__ == "__main__":
     print('\nHJ', HJ)
     print('\nSJ', SJ)
     print('\nCpJ', CpJ)
-    print('\nn', n, '\n')
-    print(thermo.b0)
-    print(thermo.get_elements(janaf, janaf.init_prod_amounts))
+    print('\nn', n)
+    print('\nb0', b0, '\n')

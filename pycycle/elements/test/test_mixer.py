@@ -9,7 +9,7 @@ from openmdao.api import Problem, Group, IndepVarComp
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
+from pycycle.constants import AIR_MIX, AIR_FUEL_MIX, janaf_init_prod_amounts
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
@@ -22,7 +22,7 @@ class MixerTestcase(unittest.TestCase):
     def test_mix_same(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, janaf_init_prod_amounts)
 
         p = Problem()
 
@@ -59,7 +59,7 @@ class MixerTestcase(unittest.TestCase):
     def test_mix_diff(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, janaf_init_prod_amounts)
 
         p = Problem()
 

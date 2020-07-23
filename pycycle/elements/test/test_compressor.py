@@ -10,6 +10,7 @@ from pycycle.connect_flow import connect_flow
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
+from pycycle import constants
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -48,7 +49,7 @@ class CompressorTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf)
+        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
 
         self.prob = Problem()
 
