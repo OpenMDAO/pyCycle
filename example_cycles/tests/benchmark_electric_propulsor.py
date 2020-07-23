@@ -17,26 +17,33 @@ class ElectricPropulsorTestCase(unittest.TestCase):
 
         prob = om.Problem()
 
-        prob.model = MPpropulsor()
+        prob.model = mp_propulsor = MPpropulsor()
 
         prob.set_solver_print(level=-1)
         prob.set_solver_print(level=2, depth=2)
 
-        prob.setup(check=False)
-        prob.final_setup()
+        prob.setup()
 
+        #Define the design point
         prob.set_val('design.fc.alt', 10000, units='m')
-        prob.set_val('off_design.fc.alt', 12000, units='m') #12000
+        prob.set_val('design.fc.MN', 0.8)
+        prob.set_val('design.inlet.MN', 0.6)
+        prob.set_val('design.fan.PR', 1.2)
+        prob.set_val('pwr_target', -3486.657, units='hp')
+        prob.set_val('design.fan.eff', 0.96)
+        prob.set_val('off_design.fc.alt', 12000, units='m')
 
-        prob['design.fc.MN'] = 0.8
-        prob['design.inlet.MN'] = 0.6
-        prob['design.fan.PR'] = 1.2
-        prob['pwr_target'] = -3486.657
-        prob['design.fan.eff'] = 0.96
+        # Set initial guesses for balances
+        prob['design.balance.W'] = 200.
+        
+        for i, pt in enumerate(mp_propulsor.od_pts):
+        
+            # initial guesses
+            prob['off_design.fan.PR'] = 1.2
+            prob['off_design.balance.W'] = 406.790
+            prob['off_design.balance.Nmech'] = 1. # normalized value
 
-        prob['off_design.fc.MN'] = 0.8
-
-
+        
         prob.model.design.nonlinear_solver.options['atol'] = 1e-6
         prob.model.design.nonlinear_solver.options['rtol'] = 1e-6
 
@@ -44,18 +51,6 @@ class ElectricPropulsorTestCase(unittest.TestCase):
         prob.model.off_design.nonlinear_solver.options['rtol'] = 1e-6
         prob.model.off_design.nonlinear_solver.options['maxiter'] = 10
 
-        ########################
-        # initial guesses
-        ########################
-        
-        prob['design.balance.W'] = 200.
-
-        prob['off_design.balance.W'] = 406.790
-        prob['off_design.balance.Nmech'] = 1. # normalized value
-        prob['off_design.fan.PR'] = 1.2
-        prob['off_design.fan.map.RlineMap'] = 2.2
-
-        
         self.prob = prob
 
 

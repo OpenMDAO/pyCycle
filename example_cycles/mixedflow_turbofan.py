@@ -188,10 +188,8 @@ class MixedFlowTurbofan(pyc.Cycle):
 
 
 def print_perf(prob,ptName):
-    ''' print out the performancs values'''
     print('BPR',prob[ptName+'.balance.BPR'])
     print('W',prob[ptName+'.balance.W'])
-    #print('W',prob[ptName+'.wDV.wDes'])
     print('Fnet uninst.',prob[ptName+'.perf.Fn'])
 
 def page_viewer(point):
@@ -227,6 +225,29 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
     def setup(self):
 
         self.pyc_add_pnt('DESIGN', MixedFlowTurbofan(design=True))
+
+        self.set_input_defaults('DESIGN.balance.rhs:BPR', 1.05 ,units=None) # defined as 1 over 2
+        self.set_input_defaults('DESIGN.inlet.MN', 0.751)
+        self.set_input_defaults('DESIGN.inlet_duct.MN', 0.4463)
+        self.set_input_defaults('DESIGN.fan.MN', 0.4578)
+        self.set_input_defaults('DESIGN.splitter.MN1', 0.3104)
+        self.set_input_defaults('DESIGN.splitter.MN2', 0.4518)
+        self.set_input_defaults('DESIGN.splitter_core_duct.MN', 0.3121)
+        self.set_input_defaults('DESIGN.lpc.MN', 0.3059)
+        self.set_input_defaults('DESIGN.lpc_duct.MN', 0.3563)
+        self.set_input_defaults('DESIGN.hpc.MN', 0.2442)
+        self.set_input_defaults('DESIGN.bld3.MN', 0.3000)
+        self.set_input_defaults('DESIGN.burner.MN', 0.1025)
+        self.set_input_defaults('DESIGN.hpt.MN', 0.3650)
+        self.set_input_defaults('DESIGN.hpt_duct.MN', 0.3063)
+        self.set_input_defaults('DESIGN.lpt.MN', 0.4127)
+        self.set_input_defaults('DESIGN.lpt_duct.MN', 0.4463)
+        self.set_input_defaults('DESIGN.bypass_duct.MN', 0.4463)
+        self.set_input_defaults('DESIGN.mixer_duct.MN', 0.4463)
+        self.set_input_defaults('DESIGN.afterburner.MN', 0.1025)
+        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm')
+        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
+
         self.pyc_add_cycle_param('balance.rhs:FAR_ab', 3400 ,units='degR')
         self.pyc_add_cycle_param('hp_shaft.HPX', 250, units='hp')
         self.pyc_add_cycle_param('inlet.ram_recovery', 0.9990)
@@ -247,10 +268,17 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
         self.pyc_add_cycle_param('hpt.cool3:frac_P', 1.0)
         self.pyc_add_cycle_param('lpt.cool1:frac_P', 1.0)
 
-        od_pts = ['OD',]
+        self.od_pts = ['OD',]
+        self.od_T4s = [3100,]
+        self.od_alts = [35000,]
+        self.od_MNs = [0.8, ]
 
-        for i,pt in enumerate(od_pts):
+        for i,pt in enumerate(self.od_pts):
             self.pyc_add_pnt(pt, MixedFlowTurbofan(design=False))
+
+            self.set_input_defaults(pt+'.balance.rhs:FAR_core', self.od_T4s[i], units='degR')
+            self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
+            self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
 
         # map scalars
         self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
@@ -276,7 +304,6 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
 
         # flow areas
         self.pyc_connect_des_od('mixed_nozz.Throat:stat:area', 'balance.rhs:W')
-
         self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
         self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
         self.pyc_connect_des_od('splitter.Fl_O1:stat:area', 'splitter.area1')
@@ -297,45 +324,6 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
         self.pyc_connect_des_od('mixer_duct.Fl_O:stat:area', 'mixer_duct.area')
         self.pyc_connect_des_od('afterburner.Fl_O:stat:area', 'afterburner.area')
 
-        self.set_input_defaults('DESIGN.balance.rhs:BPR', 1.05 ,units=None) # defined as 1 over 2
-
-        self.set_input_defaults('DESIGN.inlet.MN', 0.751)
-
-        self.set_input_defaults('DESIGN.inlet_duct.MN', 0.4463)
-
-        self.set_input_defaults('DESIGN.fan.MN', 0.4578)
-
-        self.set_input_defaults('DESIGN.splitter.MN1', 0.3104)
-        self.set_input_defaults('DESIGN.splitter.MN2', 0.4518)
-        self.set_input_defaults('DESIGN.splitter_core_duct.MN', 0.3121)
-
-        self.set_input_defaults('DESIGN.lpc.MN', 0.3059)
-
-        self.set_input_defaults('DESIGN.lpc_duct.MN', 0.3563)
-
-        self.set_input_defaults('DESIGN.hpc.MN', 0.2442)
-
-        self.set_input_defaults('DESIGN.bld3.MN', 0.3000)
-
-        self.set_input_defaults('DESIGN.burner.MN', 0.1025)
-
-        self.set_input_defaults('DESIGN.hpt.MN', 0.3650)
-
-        self.set_input_defaults('DESIGN.hpt_duct.MN', 0.3063)
-
-        self.set_input_defaults('DESIGN.lpt.MN', 0.4127)
-
-        self.set_input_defaults('DESIGN.lpt_duct.MN', 0.4463)
-
-        self.set_input_defaults('DESIGN.bypass_duct.MN', 0.4463)
-
-        self.set_input_defaults('DESIGN.mixer_duct.MN', 0.4463)
-
-        self.set_input_defaults('DESIGN.afterburner.MN', 0.1025)
-
-        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm')
-        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
-
 
 if __name__ == "__main__":
     import time
@@ -343,38 +331,25 @@ if __name__ == "__main__":
 
     prob = Problem()
 
-    prob.model = MPMixedFlowTurbofan()
+    prob.model = mp_mixedflow = MPMixedFlowTurbofan()
 
-    od_pts = ['OD',]
+    prob.setup()
 
-    od_alts = [35000,]
-    od_MNs = [0.8, ]
-
-    # setup problem
-    prob.setup(check=False)#True)
-
-
-    ##Variables with set_input_defaults problems
-    prob.set_val('DESIGN.fan.PR', 3.3) #ADV
+    #Define the design point
+    prob.set_val('DESIGN.fan.PR', 3.3)
     prob.set_val('DESIGN.fan.eff', 0.8948)
-
     prob.set_val('DESIGN.lpc.PR', 1.935)
     prob.set_val('DESIGN.lpc.eff', 0.9243)
-
     prob.set_val('DESIGN.hpc.PR', 4.9)
     prob.set_val('DESIGN.hpc.eff', 0.8707)
-
     prob.set_val('DESIGN.hpt.eff', 0.8888)
-
     prob.set_val('DESIGN.lpt.eff', 0.8996)
-
-    ##Design Parameters
-    prob.set_val('DESIGN.fc.alt', 35000., units='ft') #DV
-    prob.set_val('DESIGN.fc.MN', 0.8) #DV
+    prob.set_val('DESIGN.fc.alt', 35000., units='ft') 
+    prob.set_val('DESIGN.fc.MN', 0.8) 
     prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf')
     prob.set_val('DESIGN.balance.rhs:FAR_core', 3200, units='degR')
 
-    # initial guesses
+    # Set initial guesses for the balances
     prob['DESIGN.balance.FAR_core'] = 0.025
     prob['DESIGN.balance.FAR_ab'] = 0.025
     prob['DESIGN.balance.BPR'] = 1.0
@@ -385,10 +360,7 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Tt'] = 440.0
     prob['DESIGN.mixer.balance.P_tot']= 15
 
-    for i,pt in enumerate(od_pts):
-        prob.set_val(pt+'.balance.rhs:FAR_core', 3100, units='degR')
-        prob.set_val(pt+'.fc.alt', od_alts[i], units='ft')
-        prob.set_val(pt+'.fc.MN', od_MNs[i])
+    for i,pt in enumerate(mp_mixedflow.od_pts):
 
         prob[pt+'.balance.FAR_core'] = 0.025
         prob[pt+'.balance.FAR_ab'] = 0.025
@@ -413,13 +385,39 @@ if __name__ == "__main__":
     prob.run_model()
     page_viewer('DESIGN')
 
-    for T in [3200, 3100, 3000]:
-        prob['balance.rhs:FAR_ab'] = T
-
-        prob.run_model()
-
-        page_viewer('OD')
+   
+    for pt in ['DESIGN']+mp_mixedflow.od_pts:
+        page_viewer(pt)
 
     print()
     print("time", time.time() - st)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # for T in [3200, 3100, 3000]:
+    #     prob['balance.rhs:FAR_ab'] = T
+
+    #     prob.run_model()
+
+    #     page_viewer('OD')
+
+    # print()
+    # print("time", time.time() - st)
 

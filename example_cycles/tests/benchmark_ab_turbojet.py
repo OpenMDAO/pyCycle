@@ -17,38 +17,25 @@ class DesignTestCase(unittest.TestCase):
 
         self.prob = om.Problem()
 
-        self.prob.model = MPABTurbojet()
+        self.prob.model = mp_abturbojet = MPABTurbojet()
 
-        self.prob.set_solver_print(level=-1)
-        self.prob.set_solver_print(level=2, depth=1)
-        self.prob.setup(check=False)
-        self.prob.final_setup()
+        self.prob.setup()
 
-        #These values will go away when set_input_defaults is fixed:
+        #Define the design point
         self.prob.set_val('DESIGN.comp.PR', 13.5),
         self.prob.set_val('DESIGN.comp.eff', 0.83),
         self.prob.set_val('DESIGN.turb.eff', 0.86),
-
-        #Set initial conditions and initial guesses:
-
         self.prob.set_val('DESIGN.fc.alt', 0.0, units='ft'),
         self.prob.set_val('DESIGN.fc.MN', 0.000001),
         self.prob.set_val('DESIGN.balance.rhs:FAR', 2370.0, units='degR'),
         self.prob.set_val('DESIGN.balance.rhs:W', 11800.0, units='lbf'),
 
+        # Set initial guesses for balances
         self.prob['DESIGN.balance.FAR'] = 0.0175506829934
         self.prob['DESIGN.balance.W'] = 168.453135137
         self.prob['DESIGN.balance.turb_PR'] = 4.46138725662
         self.prob['DESIGN.fc.balance.Pt'] = 14.6955113159
         self.prob['DESIGN.fc.balance.Tt'] = 518.665288153
-
-        pts = ['OD1','OD2','OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
-
-        MNs = [0.000001, 0.8, 0.000001, 0.8, 1.00001, 1.2, 0.6, 1.6, 1.6, 1.8]
-        alts = [0.0, 0.0, 0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
-        T4s = [2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0]
-        ab_FARs = [0.031523391, 0.022759941, 0, 0, 0, 0, 0, 0, 0, 0]
-        Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
         W_guess = [168.0, 225.917, 168.005, 225.917, 166.074, 141.2, 61.70780608, 145.635, 71.53855266, 33.347]
         FAR_guess = [.01755, .016289, .01755, .01629, .0168, .01689, 0.01872827, .016083, 0.01619524, 0.015170]
@@ -57,20 +44,18 @@ class DesignTestCase(unittest.TestCase):
         Tt_guess = [518.67, 585.035, 518.67, 585.04, 558.310, 553.409, 422.29146617, 595.796, 589.9425019, 646.8115]
         PR_guess = [4.4613, 4.8185, 4.4613, 4.8185, 4.669, 4.6425, 4.42779036, 4.8803, 4.84652723, 5.11582]
 
-        for i, pt in enumerate(pts):
-            self.prob.set_val(pt+'.fc.alt', alts[i], units='ft'),
-            self.prob.set_val(pt+'.fc.MN', MNs[i]),
+        for i, pt in enumerate(mp_abturbojet.od_pts):
 
-            self.prob.set_val(pt+'.balance.rhs:FAR', T4s[i], units='degR'),
-            self.prob.set_val(pt+'.balance.rhs:W', Rlines[i]),
-            self.prob.set_val(pt+'.ab.Fl_I:FAR', ab_FARs[i]),
-
+            # initial guesses
             self.prob[pt+'.balance.W'] = W_guess[i]
             self.prob[pt+'.balance.FAR'] = FAR_guess[i]
             self.prob[pt+'.balance.Nmech'] = Nmech_guess[i]
             self.prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
             self.prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
             self.prob[pt+'.turb.PR'] = PR_guess[i]
+
+        self.prob.set_solver_print(level=-1)
+        self.prob.set_solver_print(level=2, depth=1)
 
 
     def benchmark_case1(self):
