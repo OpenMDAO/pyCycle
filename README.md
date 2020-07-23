@@ -60,4 +60,4 @@ or for pyCycle V3.2.0:
 
 Use pip to install: 
 
-    pip install pyCycle
+    pip install -e .
