@@ -15,11 +15,10 @@ class CFM56TestCase(unittest.TestCase):
 
         self.prob = om.Problem()
 
-        self.prob.model = MPhbtf()
-        self.prob.setup(check=False)
+        self.prob.model = mp_hbtf = MPhbtf()
+        self.prob.setup()
 
-
-        ##Values that should be gotten rid of when set_input_defaults is fixed:
+        #Define the design point
         self.prob.set_val('DESIGN.fan.PR', 1.685)
         self.prob.set_val('DESIGN.fan.eff', 0.8948)
         self.prob.set_val('DESIGN.lpc.PR', 1.935)
@@ -28,18 +27,12 @@ class CFM56TestCase(unittest.TestCase):
         self.prob.set_val('DESIGN.hpc.eff', 0.8707),
         self.prob.set_val('DESIGN.hpt.eff', 0.8888),
         self.prob.set_val('DESIGN.lpt.eff', 0.8996),
-
-        ##Flight conditions and initial values
         self.prob.set_val('DESIGN.fc.alt', 35000., units='ft')
         self.prob.set_val('DESIGN.fc.MN', 0.8)
         self.prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
         self.prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
-        self.prob.set_val('OD.fc.MN', 0.8)
-        self.prob.set_val('OD.fc.alt', 35000.0, units='ft')
-        self.prob.set_val('OD.balance.rhs:FAR', 5500.0, units='lbf')
-        self.prob.set_val('OD.fc.dTs', 0.0, units='degR')
-        self.prob.set_val('OD.hpc.cust:frac_W', 0.0445)
 
+        # Set initial guesses for balances
         self.prob['DESIGN.balance.FAR'] = 0.025
         self.prob['DESIGN.balance.W'] = 316.0
         self.prob['DESIGN.balance.lpt_PR'] = 4.4

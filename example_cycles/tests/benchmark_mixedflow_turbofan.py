@@ -14,7 +14,7 @@ class MixedFlowTurbofanTestCase(unittest.TestCase):
 
         self.prob = prob = Problem()
 
-        self.prob.model = MPMixedFlowTurbofan()
+        self.prob.model = mp_mixedflow = MPMixedFlowTurbofan()
 
         prob.setup(check=False)
 
@@ -23,8 +23,6 @@ class MixedFlowTurbofanTestCase(unittest.TestCase):
         self.prob.set_val('DESIGN.fc.MN', 0.8) #DV
         self.prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf')
         self.prob.set_val('DESIGN.balance.rhs:FAR_core', 3200, units='degR')
-        self.prob.set_val('OD.fc.alt', 35000, units='ft')
-        self.prob.set_val('OD.fc.MN', .8)
         self.prob.set_val('OD.balance.rhs:FAR_core', 3200, units='degR')
 
         #Values that should be removed when set_input_defaults is fixed

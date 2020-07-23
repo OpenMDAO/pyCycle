@@ -16,15 +16,26 @@ class WetPropulsorTestCase(unittest.TestCase):
 
         prob = om.Problem()
 
-        prob.model = MPWetPropulsor()
+        prob.model = mp_wet_propulsor = MPWetPropulsor()
+
+        prob.setup()
+
+        #Define the design point
+        prob.set_val('design.fan.PR', 1.2)
+        prob.set_val('design.fan.eff', 0.96)    		
+
+        # Set initial guesses for balances
+        prob['design.fc.MN'] = .8
+        prob['design.balance.W'] = 200.
+
+        prob['off_design.fc.MN'] = .8
+        prob['off_design.balance.W'] = 406.790
+        prob['off_design.balance.Nmech'] = 1. 
+        prob['off_design.fan.PR'] = 1.2
+        prob['off_design.fan.map.RlineMap'] = 2.2
 
         prob.set_solver_print(level=-1)
         prob.set_solver_print(level=2, depth=2)
-
-        prob.setup(check=False)
-
-        prob.set_val('design.fan.PR', 1.2)
-        prob.set_val('design.fan.eff', 0.96)
 
         prob.model.design.nonlinear_solver.options['atol'] = 1e-6
         prob.model.design.nonlinear_solver.options['rtol'] = 1e-6
@@ -32,21 +43,6 @@ class WetPropulsorTestCase(unittest.TestCase):
         prob.model.off_design.nonlinear_solver.options['atol'] = 1e-6
         prob.model.off_design.nonlinear_solver.options['rtol'] = 1e-6
         prob.model.off_design.nonlinear_solver.options['maxiter'] = 10
-
-    		
-
-    	# parameters
-
-        prob['design.fc.MN'] = .8
-        prob['off_design.fc.MN'] = .8
-
-    	# initial guess
-        prob['design.balance.W'] = 200.
-
-        prob['off_design.balance.W'] = 406.790
-        prob['off_design.balance.Nmech'] = 1. # normalized value
-        prob['off_design.fan.PR'] = 1.2
-        prob['off_design.fan.map.RlineMap'] = 2.2
 
         prob.run_model()
 

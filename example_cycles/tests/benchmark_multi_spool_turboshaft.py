@@ -16,13 +16,11 @@ class MultiSpoolTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        self.prob.model = MPMultiSpool()
+        self.prob.model = mp_multispool = MPMultiSpool()
 
-        self.prob.set_solver_print(level=-1)
-        self.prob.set_solver_print(level=2, depth=1)
-        self.prob.setup(check=False)
+        self.prob.setup()
 
-        ##Values will go away once set_input_defaults is fixed
+        #Define the design point
         self.prob.set_val('DESIGN.lpc.PR', 5.000),
         self.prob.set_val('DESIGN.lpc.eff', 0.8900),
         self.prob.set_val('DESIGN.hpc_axi.PR', 3.0),
@@ -32,18 +30,12 @@ class MultiSpoolTestCase(unittest.TestCase):
         self.prob.set_val('DESIGN.hpt.eff', 0.89),
         self.prob.set_val('DESIGN.lpt.eff', 0.9),
         self.prob.set_val('DESIGN.pt.eff', 0.85),
-
-        ##Initial conditions
         self.prob.set_val('DESIGN.fc.alt', 28000., units='ft'),
         self.prob.set_val('DESIGN.fc.MN', 0.5),
         self.prob.set_val('DESIGN.balance.rhs:FAR', 2740.0, units='degR'),
         self.prob.set_val('DESIGN.balance.rhs:W', 1.1)
-        self.prob.set_val('OD.balance.rhs:FAR', 1600.0, units='hp')
-        self.prob.set_val('OD.LP_Nmech', 12750.0, units='rpm')
-        self.prob.set_val('OD.fc.alt', 28000, units='ft')
-        self.prob.set_val('OD.fc.MN', .5)
 
-        ##Initial guesses
+        # Set initial guesses for balances
         self.prob['DESIGN.balance.FAR'] = 0.02261
         self.prob['DESIGN.balance.W'] = 10.76
         self.prob['DESIGN.balance.pt_PR'] = 4.939
@@ -62,6 +54,9 @@ class MultiSpoolTestCase(unittest.TestCase):
         self.prob['OD.fc.balance.Pt'] = 5.666
         self.prob['OD.fc.balance.Tt'] = 440.0
         self.prob['OD.nozzle.PR'] = 1.1
+
+        self.prob.set_solver_print(level=-1)
+        self.prob.set_solver_print(level=2, depth=1)
 
     def benchmark_case1(self):
         np.seterr(divide='raise')

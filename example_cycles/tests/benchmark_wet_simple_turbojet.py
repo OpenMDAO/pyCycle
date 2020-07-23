@@ -16,12 +16,11 @@ class WetSimpleTurbojetTestCase(unittest.TestCase):
 
         prob = om.Problem()
 
-        prob.model = MPWetTurbojet()
+        prob.model = mp_wet_turbojet = MPWetTurbojet()
 
-        pts = ['OD1']
+        prob.setup()
 
-        prob.setup(check=False)
-
+        #Define the design point
         prob.set_val('DESIGN.comp.PR', 13.5),
         prob.set_val('DESIGN.comp.eff', 0.83),
         prob.set_val('DESIGN.turb.eff', 0.86),

@@ -223,6 +223,10 @@ def viewer(prob, pt, file=sys.stdout):
         HPT_PR = prob[pt+'.hpt.PR']
         FAR = prob[pt+'.balance.FAR']
 
+    summary_data = (MN, prob[pt+'.fc.alt'], prob[pt+'.inlet.Fl_O:stat:W'], prob[pt+'.perf.Fn'],
+                        prob[pt+'.perf.Fg'], prob[pt+'.inlet.F_ram'], prob[pt+'.perf.OPR'],
+                        prob[pt+'.perf.TSFC'], prob[pt+'.splitter.BPR'])
+
     print(file=file, flush=True)
     print(file=file, flush=True)
     print(file=file, flush=True)
@@ -231,7 +235,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("----------------------------------------------------------------------------", file=file, flush=True)
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC      BPR ", file=file, flush=True)
-    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f  %7.3f" %(MN, prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC'], prob[pt+'.splitter.BPR']), file=file, flush=True)
+    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f  %7.3f" %summary_data, file=file, flush=True)
 
 
     fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'fan.Fl_O', 'splitter.Fl_O1', 'splitter.Fl_O2',
@@ -269,86 +273,7 @@ class MPhbtf(pyc.MPCycle):
     def setup(self):
 
         self.pyc_add_pnt('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
-        self.pyc_add_cycle_param('inlet.ram_recovery', 0.9990)
-        self.pyc_add_cycle_param('duct4.dPqP', 0.0048)
-        self.pyc_add_cycle_param('duct6.dPqP', 0.0101)
-        self.pyc_add_cycle_param('burner.dPqP', 0.0540)
-        self.pyc_add_cycle_param('duct11.dPqP', 0.0051)
-        self.pyc_add_cycle_param('duct13.dPqP', 0.0107)
-        self.pyc_add_cycle_param('duct15.dPqP', 0.0149)
-        self.pyc_add_cycle_param('core_nozz.Cv', 0.9933)
-        self.pyc_add_cycle_param('byp_bld.bypBld:frac_W', 0.005)
-        self.pyc_add_cycle_param('byp_nozz.Cv', 0.9939)
-        self.pyc_add_cycle_param('hpc.cool1:frac_W', 0.050708)
-        self.pyc_add_cycle_param('hpc.cool1:frac_P', 0.5)
-        self.pyc_add_cycle_param('hpc.cool1:frac_work', 0.5)
-        self.pyc_add_cycle_param('hpc.cool2:frac_W', 0.020274)
-        self.pyc_add_cycle_param('hpc.cool2:frac_P', 0.55)
-        self.pyc_add_cycle_param('hpc.cool2:frac_work', 0.5)
-        self.pyc_add_cycle_param('bld3.cool3:frac_W', 0.067214)
-        self.pyc_add_cycle_param('bld3.cool4:frac_W', 0.101256)
-        self.pyc_add_cycle_param('hpc.cust:frac_P', 0.5)
-        self.pyc_add_cycle_param('hpc.cust:frac_work', 0.5)
-        self.pyc_add_cycle_param('hpt.cool3:frac_P', 1.0)
-        self.pyc_add_cycle_param('hpt.cool4:frac_P', 0.0)
-        self.pyc_add_cycle_param('lpt.cool1:frac_P', 1.0)
-        self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
-        self.pyc_add_cycle_param('hp_shaft.HPX', 250.0, units='hp')
 
-        pts = ['OD'] #,'OD2','OD3','OD4']
-
-        for i_OD, pt in enumerate(pts):
-            ODpt = self.pyc_add_pnt(pt, HBTF(design=False))
-
-        #Connect all DESIGN map scalars to the off design cases
-        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
-        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
-        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
-        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
-        self.pyc_connect_des_od('lpc.s_PR', 'lpc.s_PR')
-        self.pyc_connect_des_od('lpc.s_Wc', 'lpc.s_Wc')
-        self.pyc_connect_des_od('lpc.s_eff', 'lpc.s_eff')
-        self.pyc_connect_des_od('lpc.s_Nc', 'lpc.s_Nc')
-        self.pyc_connect_des_od('hpc.s_PR', 'hpc.s_PR')
-        self.pyc_connect_des_od('hpc.s_Wc', 'hpc.s_Wc')
-        self.pyc_connect_des_od('hpc.s_eff', 'hpc.s_eff')
-        self.pyc_connect_des_od('hpc.s_Nc', 'hpc.s_Nc')
-        self.pyc_connect_des_od('hpt.s_PR', 'hpt.s_PR')
-        self.pyc_connect_des_od('hpt.s_Wp', 'hpt.s_Wp')
-        self.pyc_connect_des_od('hpt.s_eff', 'hpt.s_eff')
-        self.pyc_connect_des_od('hpt.s_Np', 'hpt.s_Np')
-        self.pyc_connect_des_od('lpt.s_PR', 'lpt.s_PR')
-        self.pyc_connect_des_od('lpt.s_Wp', 'lpt.s_Wp')
-        self.pyc_connect_des_od('lpt.s_eff', 'lpt.s_eff')
-        self.pyc_connect_des_od('lpt.s_Np', 'lpt.s_Np')
-        
-        #Set up the RHS of the balances!
-        self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
-        self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
-
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
-        self.pyc_connect_des_od('splitter.Fl_O1:stat:area', 'splitter.area1')
-        self.pyc_connect_des_od('splitter.Fl_O2:stat:area', 'splitter.area2')
-        self.pyc_connect_des_od('duct4.Fl_O:stat:area', 'duct4.area')
-        self.pyc_connect_des_od('lpc.Fl_O:stat:area', 'lpc.area')
-        self.pyc_connect_des_od('duct6.Fl_O:stat:area', 'duct6.area')
-        self.pyc_connect_des_od('hpc.Fl_O:stat:area', 'hpc.area')
-        self.pyc_connect_des_od('bld3.Fl_O:stat:area', 'bld3.area')
-        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
-        self.pyc_connect_des_od('hpt.Fl_O:stat:area', 'hpt.area')
-        self.pyc_connect_des_od('duct11.Fl_O:stat:area', 'duct11.area')
-        self.pyc_connect_des_od('lpt.Fl_O:stat:area', 'lpt.area')
-        self.pyc_connect_des_od('duct13.Fl_O:stat:area', 'duct13.area')
-        self.pyc_connect_des_od('byp_bld.Fl_O:stat:area', 'byp_bld.area')
-        self.pyc_connect_des_od('duct15.Fl_O:stat:area', 'duct15.area')
-
-                # FOR DESIGN
-        # Note that here the values we are setting are actually DESIGN INPUTS/ FLIGHT CONDITIONS
-
-        # ====== START DECLARING DESIGN VARIABLES ====== 
-
-        # Component level setup
         # --- INLET -----
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
 
@@ -421,9 +346,93 @@ class MPhbtf(pyc.MPCycle):
 
         # --- Set up bleed values -----
         self.set_input_defaults('DESIGN.hpc.cust:frac_W', 0.0445),
+        
+        self.pyc_add_cycle_param('inlet.ram_recovery', 0.9990)
+        self.pyc_add_cycle_param('duct4.dPqP', 0.0048)
+        self.pyc_add_cycle_param('duct6.dPqP', 0.0101)
+        self.pyc_add_cycle_param('burner.dPqP', 0.0540)
+        self.pyc_add_cycle_param('duct11.dPqP', 0.0051)
+        self.pyc_add_cycle_param('duct13.dPqP', 0.0107)
+        self.pyc_add_cycle_param('duct15.dPqP', 0.0149)
+        self.pyc_add_cycle_param('core_nozz.Cv', 0.9933)
+        self.pyc_add_cycle_param('byp_bld.bypBld:frac_W', 0.005)
+        self.pyc_add_cycle_param('byp_nozz.Cv', 0.9939)
+        self.pyc_add_cycle_param('hpc.cool1:frac_W', 0.050708)
+        self.pyc_add_cycle_param('hpc.cool1:frac_P', 0.5)
+        self.pyc_add_cycle_param('hpc.cool1:frac_work', 0.5)
+        self.pyc_add_cycle_param('hpc.cool2:frac_W', 0.020274)
+        self.pyc_add_cycle_param('hpc.cool2:frac_P', 0.55)
+        self.pyc_add_cycle_param('hpc.cool2:frac_work', 0.5)
+        self.pyc_add_cycle_param('bld3.cool3:frac_W', 0.067214)
+        self.pyc_add_cycle_param('bld3.cool4:frac_W', 0.101256)
+        self.pyc_add_cycle_param('hpc.cust:frac_P', 0.5)
+        self.pyc_add_cycle_param('hpc.cust:frac_work', 0.5)
+        self.pyc_add_cycle_param('hpt.cool3:frac_P', 1.0)
+        self.pyc_add_cycle_param('hpt.cool4:frac_P', 0.0)
+        self.pyc_add_cycle_param('lpt.cool1:frac_P', 1.0)
+        self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
+        self.pyc_add_cycle_param('hp_shaft.HPX', 250.0, units='hp')
 
+        self.od_pts = ['OD', 'OD2', 'OD3', 'OD4'] 
+        # self.od_pts = ['OD']
 
+        self.od_MNs = [0.8, 0.8, 0.25, 0.00001]
+        self.od_alts = [35000.0, 35000.0, 0.0, 0.0]
+        self.od_FARs = [5500.0, 5970.0, 22590.0, 27113.0]
+        self.od_dTs = [0.0, 0.0, 27.0, 27.0]
+        self.od_Ws = [0.0445, 0.0422, 0.0177, 0.0185]
 
+        for i, pt in enumerate(self.od_pts):
+            self.pyc_add_pnt(pt, HBTF(design=False))
+
+            self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
+            self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
+            self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_FARs[i], units='lbf')
+            self.set_input_defaults(pt+'.fc.dTs', self.od_dTs[i], units='degR')
+            self.set_input_defaults(pt+'.hpc.cust:frac_W', self.od_Ws[i])
+
+        #Connect all DESIGN map scalars to the off design cases
+        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
+        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
+        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
+        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
+        self.pyc_connect_des_od('lpc.s_PR', 'lpc.s_PR')
+        self.pyc_connect_des_od('lpc.s_Wc', 'lpc.s_Wc')
+        self.pyc_connect_des_od('lpc.s_eff', 'lpc.s_eff')
+        self.pyc_connect_des_od('lpc.s_Nc', 'lpc.s_Nc')
+        self.pyc_connect_des_od('hpc.s_PR', 'hpc.s_PR')
+        self.pyc_connect_des_od('hpc.s_Wc', 'hpc.s_Wc')
+        self.pyc_connect_des_od('hpc.s_eff', 'hpc.s_eff')
+        self.pyc_connect_des_od('hpc.s_Nc', 'hpc.s_Nc')
+        self.pyc_connect_des_od('hpt.s_PR', 'hpt.s_PR')
+        self.pyc_connect_des_od('hpt.s_Wp', 'hpt.s_Wp')
+        self.pyc_connect_des_od('hpt.s_eff', 'hpt.s_eff')
+        self.pyc_connect_des_od('hpt.s_Np', 'hpt.s_Np')
+        self.pyc_connect_des_od('lpt.s_PR', 'lpt.s_PR')
+        self.pyc_connect_des_od('lpt.s_Wp', 'lpt.s_Wp')
+        self.pyc_connect_des_od('lpt.s_eff', 'lpt.s_eff')
+        self.pyc_connect_des_od('lpt.s_Np', 'lpt.s_Np')
+        
+        #Set up the RHS of the balances!
+        self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
+        self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
+
+        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
+        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
+        self.pyc_connect_des_od('splitter.Fl_O1:stat:area', 'splitter.area1')
+        self.pyc_connect_des_od('splitter.Fl_O2:stat:area', 'splitter.area2')
+        self.pyc_connect_des_od('duct4.Fl_O:stat:area', 'duct4.area')
+        self.pyc_connect_des_od('lpc.Fl_O:stat:area', 'lpc.area')
+        self.pyc_connect_des_od('duct6.Fl_O:stat:area', 'duct6.area')
+        self.pyc_connect_des_od('hpc.Fl_O:stat:area', 'hpc.area')
+        self.pyc_connect_des_od('bld3.Fl_O:stat:area', 'bld3.area')
+        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
+        self.pyc_connect_des_od('hpt.Fl_O:stat:area', 'hpt.area')
+        self.pyc_connect_des_od('duct11.Fl_O:stat:area', 'duct11.area')
+        self.pyc_connect_des_od('lpt.Fl_O:stat:area', 'lpt.area')
+        self.pyc_connect_des_od('duct13.Fl_O:stat:area', 'duct13.area')
+        self.pyc_connect_des_od('byp_bld.Fl_O:stat:area', 'byp_bld.area')
+        self.pyc_connect_des_od('duct15.Fl_O:stat:area', 'duct15.area')
 
 
 if __name__ == "__main__":
@@ -432,52 +441,26 @@ if __name__ == "__main__":
 
     prob = om.Problem()
 
-    prob.model = MPhbtf()
+    prob.model = mp_hbtf = MPhbtf()
 
-    prob.setup(check=False)
+    prob.setup()
 
-    ####Values that won't allow set_input_defaults to be called:
+    #Define the design point
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
-
     prob.set_val('DESIGN.lpc.PR', 1.935)
-
     prob.set_val('DESIGN.lpc.eff', 0.9243)
-
     prob.set_val('DESIGN.hpc.PR', 9.369),
     prob.set_val('DESIGN.hpc.eff', 0.8707),
-
     prob.set_val('DESIGN.hpt.eff', 0.8888),
-
     prob.set_val('DESIGN.lpt.eff', 0.8996),
-
-    ####Values that are unique to each run
-
-    #Flight conditions
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
-
-    #Target Tt4 and Fn_design for the balances
     prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
     prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
+        
 
-    # OFF DESIGN
-    # The arrays represent multiple flight conditions.
-    pts = ['OD'] #,'OD2','OD3','OD4'] 
-    OD_MN = [0.8, 0.8, 0.25, 0.00001]
-    OD_alt = [35000.0, 35000.0, 0.0, 0.0]
-    OD_FAR = [5500.0, 5970.0, 22590.0, 27113.0]
-    OD_dTs = [0.0, 0.0, 27.0, 27.0]
-    OD_W = [0.0445, 0.0422, 0.0177, 0.0185]
-
-    for i_OD, pt in enumerate(pts):
-        prob.set_val(pt+'.fc.MN', OD_MN[i_OD]),
-        prob.set_val(pt+'.fc.alt', OD_alt[i_OD], units='ft'),
-        prob.set_val(pt+'.balance.rhs:FAR', OD_FAR[i_OD], units='lbf'), #8950.0
-        prob.set_val(pt+'.fc.dTs', OD_dTs[i_OD], units='degR')
-        prob.set_val(pt+'.hpc.cust:frac_W', OD_W[i_OD])
-
-    ####Value that are initial guesses
+    # Set initial guesses for balances
     prob['DESIGN.balance.FAR'] = 0.025
     prob['DESIGN.balance.W'] = 100.
     prob['DESIGN.balance.lpt_PR'] = 4.0
@@ -486,15 +469,14 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Tt'] = 440.0
 
     W_guesses = [300, 300, 700, 700]
-    for i, pt in enumerate(pts):
-        # ADP and TOC guesses
+    for i, pt in enumerate(mp_hbtf.od_pts):
+
+        # initial guesses
         prob[pt+'.balance.FAR'] = 0.02467
         prob[pt+'.balance.W'] = W_guesses[i]
         prob[pt+'.balance.BPR'] = 5.105
-        prob[pt+'.balance.lp_Nmech'] = 5000 # 4666.1
-        prob[pt+'.balance.hp_Nmech'] = 15000 # 14705.7
-        # prob[pt+'.fc.balance.Pt'] = 5.2
-        # prob[pt+'.fc.balance.Tt'] = 440.0
+        prob[pt+'.balance.lp_Nmech'] = 5000 
+        prob[pt+'.balance.hp_Nmech'] = 15000 
         prob[pt+'.hpt.PR'] = 3.
         prob[pt+'.lpt.PR'] = 4.
         prob[pt+'.fan.map.RlineMap'] = 2.0
@@ -506,9 +488,8 @@ if __name__ == "__main__":
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
-    prob.model.DESIGN.list_outputs(residuals=True, residuals_tol=1e-2)
 
-    for pt in ['DESIGN']+pts:
+    for pt in ['DESIGN']+mp_hbtf.od_pts:
         viewer(prob, pt)
 
     print()
