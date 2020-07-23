@@ -62,22 +62,24 @@ def N3_MDP_Opt_model():
 if __name__ == "__main__":
 
     prob = N3_MDP_Opt_model()
-    prob.setup(check=False)
-    pts = ['RTO','SLS','CRZ']
 
+    prob.setup()
+
+    # Define the design point
     prob.set_val('TOC.splitter.BPR', 23.7281)
+    prob.set_val('TOC.balance.rhs:hpc_PR', 55.0)
+
+    # Set specific cycle parameters
     prob.set_val('SLS.fc.MN', 0.001)
     prob.set_val('SLS.balance.rhs:FAR', 28620.9, units='lbf')
     prob.set_val('CRZ.balance.rhs:FAR', 5466.5, units='lbf')
     prob.set_val('bal.rhs:TOC_BPR', 1.40)
-    prob.set_val('TOC.balance.rhs:hpc_PR', 55.0)
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('fan:PRdes', 1.300)
     prob.set_val('lpc:PRdes', 3.000)
+    prob.set_val('RTO.hpt_cooling.x_factor', 0.9)
 
-    prob['RTO.hpt_cooling.x_factor'] = 0.9
-
-    # initial guesses
+    # Set inital guesses for balances
     prob['TOC.balance.FAR'] = 0.02650
     prob['bal.TOC_W'] = 820.95
     prob['TOC.balance.lpt_PR'] = 10.937
@@ -85,57 +87,38 @@ if __name__ == "__main__":
     prob['TOC.fc.balance.Pt'] = 5.272
     prob['TOC.fc.balance.Tt'] = 444.41
 
-    for pt in pts:
+    FAR_guess = [0.02832, 0.02541, 0.02510]
+    W_guess = [1916.13, 2000 , 802.79]
+    BPR_guess = [25.5620, 27.3467, 24.3233]
+    fan_Nmech_guess = [2132.6, 1953.1, 2118.7]
+    lp_Nmech_guess = [6611.2, 6054.5, 6567.9]
+    hp_Nmech_guess = [22288.2, 21594.0, 20574.1]
+    Pt_guess = [15.349, 14.696, 5.272]
+    Tt_guess = [552.49, 545.67, 444.41]
+    hpt_PR_guess = [4.210, 4.245, 4.197]
+    lpt_PR_guess = [8.161, 7.001, 10.803]
+    fan_Rline_guess = [1.7500, 1.7500, 1.9397]
+    lpc_Rline_guess = [2.0052, 1.8632, 2.1075]
+    hpc_Rline_guess = [2.0589, 2.0281, 1.9746]
+    trq_guess = [52509.1, 41779.4, 22369.7]
 
-        if pt == 'RTO':
-            prob[pt+'.balance.FAR'] = 0.02832
-            prob[pt+'.balance.W'] = 1916.13
-            prob[pt+'.balance.BPR'] = 25.5620
-            prob[pt+'.balance.fan_Nmech'] = 2132.6
-            prob[pt+'.balance.lp_Nmech'] = 6611.2
-            prob[pt+'.balance.hp_Nmech'] = 22288.2
-            prob[pt+'.fc.balance.Pt'] = 15.349
-            prob[pt+'.fc.balance.Tt'] = 552.49
-            prob[pt+'.hpt.PR'] = 4.210
-            prob[pt+'.lpt.PR'] = 8.161
-            prob[pt+'.fan.map.RlineMap'] = 1.7500
-            prob[pt+'.lpc.map.RlineMap'] = 2.0052
-            prob[pt+'.hpc.map.RlineMap'] = 2.0589
-            prob[pt+'.gearbox.trq_base'] = 52509.1
+    for i, pt in enumerate(prob.model.od_pts):
 
-        if pt == 'SLS':
-            prob[pt+'.balance.FAR'] = 0.02541
-            prob[pt+'.balance.W'] = 2000 # 1734.44
-            prob[pt+'.balance.BPR'] = 27.3467
-            prob[pt+'.balance.fan_Nmech'] = 1953.1
-            prob[pt+'.balance.lp_Nmech'] = 6054.5
-            prob[pt+'.balance.hp_Nmech'] = 21594.0
-            prob[pt+'.fc.balance.Pt'] = 14.696
-            prob[pt+'.fc.balance.Tt'] = 545.67
-            prob[pt+'.hpt.PR'] = 4.245
-            prob[pt+'.lpt.PR'] = 7.001
-            prob[pt+'.fan.map.RlineMap'] = 1.7500
-            prob[pt+'.lpc.map.RlineMap'] = 1.8632
-            prob[pt+'.hpc.map.RlineMap'] = 2.0281
-            prob[pt+'.gearbox.trq_base'] = 41779.4
-
-        if pt == 'CRZ':
-            prob[pt+'.balance.FAR'] = 0.02510
-            prob[pt+'.balance.W'] = 802.79
-            prob[pt+'.balance.BPR'] = 24.3233
-            prob[pt+'.balance.fan_Nmech'] = 2118.7
-            prob[pt+'.balance.lp_Nmech'] = 6567.9
-            prob[pt+'.balance.hp_Nmech'] = 20574.1
-            prob[pt+'.fc.balance.Pt'] = 5.272
-            prob[pt+'.fc.balance.Tt'] = 444.41
-            prob[pt+'.hpt.PR'] = 4.197
-            prob[pt+'.lpt.PR'] = 10.803
-            prob[pt+'.fan.map.RlineMap'] = 1.9397
-            prob[pt+'.lpc.map.RlineMap'] = 2.1075
-            prob[pt+'.hpc.map.RlineMap'] = 1.9746
-            prob[pt+'.gearbox.trq_base'] = 22369.7
-
-
+        # initial guesses
+        prob[pt+'.balance.FAR'] = FAR_guess[i]
+        prob[pt+'.balance.W'] = W_guess[i]
+        prob[pt+'.balance.BPR'] = BPR_guess[i]
+        prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
+        prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
+        prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
+        prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
+        prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
+        prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
+        prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
+        prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]
+        prob[pt+'.lpc.map.RlineMap'] = lpc_Rline_guess[i]
+        prob[pt+'.hpc.map.RlineMap'] = hpc_Rline_guess[i]
+        prob[pt+'.gearbox.trq_base'] = trq_guess[i]
 
     st = time.time()
 
@@ -143,7 +126,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_driver()
 
-    for pt in ['TOC']+pts:
+    for pt in ['TOC']+prob.model.od_pts:
         viewer(prob, pt)
 
     print()
@@ -151,64 +134,3 @@ if __name__ == "__main__":
     print('ER', prob['CRZ.ext_ratio.ER'])
 
     print("time", time.time() - st)
-
-    print('TOC')
-    print(prob['TOC.inlet.Fl_O:stat:W'] - 810.91780825)#
-    print(prob['TOC.inlet.Fl_O:tot:P'] - 5.26210728)#
-    print(prob['TOC.hpc.Fl_O:tot:P'] - 359.19407379)#
-    print(prob['TOC.burner.Wfuel'] - 0.84696398)#
-    print(prob['TOC.inlet.F_ram'] - 19624.42022041)#
-    print(prob['TOC.core_nozz.Fg'] - 2062.17720394)#
-    print(prob['TOC.byp_nozz.Fg'] - 24607.96791651)#
-    print(prob['TOC.perf.TSFC'] - 0.43275466)#
-    print(prob['TOC.perf.OPR'] - 68.2605)#
-    print(prob['TOC.balance.FAR'] - 0.02157518)#
-    print(prob['TOC.hpc.Fl_O:tot:T'] - 1629.57914093)#
-    print('............................')
-    print('RTO')
-    print(prob['RTO.inlet.Fl_O:stat:W'] - 1836.24241256)#
-    print(prob['RTO.inlet.Fl_O:tot:P'] - 15.3028198)#
-    print(prob['RTO.hpc.Fl_O:tot:P'] - 746.29459765)#
-    print(prob['RTO.burner.Wfuel'] - 1.74761057)#
-    print(prob['RTO.inlet.F_ram'] - 16337.75511063)#
-    print(prob['RTO.core_nozz.Fg'] - 2531.69432791)#
-    print(prob['RTO.byp_nozz.Fg'] - 36606.06077695)#
-    print(prob['RTO.perf.TSFC'] - 0.27593851)#
-    print(prob['RTO.perf.OPR'] - 48.76843661)#
-    print(prob['RTO.balance.FAR'] - 0.02201472)#
-    print(prob['RTO.balance.fan_Nmech'] - 2047.49245139)#
-    print(prob['RTO.balance.lp_Nmech'] - 6347.27346339)#
-    print(prob['RTO.balance.hp_Nmech'] - 21956.80317383)#
-    print(prob['RTO.hpc.Fl_O:tot:T'] - 1785.68517839)#
-    print('............................')
-    print('SLS')
-    print(prob['SLS.inlet.Fl_O:stat:W'] - 1665.15413784)#
-    print(prob['SLS.inlet.Fl_O:tot:P'] - 14.62243072)#
-    print(prob['SLS.hpc.Fl_O:tot:P'] - 618.67644706)#
-    print(prob['SLS.burner.Wfuel'] - 1.3646179)#
-    print(prob['SLS.inlet.F_ram'] - 59.26206766)#
-    print(prob['SLS.core_nozz.Fg'] - 1803.28636041)#
-    print(prob['SLS.byp_nozz.Fg'] - 26876.81570145)#
-    print(prob['SLS.perf.TSFC'] - 0.17164501)#
-    print(prob['SLS.perf.OPR'] - 42.31009597)#
-    print(prob['SLS.balance.FAR'] - 0.02009085)#
-    print(prob['SLS.balance.fan_Nmech'] - 1885.03384389)#
-    print(prob['SLS.balance.lp_Nmech'] - 5843.64806172)#
-    print(prob['SLS.balance.hp_Nmech'] - 21335.89542087)#
-    print(prob['SLS.hpc.Fl_O:tot:T'] - 1698.10451317)#
-    print('............................')
-    print('CRZ')
-    print(prob['CRZ.inlet.Fl_O:stat:W'] - 792.88599794)#
-    print(prob['CRZ.inlet.Fl_O:tot:P'] - 5.26210728)#
-    print(prob['CRZ.hpc.Fl_O:tot:P'] - 336.48275934)#
-    print(prob['CRZ.burner.Wfuel'] - 0.76513434)#
-    print(prob['CRZ.inlet.F_ram'] - 19188.04575789)#
-    print(prob['CRZ.core_nozz.Fg'] - 1832.22026473)#
-    print(prob['CRZ.byp_nozz.Fg'] - 23696.97790339)#
-    print(prob['CRZ.perf.TSFC'] - 0.43438218)#
-    print(prob['CRZ.perf.OPR'] - 63.9444887)#
-    print(prob['CRZ.balance.FAR'] - 0.02044895)#
-    print(prob['CRZ.balance.fan_Nmech'] - 2118.19810925)#
-    print(prob['CRZ.balance.lp_Nmech'] - 6566.46262111)#
-    print(prob['CRZ.balance.hp_Nmech'] - 20575.59530495)#
-    print(prob['CRZ.hpc.Fl_O:tot:T'] - 1591.47697124)#
