@@ -152,6 +152,10 @@ def viewer(prob, pt, file=sys.stdout):
     print a report of all the relevant cycle properties
     """
 
+    summary_data = (prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'], 
+                    prob[pt+'.perf.Fn'], prob[pt+'.perf.Fg'], prob[pt+'.inlet.F_ram'],
+                    prob[pt+'.perf.OPR'], prob[pt+'.perf.PSFC'])
+
     print(file=file, flush=True)
     print(file=file, flush=True)
     print(file=file, flush=True)
@@ -160,9 +164,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("----------------------------------------------------------------------------", file=file, flush=True)
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     PSFC ")
-    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" \
-                %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'], \
-                prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))
+    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %summary_data)
 
 
     fs_names = ['fc.Fl_O','inlet.Fl_O','duct1.Fl_O','lpc.Fl_O',
@@ -195,15 +197,33 @@ def viewer(prob, pt, file=sys.stdout):
     bleed_full_names = [f'{pt}.{b}' for b in bleed_names]
     pyc.print_bleed(prob, bleed_full_names, file=file)
 
-
-
-
-
 class MPMultiSpool(pyc.MPCycle):
 
     def setup(self):
 
         self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft())
+
+        self.set_input_defaults('DESIGN.inlet.MN', 0.4),
+        self.set_input_defaults('DESIGN.duct1.MN', 0.4),
+        self.set_input_defaults('DESIGN.lpc.MN', 0.3),
+        self.set_input_defaults('DESIGN.icduct.MN', 0.3),
+        self.set_input_defaults('DESIGN.hpc_axi.MN', 0.25),
+        self.set_input_defaults('DESIGN.bld25.MN', 0.3000),
+        self.set_input_defaults('DESIGN.hpc_centri.MN', 0.20),
+        self.set_input_defaults('DESIGN.bld3.MN', 0.2000),
+        self.set_input_defaults('DESIGN.duct6.MN', 0.2000),
+        self.set_input_defaults('DESIGN.burner.MN', 0.15),
+        self.set_input_defaults('DESIGN.hpt.MN', 0.30),
+        self.set_input_defaults('DESIGN.duct43.MN', 0.30),
+        self.set_input_defaults('DESIGN.lpt.MN', 0.4),
+        self.set_input_defaults('DESIGN.itduct.MN', 0.4),
+        self.set_input_defaults('DESIGN.pt.MN', 0.4),
+        self.set_input_defaults('DESIGN.duct12.MN', 0.4),
+        self.set_input_defaults('DESIGN.LP_Nmech', 12750., units='rpm'),
+        self.set_input_defaults('DESIGN.lp_shaft.HPX', 1800.0, units='hp'),
+        self.set_input_defaults('DESIGN.IP_Nmech', 12000., units='rpm'),
+        self.set_input_defaults('DESIGN.HP_Nmech', 14800., units='rpm'),
+
         self.pyc_add_cycle_param('inlet.ram_recovery', 1.0)
         self.pyc_add_cycle_param('duct1.dPqP', 0.0)
         self.pyc_add_cycle_param('icduct.dPqP', 0.002)
@@ -222,10 +242,19 @@ class MPMultiSpool(pyc.MPCycle):
         self.pyc_add_cycle_param('lpt.cool1:frac_P', 1.0)
         self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
 
-        pts = ['OD'] 
+        self.od_pts = ['OD'] 
+        self.od_pwrs = [1600.0,]
+        self.od_Nmechs = [12750.0,]
+        self.od_alts = [28000,]
+        self.od_MNs = [.5,]
 
-        for pt in pts:
-            ODpt = self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, maxiter=10))
+        for i, pt in enumerate(self.od_pts):
+            self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, maxiter=10))
+
+            self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_pwrs[i], units='hp')
+            self.set_input_defaults(pt+'.LP_Nmech', self.od_Nmechs[i], units='rpm')
+            self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
+            self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
 
         self.pyc_connect_des_od('lpc.s_PR', 'lpc.s_PR')
         self.pyc_connect_des_od('lpc.s_Wc', 'lpc.s_Wc')
@@ -269,35 +298,6 @@ class MPMultiSpool(pyc.MPCycle):
         self.pyc_connect_des_od('duct12.Fl_O:stat:area', 'duct12.area')
         self.pyc_connect_des_od('nozzle.Throat:stat:area','balance.rhs:W')
 
-        self.set_input_defaults('DESIGN.inlet.MN', 0.4),
-        self.set_input_defaults('DESIGN.duct1.MN', 0.4),
-
-        self.set_input_defaults('DESIGN.lpc.MN', 0.3),
-        self.set_input_defaults('DESIGN.icduct.MN', 0.3),
-
-        self.set_input_defaults('DESIGN.hpc_axi.MN', 0.25),
-        self.set_input_defaults('DESIGN.bld25.MN', 0.3000),
-
-        self.set_input_defaults('DESIGN.hpc_centri.MN', 0.20),
-        self.set_input_defaults('DESIGN.bld3.MN', 0.2000),
-
-        self.set_input_defaults('DESIGN.duct6.MN', 0.2000),
-        self.set_input_defaults('DESIGN.burner.MN', 0.15),
-
-        self.set_input_defaults('DESIGN.hpt.MN', 0.30),
-        self.set_input_defaults('DESIGN.duct43.MN', 0.30),
-
-        self.set_input_defaults('DESIGN.lpt.MN', 0.4),
-
-        self.set_input_defaults('DESIGN.itduct.MN', 0.4),
-        self.set_input_defaults('DESIGN.pt.MN', 0.4),
-        self.set_input_defaults('DESIGN.duct12.MN', 0.4),
-
-        self.set_input_defaults('DESIGN.LP_Nmech', 12750., units='rpm'),
-        self.set_input_defaults('DESIGN.lp_shaft.HPX', 1800.0, units='hp'),
-        self.set_input_defaults('DESIGN.IP_Nmech', 12000., units='rpm'),
-        self.set_input_defaults('DESIGN.HP_Nmech', 14800., units='rpm'),
-
 if __name__ == "__main__":
 
     import time
@@ -306,17 +306,15 @@ if __name__ == "__main__":
 
     prob = om.Problem()
 
-    prob.model = MPMultiSpool()
-    pts = ['OD'] 
+    prob.model = mp_multispool = MPMultiSpool()
+
     prob.setup()
 
-    #Initial conditions
+    #Define the design point
     prob.set_val('DESIGN.fc.alt', 28000., units='ft'),
     prob.set_val('DESIGN.fc.MN', 0.5),
     prob.set_val('DESIGN.balance.rhs:FAR', 2740.0, units='degR'),
     prob.set_val('DESIGN.balance.rhs:W', 1.1)
-
-    #Values that will go away when set_input_defaults is fixed
     prob.set_val('DESIGN.lpc.PR', 5.000),
     prob.set_val('DESIGN.lpc.eff', 0.8900),
     prob.set_val('DESIGN.hpc_axi.PR', 3.0),
@@ -327,16 +325,16 @@ if __name__ == "__main__":
     prob.set_val('DESIGN.lpt.eff', 0.9),
     prob.set_val('DESIGN.pt.eff', 0.85),
 
-    alts = [28000,]
-    MNs = [.5,]
+    # Set initial guesses for balances
+    prob['DESIGN.balance.FAR'] = 0.02261
+    prob['DESIGN.balance.W'] = 10.76
+    prob['DESIGN.balance.hpt_PR'] = 4.233
+    prob['DESIGN.balance.lpt_PR'] = 1.979
+    prob['DESIGN.balance.pt_PR'] = 4.919
+    prob['DESIGN.fc.balance.Pt'] = 5.666
+    prob['DESIGN.fc.balance.Tt'] = 440.0
 
-    #Initial conditions and guesses for off design case 
-    for i, pt in enumerate(pts):
-
-        prob.set_val(pt+'.balance.rhs:FAR', 1600.0, units='hp')
-        prob.set_val(pt+'.LP_Nmech', 12750.0, units='rpm')
-        prob.set_val(pt+'.fc.alt', alts[i], units='ft')
-        prob.set_val(pt+'.fc.MN', MNs[i])
+    for i, pt in enumerate(mp_multispool.od_pts):
 
         # initial guesses
         prob[pt+'.balance.FAR'] = 0.02135
@@ -350,15 +348,6 @@ if __name__ == "__main__":
         prob[pt+'.fc.balance.Tt'] = 440.0
         prob[pt+'.nozzle.PR'] = 1.1
 
-    # initial guesses
-    prob['DESIGN.balance.FAR'] = 0.02261
-    prob['DESIGN.balance.W'] = 10.76
-    prob['DESIGN.balance.hpt_PR'] = 4.233
-    prob['DESIGN.balance.lpt_PR'] = 1.979
-    prob['DESIGN.balance.pt_PR'] = 4.919
-    prob['DESIGN.fc.balance.Pt'] = 5.666
-    prob['DESIGN.fc.balance.Tt'] = 440.0
-
     st = time.time()
 
 
@@ -366,7 +355,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
 
-    for pt in ['DESIGN']+pts:
+    for pt in ['DESIGN']+mp_multispool.od_pts:
         viewer(prob, pt)
 
     print()

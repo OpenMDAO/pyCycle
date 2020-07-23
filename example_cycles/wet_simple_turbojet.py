@@ -123,6 +123,10 @@ def viewer(prob, pt, file=sys.stdout):
     print a report of all the relevant cycle properties
     """
 
+    summary_data = (prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'], prob[pt+'.inlet.Fl_O:stat:W'],
+                    prob[pt+'.perf.Fn'], prob[pt+'.perf.Fg'], prob[pt+'.inlet.F_ram'],
+                    prob[pt+'.perf.OPR'], prob[pt+'.perf.TSFC'])
+
     print(file=file, flush=True)
     print(file=file, flush=True)
     print(file=file, flush=True)
@@ -131,7 +135,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("----------------------------------------------------------------------------", file=file, flush=True)
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC  ", file=file, flush=True)
-    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC']), file=file, flush=True)
+    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %summary_data, file=file, flush=True)
 
 
     fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'comp.Fl_O', 'burner.Fl_O',
@@ -164,18 +168,31 @@ class MPWetTurbojet(pyc.MPCycle):
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', WetTurbojet())
 
-        pts = ['OD1']
-
-        for pt in pts:
-            self.pyc_add_pnt(pt, WetTurbojet(design=False))
-
-            self.set_input_defaults(pt+'.fc.MN', 0.000001),
-            self.set_input_defaults(pt+'.fc.alt', 0.0, units='ft'),
-            self.set_input_defaults(pt+'.balance.rhs:FAR', 11000.0, units='lbf')
+        self.set_input_defaults('DESIGN.fc.alt', 0.0, units='ft'),
+        self.set_input_defaults('DESIGN.fc.MN', 0.000001),
+        self.set_input_defaults('DESIGN.balance.rhs:FAR', 2370.0, units='degR'),
+        self.set_input_defaults('DESIGN.balance.rhs:W', 11800.0, units='lbf'),
+        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
+        self.set_input_defaults('DESIGN.inlet.MN', 0.60),
+        self.set_input_defaults('DESIGN.comp.MN', 0.20),
+        self.set_input_defaults('DESIGN.burner.MN', 0.20),
+        self.set_input_defaults('DESIGN.turb.MN', 0.4),
 
         self.pyc_add_cycle_param('burner.dPqP', .03)
         self.pyc_add_cycle_param('nozz.Cv', 0.99)
         self.pyc_add_cycle_param('fc.WAR', .001)
+
+        self.od_pts = ['OD1']
+        self.od_MNs = [0.000001,]
+        self.od_alts = [0,0,]
+        self.od_pwrs = [11000.0,]
+
+        for i, pt in enumerate(self.od_pts):
+            self.pyc_add_pnt(pt, WetTurbojet(design=False))
+
+            self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i]),
+            self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft'),
+            self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_pwrs[i], units='lbf')
 
         self.pyc_connect_des_od('comp.s_PR', 'comp.s_PR')
         self.pyc_connect_des_od('comp.s_Wc', 'comp.s_Wc')
@@ -194,17 +211,6 @@ class MPWetTurbojet(pyc.MPCycle):
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
-        self.set_input_defaults('DESIGN.fc.alt', 0.0, units='ft'),
-        self.set_input_defaults('DESIGN.fc.MN', 0.000001),
-        self.set_input_defaults('DESIGN.balance.rhs:FAR', 2370.0, units='degR'),
-        self.set_input_defaults('DESIGN.balance.rhs:W', 11800.0, units='lbf'),
-        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
-
-        self.set_input_defaults('DESIGN.inlet.MN', 0.60),
-        self.set_input_defaults('DESIGN.comp.MN', 0.20),
-        self.set_input_defaults('DESIGN.burner.MN', 0.20),
-        self.set_input_defaults('DESIGN.turb.MN', 0.4),
-
 
 if __name__ == "__main__":
 
@@ -214,12 +220,11 @@ if __name__ == "__main__":
 
     prob = om.Problem()
 
-    prob.model = MPWetTurbojet()
-    
-    pts = ['OD1']
+    prob.model = mp_wet_turbojet = MPWetTurbojet()
 
-    prob.setup(check=False)
+    prob.setup()
 
+    #Define the design point
     prob.set_val('DESIGN.comp.PR', 13.5),
     prob.set_val('DESIGN.comp.eff', 0.83),
     prob.set_val('DESIGN.turb.eff', 0.86),
@@ -231,7 +236,7 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Pt'] = 14.6955113159
     prob['DESIGN.fc.balance.Tt'] = 518.665288153
 
-    for pt in pts:
+    for i, pt in enumerate(mp_wet_turbojet.od_pts):
         prob[pt+'.balance.W'] = 166.073
         prob[pt+'.balance.FAR'] = 0.01680
         prob[pt+'.balance.Nmech'] = 8197.38
@@ -245,7 +250,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
 
-    for pt in ['DESIGN']+pts:
+    for pt in ['DESIGN']+mp_wet_turbojet.od_pts:
         viewer(prob, pt)
 
     print()

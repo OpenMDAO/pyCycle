@@ -15,47 +15,20 @@ class SingleSpoolTestCase(unittest.TestCase):
 
         prob = om.Problem()
 
-        prob.model = MPSingleSpool()
-
-        prob.set_solver_print(level=-1)
-        prob.set_solver_print(level=2, depth=1)
+        prob.model = mp_single_spool = MPSingleSpool()
 
         prob.setup(check=False)
 
-        ##Intial contitions
+        #Define the initial design point
         prob.set_val('DESIGN.fc.alt', 0.0, units='ft')
         prob.set_val('DESIGN.fc.MN', 0.000001)
         prob.set_val('DESIGN.balance.T4_target', 2370.0, units='degR')
         prob.set_val('DESIGN.balance.pwr_target', 4000.0, units='hp')
         prob.set_val('DESIGN.balance.nozz_PR_target', 1.2)
-
-        ##Values will go away after set_input_defaults is fixed
         prob.set_val('DESIGN.comp.PR', 13.5)
         prob.set_val('DESIGN.comp.eff', 0.83)
         prob.set_val('DESIGN.turb.eff', 0.86)
         prob.set_val('DESIGN.pt.eff', 0.9)
-
-        ##Initial conditions and initial balance guesses for OD points
-        od_pts = ['OD', 'OD2']
-        od_MNs = [0.1, 0.000001]
-        od_alts =[0.0, 0.0]
-        od_pwrs =[3500.0, 3500.0]
-        od_nmechs =[5000., 5000.]
-
-        for i,pt in enumerate(od_pts):
-
-            prob.set_val(pt+'.fc.alt', od_alts[i], units='ft')
-            prob.set_val(pt+'.fc.MN', od_MNs[i])
-            prob.set_val(pt+'.LP_Nmech', od_nmechs[i], units='rpm')
-            prob.set_val(pt+'.balance.pwr_target', od_pwrs[i], units='hp')
-
-            prob[pt+'.balance.W'] = 27.265
-            prob[pt+'.balance.FAR'] = 0.0175506829934
-            prob[pt+'.balance.HP_Nmech'] = 8070.0
-            prob[pt+'.fc.balance.Pt'] = 15.703
-            prob[pt+'.fc.balance.Tt'] = 558.31
-            prob[pt+'.turb.PR'] = 3.8768
-            prob[pt+'.pt.PR'] = 2.8148
 
         # Set initial guesses for balances
         prob['DESIGN.balance.FAR'] = 0.0175506829934
@@ -64,6 +37,21 @@ class SingleSpoolTestCase(unittest.TestCase):
         prob['DESIGN.balance.pt_PR'] = 2.8148
         prob['DESIGN.fc.balance.Pt'] = 14.6955113159
         prob['DESIGN.fc.balance.Tt'] = 518.665288153
+
+        for i,pt in enumerate(mp_single_spool.od_pts):
+
+            # initial guesses
+            prob[pt+'.balance.W'] = 27.265
+            prob[pt+'.balance.FAR'] = 0.0175506829934
+            prob[pt+'.balance.HP_Nmech'] = 8070.0
+            prob[pt+'.fc.balance.Pt'] = 15.703
+            prob[pt+'.fc.balance.Tt'] = 558.31
+            prob[pt+'.turb.PR'] = 3.8768
+            prob[pt+'.pt.PR'] = 2.8148
+        
+
+        prob.set_solver_print(level=-1)
+        prob.set_solver_print(level=2, depth=1)
 
         np.seterr(divide='raise')
 

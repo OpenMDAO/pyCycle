@@ -115,6 +115,10 @@ def viewer(prob, pt, file=sys.stdout):
     print a report of all the relevant cycle properties
     """
 
+    summary_data = (prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'], prob[pt+'.inlet.Fl_O:stat:W'],
+                    prob[pt+'.perf.Fn'], prob[pt+'.perf.Fg'], prob[pt+'.inlet.F_ram'], prob[pt+'.perf.OPR'],
+                    prob[pt+'.perf.TSFC'])
+
     print(file=file, flush=True)
     print(file=file, flush=True)
     print(file=file, flush=True)
@@ -123,7 +127,7 @@ def viewer(prob, pt, file=sys.stdout):
     print("----------------------------------------------------------------------------", file=file, flush=True)
     print("                       PERFORMANCE CHARACTERISTICS", file=file, flush=True)
     print("    Mach      Alt       W      Fn      Fg    Fram     OPR     TSFC  ", file=file, flush=True)
-    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %(prob[pt+'.fc.Fl_O:stat:MN'], prob[pt+'.fc.alt'],prob[pt+'.inlet.Fl_O:stat:W'],prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.TSFC']), file=file, flush=True)
+    print(" %7.5f  %7.1f %7.3f %7.1f %7.1f %7.1f %7.3f  %7.5f" %summary_data, file=file, flush=True)
 
 
     fs_names = ['fc.Fl_O', 'inlet.Fl_O', 'duct1.Fl_O', 'comp.Fl_O', 'burner.Fl_O',
@@ -161,6 +165,16 @@ class MPABTurbojet(pyc.MPCycle):
 
         # DESIGN CASE
         self.pyc_add_pnt('DESIGN', ABTurbojet(design=True))
+
+        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
+        self.set_input_defaults('DESIGN.inlet.MN', 0.60),
+        self.set_input_defaults('DESIGN.duct1.MN', 0.60),
+        self.set_input_defaults('DESIGN.comp.MN', 0.20),
+        self.set_input_defaults('DESIGN.burner.MN', 0.20),
+        self.set_input_defaults('DESIGN.turb.MN', 0.4),
+        self.set_input_defaults('DESIGN.ab.MN',0.4),
+        self.set_input_defaults('DESIGN.ab.Fl_I:FAR', 0.000),
+
         self.pyc_add_cycle_param('duct1.dPqP', 0.02)
         self.pyc_add_cycle_param('burner.dPqP', 0.03)
         self.pyc_add_cycle_param('ab.dPqP', 0.06)
@@ -174,11 +188,22 @@ class MPABTurbojet(pyc.MPCycle):
         self.pyc_add_cycle_param('turb.cool1:frac_P', 1.0)
         self.pyc_add_cycle_param('turb.cool2:frac_P', 0.0)
 
-        # OFF DESIGN CASES
-        pts = ['OD1','OD2','OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
+        # define the off_design conditions we want to run
+        self.od_pts = ['OD1','OD2','OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
+        self.od_MNs = [0.000001, 0.8, 0.000001, 0.8, 1.00001, 1.2, 0.6, 1.6, 1.6, 1.8]
+        self.od_alts = [0.0, 0.0, 0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
+        self.od_T4s = [2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0]
+        self.od_ab_FARs = [0.031523391, 0.022759941, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.od_Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
-        for pt in pts:
+        for i, pt in enumerate(self.od_pts):
             self.pyc_add_pnt(pt, ABTurbojet(design=False))
+
+            self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
+            self.set_input_defaults(pt+'.fc.alt', val=self.od_alts[i], units='ft')
+            self.set_input_defaults(pt+'.balance.rhs:FAR', val=self.od_T4s[i], units='degR'),
+            self.set_input_defaults(pt+'.balance.rhs:W', val=self.od_Rlines[i]),
+            self.set_input_defaults(pt+'.ab.Fl_I:FAR', val=self.od_ab_FARs[i]),
 
         self.pyc_connect_des_od('comp.s_PR', 'comp.s_PR')
         self.pyc_connect_des_od('comp.s_Wc', 'comp.s_Wc')
@@ -197,52 +222,26 @@ class MPABTurbojet(pyc.MPCycle):
         self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
         self.pyc_connect_des_od('ab.Fl_O:stat:area', 'ab.area')
 
-        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
-
-        self.set_input_defaults('DESIGN.inlet.MN', 0.60),
-        self.set_input_defaults('DESIGN.duct1.MN', 0.60),
-        self.set_input_defaults('DESIGN.comp.MN', 0.20),
-        self.set_input_defaults('DESIGN.burner.MN', 0.20),
-        self.set_input_defaults('DESIGN.turb.MN', 0.4),
-        self.set_input_defaults('DESIGN.ab.MN',0.4),
-        self.set_input_defaults('DESIGN.ab.Fl_I:FAR', 0.000),
-
 if __name__ == "__main__":
 
     import time
 
     prob = om.Problem()
 
-    prob.model = MPABTurbojet()
+    prob.model = mp_abturbojet = MPABTurbojet()
 
-    prob.setup(check=False)
+    prob.setup()
 
-    #Initial conditions:
-
+    #Define the design point
     prob.set_val('DESIGN.fc.alt', 0.0, units='ft'),
     prob.set_val('DESIGN.fc.MN', 0.000001),
     prob.set_val('DESIGN.balance.rhs:W', 11800.0, units='lbf'),
     prob.set_val('DESIGN.balance.rhs:FAR', 2370.0, units='degR'),
-
-    MNs = [0.000001, 0.8, 0.000001, 0.8, 1.00001, 1.2, 0.6, 1.6, 1.6, 1.8]
-    alts = [0.0, 0.0, 0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
-    T4s = [2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0]
-    ab_FARs = [0.031523391, 0.022759941, 0, 0, 0, 0, 0, 0, 0, 0]
-    Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
-
-    # MNs = [0.000001, 0.8, 1.0, 1.2, 0.6, 1.6, 1.6, 1.8]
-    # alts = [0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
-    # T4s = [2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0]
-    # ab_FARs = [0.031523391, 0.022759941, 0.036849745, 0.035266091, 0.020216221, 0.038532787, 0.038532787, 0.038532787]
-    # Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
-
-    #Values that will go away when set_input_defaults is fixed:
     prob.set_val('DESIGN.comp.PR', 13.5),
     prob.set_val('DESIGN.comp.eff', 0.83),
     prob.set_val('DESIGN.turb.eff', 0.86),
 
-    # initial guesses:
-
+    # Set initial guesses for balances
     prob['DESIGN.balance.FAR'] = 0.01755078
     prob['DESIGN.balance.W'] = 168.00454616
     prob['DESIGN.balance.turb_PR'] = 4.46131867
@@ -256,16 +255,9 @@ if __name__ == "__main__":
     Tt_guess = [518.67, 585.035, 518.67, 585.04, 558.310, 553.409, 422.29146617, 595.796, 589.9425019, 646.8115]
     PR_guess = [4.4613, 4.8185, 4.4613, 4.8185, 4.669, 4.6425, 4.42779036, 4.8803, 4.84652723, 5.11582]
 
-    pts = ['OD1','OD2','OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
+    for i, pt in enumerate(mp_abturbojet.od_pts):
 
-    for i, pt in enumerate(pts):
-        prob.set_val(pt+'.fc.alt', alts[i], units='ft'),
-        prob.set_val(pt+'.fc.MN', MNs[i]),
-
-        prob.set_val(pt+'.balance.rhs:FAR', T4s[i], units='degR'),
-        prob.set_val(pt+'.balance.rhs:W', Rlines[i]),
-        prob.set_val(pt+'.ab.Fl_I:FAR', ab_FARs[i]),
-
+        # initial guesses
         prob[pt+'.balance.W'] = W_guess[i]
         prob[pt+'.balance.FAR'] = FAR_guess[i]
         prob[pt+'.balance.Nmech'] = Nmech_guess[i]
@@ -279,7 +271,7 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
 
-    for pt in ['DESIGN']+pts:
+    for pt in ['DESIGN']+mp_abturbojet.od_pts:
         viewer(prob, pt)
 
     print()

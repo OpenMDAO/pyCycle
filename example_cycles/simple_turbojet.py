@@ -152,6 +152,13 @@ class MPTurbojet(pyc.MPCycle):
 
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', Turbojet())
+
+        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm')
+        self.set_input_defaults('DESIGN.inlet.MN', 0.60)
+        self.set_input_defaults('DESIGN.comp.MN', 0.020)#.2
+        self.set_input_defaults('DESIGN.burner.MN', 0.020)#.2
+        self.set_input_defaults('DESIGN.turb.MN', 0.4)
+
         self.pyc_add_cycle_param('burner.dPqP', 0.03)
         self.pyc_add_cycle_param('nozz.Cv', 0.99)
 
@@ -185,13 +192,6 @@ class MPTurbojet(pyc.MPCycle):
         self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
-
-        self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm')
-
-        self.set_input_defaults('DESIGN.inlet.MN', 0.60)
-        self.set_input_defaults('DESIGN.comp.MN', 0.020)#.2
-        self.set_input_defaults('DESIGN.burner.MN', 0.020)#.2
-        self.set_input_defaults('DESIGN.turb.MN', 0.4)
 
 if __name__ == "__main__":
 
