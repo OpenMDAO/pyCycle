@@ -43,6 +43,7 @@ class Turbojet(pyc.Cycle):
         self.pyc_connect_flow('burner.Fl_O', 'turb.Fl_I')
         self.pyc_connect_flow('turb.Fl_O', 'nozz.Fl_I')
 
+        # Make other non-flow connections
         # Connect turbomachinery elements to shaft
         self.connect('comp.trq', 'shaft.trq_0')
         self.connect('turb.trq', 'shaft.trq_1')
@@ -88,7 +89,7 @@ class Turbojet(pyc.Cycle):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['balance', 'fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf'])
+        self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
