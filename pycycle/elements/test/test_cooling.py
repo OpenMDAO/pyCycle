@@ -122,9 +122,9 @@ class Tests(unittest.TestCase):
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
 
         # values needed for the flow initialization from the burner exit
-        indeps.add_output('burner:W', val=60.32, units="lbm/s")
-        indeps.add_output('burner:FAR', val=0.0304)
-        indeps.add_output('burner:h_in', val=298.48, units='Btu/lbm')
+        p.model.set_input_defaults('mix_fuel.Fl_I:stat:W', val=60.32, units="lbm/s")
+        p.model.set_input_defaults('mix_fuel.Fl_I:FAR', val=0.0304)
+        p.model.set_input_defaults('mix_fuel.Fl_I:tot:h', val=298.48, units='Btu/lbm')
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
                            1.00000000e-10, 7.23198770e-03])
@@ -142,9 +142,9 @@ class Tests(unittest.TestCase):
 
         # needed to get the FAR right to match NPSS numbers
         p.model.add_subsystem('mix_fuel', combustor.MixFuel(thermo_data=species_data.janaf))
-        p.model.connect('burner:W', 'mix_fuel.Fl_I:stat:W')
-        p.model.connect('burner:FAR', 'mix_fuel.Fl_I:FAR')
-        p.model.connect('burner:h_in', 'mix_fuel.Fl_I:tot:h')
+        # p.model.connect('burner:W', 'mix_fuel.Fl_I:stat:W')
+        # p.model.connect('burner:FAR', 'mix_fuel.Fl_I:FAR')
+        # p.model.connect('burner:h_in', 'mix_fuel.Fl_I:tot:h')
         p.model.connect('clean_n', 'mix_fuel.Fl_I:tot:n')
 
         p.model.add_subsystem(
@@ -178,8 +178,8 @@ class Tests(unittest.TestCase):
 
         tol = 1e-4
         assert_near_equal(p['W_cool'], 4.44635, tol)
-        # assert_rel_error(self, p['Pt_out'], 4.44635, tol) # TODO: set this
-        # assert_rel_error(self, p['ht_out'], 4.44635, tol)
+        # assert_near_equal(self, p['Pt_out'], 4.44635, tol) # TODO: set this
+        # assert_near_equal(self, p['ht_out'], 4.44635, tol)
 
     def test_row(self):
         """test the flow mixing calculations for a single row"""
@@ -199,7 +199,6 @@ class Tests(unittest.TestCase):
 
         p.model.connect('W_primary', 'row.W_primary')
         p.model.connect('x_factor', 'row.x_factor')
-        # p.model.connect('turb_pwr', 'row.turb_pwr')
 
         p.model.connect('Tt_primary', 'row.Tt_primary')
         p.model.connect('Tt_cool', 'row.Tt_cool')
@@ -234,8 +233,6 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        # p.model.connect('x_factor', 'turb_cool.x_factor') # don't need, because
-        # the indep is inside the group
         p.model.connect('Tt_cool', 'turb_cool.Fl_cool:tot:T')
         p.model.connect('ht_cool', 'turb_cool.Fl_cool:tot:h')
         p.model.connect('clean_n', 'turb_cool.Fl_cool:tot:n')
@@ -252,9 +249,6 @@ class Tests(unittest.TestCase):
         p.set_solver_print(0)
 
         p['turb_cool.x_factor'] = p['x_factor']
-
-        # from openmdao.api import view_model
-        # view_model(p)
 
         p.run_model()
 

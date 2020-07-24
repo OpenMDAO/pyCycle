@@ -79,11 +79,6 @@ class TurbineMapTestCase(unittest.TestCase):
         des_vars.add_output('effDes', 1.0)
         des_vars.add_output('PR', 5.0)
 
-        # ('s_NpDes', 1.721074624),
-        # ('s_PRdes', 0.147473296),
-        # ('s_WpDes',  2.152309293),
-        # ('s_effDes', 0.9950409659),
-
         self.prob.model.add_subsystem(
             'map',
             TurbineMap(
@@ -92,9 +87,6 @@ class TurbineMapTestCase(unittest.TestCase):
             promotes=['*'])
 
         self.prob.setup(check=False)
-        # self.prob.root.list_connections()
-        # print p['Wp'], p['WpScaled']
-        # p.run()
 
     def test_case1(self):
         # 4 cases to check against
@@ -143,19 +135,19 @@ class TurbineMapTestCase(unittest.TestCase):
         print('WpMap:', pyc, npss)
         assert_near_equal(pyc, npss, tol)
 
-        # # check outputs of scaledOutput
-        # npss = data[h_map['turb.eff']]
-        # pyc = self.prob['eff']
-        # rel_err = abs(npss - pyc)/npss
-        # print('eff:', npss, pyc, rel_err)
-        # self.assertLessEqual(rel_err, tol)
+        # check outputs of scaledOutput
+        npss = data[h_map['turb.eff']]
+        pyc = self.prob['eff']
+        rel_err = abs(npss - pyc)/npss
+        print('eff:', npss, pyc, rel_err)
+        self.assertLessEqual(rel_err, tol)
 
-        # # check top level outputs
-        # npss = data[h_map['turb.PR']]
-        # pyc = self.prob['PR']
-        # rel_err = abs(npss - pyc)/npss
-        # print('PR:', npss, pyc, rel_err)
-        # self.assertLessEqual(rel_err, tol)
+        # check top level outputs
+        npss = data[h_map['turb.PR']]
+        pyc = self.prob['PR']
+        rel_err = abs(npss - pyc)/npss
+        print('PR:', npss, pyc, rel_err)
+        self.assertLessEqual(rel_err, tol)
 
 
 class TurbineMapODTestCase(unittest.TestCase):

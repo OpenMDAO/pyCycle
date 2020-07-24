@@ -111,7 +111,6 @@ class InletTestCase(unittest.TestCase):
             ts_computed = self.prob['inlet.Fl_O:stat:T']
 
             tol = 1e-4
-            # rel_err = abs(pt_computed - pt) / pt_computed
             assert_near_equal(pt_computed, pt, tol)
             assert_near_equal(ht_computed, ht, tol)
             assert_near_equal(Fram_computed, Fram, tol)

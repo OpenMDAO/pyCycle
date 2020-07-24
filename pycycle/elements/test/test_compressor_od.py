@@ -27,34 +27,26 @@ class CompressorODTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
+        # Remaining des_vars will be removed when set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17., units='psi')
-        des_vars.add_output('T', 500., units='degR')
         des_vars.add_output('W', 0., units='lbm/s')
-        des_vars.add_output('Nmech', 0., units='rpm')
         des_vars.add_output('area_targ', 50., units='inch**2')
 
-        des_vars.add_output('s_PR', val=1.)
-        des_vars.add_output('s_eff', val=1.)
-        des_vars.add_output('s_Wc', val=1.)
-        des_vars.add_output('s_Nc', val=1.)
-        des_vars.add_output('alphaMap', val=0.)
-
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
         self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("Nmech", "compressor.Nmech")
         self.prob.model.connect("area_targ", "compressor.area")
-
-        self.prob.model.connect("s_PR", "compressor.s_PR")
-        self.prob.model.connect("s_eff", "compressor.s_eff")
-        self.prob.model.connect("s_Wc", "compressor.s_Wc")
-        self.prob.model.connect("s_Nc", "compressor.s_Nc")
-        self.prob.model.connect('alphaMap', 'compressor.map.alphaMap')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('compressor', Compressor(
                 map_data=AXI5, design=False, elements=AIR_MIX, map_extrap=False))
+
+        self.prob.model.set_input_defaults('compressor.s_PR', val=1.)
+        self.prob.model.set_input_defaults('compressor.s_eff', val=1.)
+        self.prob.model.set_input_defaults('compressor.s_Wc', val=1.)
+        self.prob.model.set_input_defaults('compressor.s_Nc', val=1.)
+        self.prob.model.set_input_defaults('compressor.map.alphaMap', val=0.)
+        self.prob.model.set_input_defaults('compressor.Nmech', 0., units='rpm')
+        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
+        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
 
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
 
@@ -128,21 +120,17 @@ class CompressorODTestCase(unittest.TestCase):
         h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
         # 6 cases to check against
         for i, data in enumerate(ref_data):
-            # if i == 0:
-            #     pass  # skip design case
-            # else:
-                self.prob['s_PR'] = data[h_map['comp.s_PRdes']]
-                self.prob['s_Wc'] = data[h_map['comp.s_WcDes']]
-                self.prob['s_eff'] = data[h_map['comp.s_effDes']]
-                self.prob['s_Nc'] = data[h_map['comp.s_NcDes']]
+                self.prob['compressor.s_PR'] = data[h_map['comp.s_PRdes']]
+                self.prob['compressor.s_Wc'] = data[h_map['comp.s_WcDes']]
+                self.prob['compressor.s_eff'] = data[h_map['comp.s_effDes']]
+                self.prob['compressor.s_Nc'] = data[h_map['comp.s_NcDes']]
                 self.prob['compressor.map.RlineMap'] = data[h_map['comp.RlineMap']]
-                self.prob['Nmech'] = data[h_map['shaft.Nmech']]
+                self.prob['compressor.Nmech'] = data[h_map['shaft.Nmech']]
 
                 # input flowstation
-                self.prob['P'] = data[h_map['comp.Fl_I.Pt']]
-                self.prob['T'] = data[h_map['comp.Fl_I.Tt']]
+                self.prob['flow_start.P'] = data[h_map['comp.Fl_I.Pt']]
+                self.prob['flow_start.T'] = data[h_map['comp.Fl_I.Tt']]
                 self.prob['W'] = data[h_map['comp.Fl_I.W']]
-                # cu(data[h_map['comp.Fl_O.A']],"inch**2", "m**2")
                 self.prob['area_targ'] = data[h_map['comp.Fl_O.A']]
 
                 self.prob.run_model()

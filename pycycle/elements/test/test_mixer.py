@@ -159,16 +159,11 @@ class MixerTestcase(unittest.TestCase):
 
         p.run_model()
 
-        # assert_near_equal(p['mixer.Fl_O:stat:area'], 3290.1586448, tolerance=tol)
-        # assert_near_equal(p['mixer.Fl_O:tot:P'], 8.91898798, tolerance=tol)
-        # assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
-
     def test_mixer_partials(self):
 
         p = self._build_problem(designed_stream=1, complex=True)
         p.run_model()
         partials = p.check_partials(includes=['mixer.area_calc*', 'mixer.mix_flow*', 'mixer.imp_out*'], out_stream=None)
-        # print(partials)
         assert_check_partials(partials, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":

@@ -53,31 +53,26 @@ class CompressorTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17., units='psi')
-        des_vars.add_output('T', 500., units='degR')
-        des_vars.add_output('MN', 0.5)
         des_vars.add_output('W', 10., units='lbm/s')
         des_vars.add_output('PR', 6.)
         des_vars.add_output('eff', 0.9)
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
         self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("MN", "compressor.MN")
         self.prob.model.connect('PR', 'compressor.PR')
         self.prob.model.connect('eff', 'compressor.eff')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('compressor', Compressor(design=True, elements=AIR_MIX))
 
+        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
+        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
+        self.prob.model.set_input_defaults('compressor.MN', 0.5)
+
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
-
-        # from openmdao.api import view_model
-        # view_model(self.prob)
-        # exit()
 
     def test_case1(self):
         np.seterr(divide='raise')
@@ -85,30 +80,14 @@ class CompressorTestCase(unittest.TestCase):
         for i, data in enumerate(ref_data):
             self.prob['PR'] = data[h_map['comp.PRdes']]
             self.prob['eff'] = data[h_map['comp.effDes']]
-            self.prob['MN'] = data[h_map['comp.Fl_O.MN']]
+            self.prob['compressor.MN'] = data[h_map['comp.Fl_O.MN']]
 
             # input flowstation
-            self.prob['P'] = data[h_map['start.Pt']]
-            self.prob['T'] = data[h_map['start.Tt']]
+            self.prob['flow_start.P'] = data[h_map['start.Pt']]
+            self.prob['flow_start.T'] = data[h_map['start.Tt']]
             self.prob['W'] = data[h_map['start.W']]
             self.prob.run_model()
 
-            # print("    mapPRdes     :         PRdes       :        PR       :      scalarsPRmapDes : scaledOutput.PR")
-            # print(self.prob['PR'], data[h_map['comp.PRdes']], self.prob[
-            #       'PR'], self.prob['compressor.map.PRmap'])
-            # print("s_PR", self.prob['compressor.s_PR'])
-
-            # print("    mapeffDes     :         effDes       :        eff       :      scalars_effMapDes : scaledOutput.eff")
-            # print(self.prob['compressor.map.effDes'], data[h_map['comp.effDes']], self.prob[
-            #       'compressor.eff'], self.prob['compressor.map.scalars.effMapDes'])
-            # print("Rline", self.prob['compressor.map.RlineMap'])
-
-            # print(self.prob.model.resids._dat.keys())
-
-            #print("errWc: ", self.prob.model.resids['compressor.map.RlineMap'])
-
-            # quit()
-            # check outputs
             tol = 1e-3
 
             npss = data[h_map['comp.Fl_O.Pt']]
@@ -118,7 +97,6 @@ class CompressorTestCase(unittest.TestCase):
 
             npss = data[h_map['comp.Fl_O.Tt']]
             pyc = self.prob['compressor.Fl_O:tot:T'][0]
-            # print('foo test:', self.prob['compressor.enth_rise.ht_out'][0], data[h_map['start.Fl_O.ht']])
             print('Tt out:', npss, pyc)
             assert_near_equal(pyc, npss, tol)
 

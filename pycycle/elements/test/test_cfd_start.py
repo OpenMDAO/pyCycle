@@ -16,13 +16,14 @@ class CFDStartTestCase(unittest.TestCase):
 
         p = om.Problem()
 
+        # remaining indeps will be removed once set_input_defaults is fixed
         des_vars = p.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Ps', units='kPa', val=100)
-        des_vars.add_output('V', units='m/s', val=100.)
-        des_vars.add_output('area', units='m**2', val=1)
         des_vars.add_output('W', units='kg/s', val=100.)
 
         p.model.add_subsystem('cfd_start', CFDStart(), promotes=['*'])
+        p.model.set_input_defaults('Ps', units='kPa', val=100)
+        p.model.set_input_defaults('V', units='m/s', val=100.)
+        p.model.set_input_defaults('area', units='m**2', val=1)
 
         p.setup()
         p.run_model()

@@ -52,9 +52,6 @@ class PropsRHSTestCase(unittest.TestCase):
         assert_near_equal(p['rhs_P'], goal_rhs_P, tol)
         assert_near_equal(p['lhs_TP'], goal_lhs_TP, tol)
 
-        # p.check_partial_derivatives()
-
-
 class PropsCalcsTestCase(unittest.TestCase):
 
     def setUp(self):

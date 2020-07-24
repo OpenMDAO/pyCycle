@@ -80,19 +80,6 @@ class TestSetStaticArea(unittest.TestCase):
             A_computed = p['area']
             MN_computed = p['set_static_A.MN']
 
-            # I think these area already converted in the file: Ken
-            # V_SI = cu(V, 'ft/s', 'm/s')
-            # A_SI = cu(A, 'inch**2', 'm**2')
-
-            # print(p['T'], p['P'])
-            # print("Ps", Ps_computed, Ps)
-            # print("Ts", Ts_computed, Ts)
-            # print("gamma", gams_computed, gams)
-            # print("V", V_computed, V)
-            # print("A", A_computed, A)
-            # print("MN", MN_computed, MN)
-            # print("rhos", rhos_computed, rhos)
-            # print()
             tol = 1.0e-4
             assert_near_equal(gams_computed, gams, tol)
             assert_near_equal(MN_computed, MN, tol)

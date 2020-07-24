@@ -17,8 +17,6 @@ from pycycle.maps.lpt2269 import LPT2269
 
 from pycycle.elements.test.util import check_element_partials
 
-# AIR_MIX = {'O':1, 'C':1, 'N':1, 'Ar':1}
-
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/turbine.csv", delimiter=",", skiprows=1)
 
@@ -107,11 +105,6 @@ class TurbineTestCase(unittest.TestCase):
 
             # check outputs
             tol = 5e-4
-
-            # print("effDes", self.prob['turbine.map.effDes'])
-            # print("S_eff", self.prob['turbine.s_effDes'])
-            # print("effMap", self.prob['turbine.map.desMap.effMap'])
-
 
             npss = data[h_map['EffDes']]
             pyc  = self.prob['eff'][0]

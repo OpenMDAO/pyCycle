@@ -15,9 +15,6 @@ from pycycle.constants import AIR_MIX, janaf_init_prod_amounts
 
 from pycycle.elements.test.util import check_element_partials
 
-
-# AIR_MIX = {'O':1, 'C':1, 'N':1, 'Ar':1}
-
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/nozzle.csv", delimiter=",", skiprows=1)
 
@@ -54,7 +51,7 @@ class NozzleTestCase(unittest.TestCase):
                 fl_src, v_name), '%s:tot:%s' % (fl_target, v_name))
 
         # no prefix
-        for v_name in ('W', ):  # ('Wc', 'W', 'FAR'):
+        for v_name in ('W', ): 
             self.prob.model.connect(
                 '%s:stat:%s' %
                 (fl_src, v_name), '%s:stat:%s' %
@@ -64,9 +61,7 @@ class NozzleTestCase(unittest.TestCase):
         self.prob.model.connect('P', 'flow_start.P')
         self.prob.model.connect('T', 'flow_start.T')
         self.prob.model.connect('MN', 'flow_start.MN')
-        # self.prob.model.connect('MN', 'nozzle.Fl_I:stat:MN')
         self.prob.model.connect('Ps_exhaust', 'nozzle.Ps_exhaust')
-        # self.prob.model.connect('set_tp.props.tp2props.flow_prods', 'compressor.Fl_I:flow_prods')
 
         self.prob.setup(check=False)
 
@@ -82,13 +77,7 @@ class NozzleTestCase(unittest.TestCase):
             self.prob['W'] = data[h_map['Fl_I.W']]
             self.prob['MN'] = data[h_map['Fl_I.MN']]
 
-            # self.prob['nozzle.throat_static_choked.n2ls.P'] = data[h_map['Fl_O.Ps']]
-            # self.prob.root.list_connections()
             self.prob.run_model()
-
-            # print self.prob['nozzle.throat_static_choked.flow:h']
-            # print self.prob['nozzle.throat_static_choked.flow:S']
-            # quit()
 
             # check outputs
             Fg, V, PR = data[h_map['Fg']], data[
@@ -103,56 +92,14 @@ class NozzleTestCase(unittest.TestCase):
             Ath_computed = self.prob['nozzle.Fl_O:stat:area']
             Pt_computed = self.prob['nozzle.Fl_O:tot:P']
 
-            # print('Cfg:      ', self.prob['nozzle.Cfg'])
-            # print('Ps_exh:   ', self.prob['Ps_exhaust'], data[h_map['PsExh']])
-            # print('S_in:     ', self.prob['nozzle.Fl_I:tot:S'])
-            # print('Pt_in:    ', self.prob['nozzle.Fl_I:tot:P'])
-            # print('Tt_in:    ', self.prob['nozzle.Fl_I:tot:T'])
-            # print('ht_in:    ', self.prob['nozzle.Fl_I:tot:h'])
-            # print('rhot_in:  ', self.prob['nozzle.Fl_I:tot:rho'])
-            # print('gamt_in:  ', self.prob['nozzle.Fl_I:tot:gamma'])
-            # print('----------------------')
-            # print('MNth:     ', self.prob['nozzle.Fl_O:stat:MN'])
-            # print('S_out:    ', self.prob['nozzle.Fl_O:tot:S'])
-            # print('Pt_out:   ', self.prob['nozzle.Fl_O:tot:P'])
-            # print('Tt_out:   ', self.prob['nozzle.Fl_O:tot:T'])
-            # print('ht_out:   ', self.prob['nozzle.Fl_O:tot:h'])
-            # # print('rhot_out: ', self.prob['nozzle.Fl_O.rhot'])
-            # # print('gamt_out: ', self.prob['nozzle.Fl_O.gamt'])
-            # print('Ps_out:   ', self.prob['nozzle.Fl_O:stat:P'])
-            # print('----------------------')
-            # print('Fg:       ', self.prob['nozzle.Fg'])
-            # print('Fg_ideal: ', self.prob['nozzle.perf_calcs.Fg_ideal'])
-            # print('MN:       ', MN_computed, MN)
-            # # print('V_actual: ', self.prob['nozzle..Vactual'])
-            # # print('Aexit:    ', self.prob['nozzle.Fl_O.area'])
-            # print('PR:       ', PR_computed, PR)
-            # print('----------------------')
-
             # Used for all
             tol = 5.e-3
 
             assert_near_equal(MN_computed, MN, tol)
 
-            # print "bar", Fg_computed, Fg
             assert_near_equal(Fg_computed, Fg, tol)
             assert_near_equal(V_computed, V, tol)
             assert_near_equal(Pt_computed, Pt, tol)
-
-            # print "foo", PR_computed, PR
-            # print("Fg_comp ", Fg_computed)
-
-            # print("psE ", self.prob['nozzle.Ps_exhaust'])
-            # print("videal ", self.prob['nozzle.perf_calcs.V_ideal'])
-            # print("A ideal ", self.prob['nozzle.perf_calcs.A_ideal'])
-            # print("Ps ideal ",self.prob['nozzle.perf_calcs.Ps_ideal'])
-            # print("w ", self.prob['nozzle.Fl_I:stat:W'])
-            # print("S ", self.prob['nozzle.ideal_flow.S'])
-            # print("ht ", self.prob['nozzle.ideal_flow.ht'])
-            # print("nn ", self.prob['nozzle.ideal_flow.init_prod_amounts'])
-            # print("Ps ", self.prob['nozzle.ideal_flow.Ps'])
-            # print("W_in ", self.prob['nozzle.perf_calcs.W_in'])
-            # print("W ", self.prob['nozzle.Fl_O:stat:W'])
 
             assert_near_equal(PR_computed, PR, tol)
             assert_near_equal(Ath_computed, Ath, tol)

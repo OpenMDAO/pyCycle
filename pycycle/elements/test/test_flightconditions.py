@@ -40,10 +40,6 @@ class FlightConditionsTestCase(unittest.TestCase):
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
 
-        # from openmdao.api import view_model
-        # view_model(self.prob)
-        # exit()
-
     def test_case1(self):
 
         # 6 cases to check against
@@ -54,12 +50,6 @@ class FlightConditionsTestCase(unittest.TestCase):
 
             if self.prob['MN'] < 1e-10:
                 self.prob['MN'] += 1e-6
-
-            # print(data[h_map['alt']], data[h_map['MN']], data[h_map['dTs']])
-
-            # from openmdao.api import view_model
-            # view_model(self.prob)
-            # exit()
 
             self.prob.run_model()
 
@@ -75,13 +65,6 @@ class FlightConditionsTestCase(unittest.TestCase):
 
             Ts = data[h_map['Ts']]
             Ts_c = self.prob['fc.Fl_O:stat:T']
-
-            # print('alt, MN, dts: ', self.prob['alt'], self.prob['MN'], self.prob['dTs'])
-            # print('Pt:', Pt_c, Pt)
-            # print('Ps:', Ps_c, Ps)
-            # print('Tt:', Tt_c, Tt)
-            # print('Ts:', Ts_c, Ts)
-            # print()
 
             tol = 1e-4
             assert_near_equal(Pt_c, Pt, tol)

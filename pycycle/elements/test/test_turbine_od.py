@@ -114,15 +114,9 @@ class TurbineODTestCase(unittest.TestCase):
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
-        # self.prob.print_all_convergence(1)
-
-        # from openmdao.api import view_model
-        # view_model(self.prob)
-        # exit()
 
     def test_case1(self):
 
-        # np.seterr(all='raise')
         # 6 cases to check against
         for i, data in enumerate(ref_data):
             # input turbine variables
@@ -146,11 +140,10 @@ class TurbineODTestCase(unittest.TestCase):
 
             # input burner variable
             self.prob['burner_FAR'] = data[h_map['burn.FAR']]
-            # cu(data[h_map['turb.Fl_O.A']],"inch**2", "m**2")
+
             self.prob['area_targ'] = data[h_map['turb.Fl_O.A']]
 
             self.prob.run_model()
-            # print("n ", self.prob['flow_start.Fl_O:stat:n'])
 
             print('---- Test Case', i, ' ----')
 
@@ -208,34 +201,33 @@ class TurbineODTestCase(unittest.TestCase):
             print('S in:', npss, pyc)
             assert_near_equal(pyc, npss, tol)
 
-            # npss = data[h_map['turb.Fl_O.s']]
-            # pyc = self.prob['turbine.Fl_O:tot:S'][0]
-            # print('S out:', npss, pyc)
-            # assert_near_equal(pyc, npss, tol)
+            npss = data[h_map['turb.Fl_O.s']]
+            pyc = self.prob['turbine.Fl_O:tot:S'][0]
+            print('S out:', npss, pyc)
+            assert_near_equal(pyc, npss, tol)
 
-            # npss = data[h_map['turb.pwr']]
-            # pyc = self.prob['turbine.power'][0]
-            # print('Power:', npss, pyc)
-            # assert_near_equal(pyc, npss, tol)
+            npss = data[h_map['turb.pwr']]
+            pyc = self.prob['turbine.power'][0]
+            print('Power:', npss, pyc)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['turb.Fl_O.Pt']]
             pyc = self.prob['turbine.Fl_O:tot:P'][0]
             print('Pt out:', npss, pyc)
             assert_near_equal(pyc, npss, tol)
 
-            # # these fail downstream of combustor
-            # npss = data[h_map['turb.Fl_O.Ps']]
-            # pyc = self.prob['turbine.Fl_O:stat:P'][0]
-            # print('Ps out:', npss, pyc)
-            # assert_near_equal(pyc, npss, tol)
+            # these fail downstream of combustor
+            npss = data[h_map['turb.Fl_O.Ps']]
+            pyc = self.prob['turbine.Fl_O:stat:P'][0]
+            print('Ps out:', npss, pyc)
+            assert_near_equal(pyc, npss, tol)
 
-            # npss = data[h_map['turb.Fl_O.Ts']]
-            # pyc = self.prob['turbine.Fl_O:stat:T'][0]
-            # print('Ts out:', npss, pyc)
-            # assert_near_equal(pyc, npss, tol)
-            # print("")
+            npss = data[h_map['turb.Fl_O.Ts']]
+            pyc = self.prob['turbine.Fl_O:stat:T'][0]
+            print('Ts out:', npss, pyc)
+            assert_near_equal(pyc, npss, tol)
+            print("")
 
-            # break
             print()
 
 

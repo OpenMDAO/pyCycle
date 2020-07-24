@@ -89,7 +89,7 @@ class splitterTestCase(unittest.TestCase):
                 (fl_src, v_name), '%s:tot:%s' %
                 (fl_target, v_name))
         # no prefix
-        for v_name in ('W', ):  # ('Wc', 'W', 'FAR'):
+        for v_name in ('W', ):  
             self.prob.model.connect(
                 '%s:stat:%s' %
                 (fl_src, v_name), '%s:stat:%s' %

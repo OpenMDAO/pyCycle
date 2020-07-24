@@ -52,7 +52,7 @@ class SpeciesDataTestCase(unittest.TestCase):
 
         thermo = species_data.Thermo(thermo_data_module=thermo_data, init_reacts=reactants)
         elements = thermo.elements
-        proportions = thermo.get_b0(reactants)
+        proportions = thermo.get_b0()
 
         reactants2 = {'O2': 20.78, 'H2O':1.0, 'CO2':.01, 'Ar':0.01}
         expected_elements2 = {'Ar', 'C', 'H', 'O'}
@@ -60,7 +60,7 @@ class SpeciesDataTestCase(unittest.TestCase):
 
         thermo2 = species_data.Thermo(thermo_data_module=thermo_data, init_reacts=reactants2)
         elements2 = thermo2.elements
-        proportions2 = thermo2.get_b0(reactants2)
+        proportions2 = thermo2.get_b0()
 
         self.assertEqual(elements, expected_elements)
         assert_near_equal(proportions, expected_proportions, 1e-4)
@@ -117,20 +117,12 @@ class SpeciesDataTestCase(unittest.TestCase):
         CpJ_expected = np.array([0.0, 8.49157682e-04, 2.05623736e-03, 0.0,
         8.39005783e-04, 1.91861539e-03, 2.54742879e-03, 8.12550383e-04, -5.62484525e-05, 8.19626699e-04])
         CpJ_expected3 = np.array([8.49157682e-04, 2.05623736e-03, 8.19626699e-04])
-        
-        n1 = thermo1.init_prod_amounts
-        n2 = thermo2.init_prod_amounts
-        n3 = thermo3.init_prod_amounts
-        n_expected = np.array([3.23319258e-04, 0.0, 1.10132241e-05, 0.0,
-        0.0, 0.0, 0.0, 2.69578868e-02, 0.0, 7.23199412e-03])
-        n_expected2 = -np.ones(thermo2.num_prod)
-        n_expected3 = -np.ones(thermo3.num_prod)
 
         b01 = thermo1.b0
         b02 = thermo2.b0
         b03 = thermo3.b0
         b0_expected = np.array([3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02])
-        b0_expected3 = np.array([0.02496742, 0.04993483])
+        b0_expected3 = np.array([0.02272211, 0.04544422])
 
         tol = 1e-4
 
@@ -141,7 +133,6 @@ class SpeciesDataTestCase(unittest.TestCase):
         assert_near_equal(HJ1, HJ_expected, tol)
         assert_near_equal(SJ1, SJ_expected, tol)
         assert_near_equal(CpJ1, CpJ_expected, tol)
-        assert_near_equal(n1, n_expected, tol)
         assert_near_equal(b01, b0_expected, tol)
 
         assert_near_equal(H02, H0_expected, tol)
@@ -151,7 +142,6 @@ class SpeciesDataTestCase(unittest.TestCase):
         assert_near_equal(HJ2, HJ_expected, tol)
         assert_near_equal(SJ2, SJ_expected, tol)
         assert_near_equal(CpJ2, CpJ_expected, tol)
-        assert_near_equal(n2, n_expected2, tol)
         assert_near_equal(b02, b0_expected, tol)
 
         assert_near_equal(H03, H0_expected3, tol)
@@ -161,7 +151,6 @@ class SpeciesDataTestCase(unittest.TestCase):
         assert_near_equal(HJ3, HJ_expected3, tol)
         assert_near_equal(SJ3, SJ_expected3, tol)
         assert_near_equal(CpJ3, CpJ_expected3, tol)
-        assert_near_equal(n3, n_expected3, tol)
         assert_near_equal(b03, b0_expected3, tol)
 
     def test_element_filter(self):

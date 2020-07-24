@@ -53,8 +53,6 @@ class NozzleTestCase(unittest.TestCase):
         elif LossType == 'Cfg':
             self.prob.model.connect("Cfg", "nozzle.Cfg")
 
-        # self.prob.model.connect("area_targ", "compressor.area")
-
         self.prob.set_solver_print(level=2)
         self.prob.setup(check=False)
 
@@ -128,7 +126,6 @@ class NozzleTestCase(unittest.TestCase):
                             self.prob['nozzle.Throat:stat:MN'])
             self.err_helper('Fl_O.MN', data[self.h_map['Fl_O.MN']],
                             self.prob['nozzle.Fl_O:stat:MN'])
-            # self.err_helper('V_actual', data[self.h_map['Vactual']], self.prob['nozzle.Fl_O:stat:V'])
 
     def test_CVnozzle(self):
 

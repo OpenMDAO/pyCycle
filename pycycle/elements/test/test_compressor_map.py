@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
 from openmdao.utils.assert_utils import assert_near_equal
@@ -64,15 +64,6 @@ class CompressorMapTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wc', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Nc', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('s_Nc', 1.721074624)
-        des_vars.add_output('s_PR', 0.147473296)
-        des_vars.add_output('s_Wc', 2.152309293)
-        des_vars.add_output('s_eff', 0.9950409659)
-
         self.prob.model.add_subsystem(
             'map',
             CompressorMap(
@@ -80,9 +71,13 @@ class CompressorMapTestCase(unittest.TestCase):
                 design=False),
             promotes=['*'])
 
-        # prob.print_all_convergence()
-
-        # Target PR: 1.7373664799999999
+        self.prob.model.set_input_defaults('Wc', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Nc', 172.11870165984794, units='rpm')
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
+        self.prob.model.set_input_defaults('s_Nc', 1.721074624)
+        self.prob.model.set_input_defaults('s_PR', 0.147473296)
+        self.prob.model.set_input_defaults('s_Wc', 2.152309293)
+        self.prob.model.set_input_defaults('s_eff', 0.9950409659)
 
         newton = self.prob.model.nonlinear_solver = NewtonSolver()
         newton.options['atol'] = 1e-8
@@ -99,8 +94,6 @@ class CompressorMapTestCase(unittest.TestCase):
 
 
         self.prob.setup(check=False)
-        # print p['Wc'], p['WcScaled']
-        # p.run()
 
     def test_caseOD1(self):
         # 4 cases to check against

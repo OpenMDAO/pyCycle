@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 
 from pycycle.elements.combustor import Combustor
 
@@ -34,32 +34,13 @@ class BurnerTestCase(unittest.TestCase):
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
                            1.00000000e-10, 7.23198770e-03])
 
-        model.add_subsystem(
-            'des_var1',
-            IndepVarComp(
-                'Fl_I:tot:P',
-                100.0,
-                units='lbf/inch**2'),
-            promotes=["*"])
-        model.add_subsystem(
-            'des_var2',
-            IndepVarComp(
-                'Fl_I:tot:h',
-                100.0,
-                units='Btu/lbm'),
-            promotes=["*"])
-        model.add_subsystem(
-            'des_var3',
-            IndepVarComp(
-                'Fl_I:stat:W',
-                100.0,
-                units='lbm/s'),
-            promotes=["*"])
-        model.add_subsystem('des_var4', IndepVarComp('Fl_I:FAR', 0.0), promotes=["*"])
-        model.add_subsystem('des_var5', IndepVarComp('MN', 0.5), promotes=["*"])
-        model.add_subsystem('des_var6', IndepVarComp('Fl_I:tot:n', n_init), promotes=["*"])
-
         model.add_subsystem('combustor', Combustor(), promotes=["*"])
+        model.set_input_defaults('Fl_I:tot:P', 100.0, units='lbf/inch**2')
+        model.set_input_defaults('Fl_I:tot:h', 100.0, units='Btu/lbm')
+        model.set_input_defaults('Fl_I:stat:W', 100.0, units='lbm/s')
+        model.set_input_defaults('Fl_I:FAR', 0.0)
+        model.set_input_defaults('MN', 0.5)
+        model.set_input_defaults('Fl_I:tot:n', n_init)
 
         prob.set_solver_print(level=2)
         prob.setup(check=False)
@@ -118,7 +99,6 @@ class BurnerTestCase(unittest.TestCase):
             print('')
 
             check_element_partials(self, prob, tol=1e-4)
-        # prob.check_partials()
 
 if __name__ == "__main__":
     unittest.main()

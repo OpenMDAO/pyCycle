@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 
 from openmdao.utils.assert_utils import assert_near_equal
 
@@ -22,15 +22,9 @@ class SetTotalTestCase(unittest.TestCase):
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="T")
         p.model.set_input_defaults('b0', thermo.b0)
+        p.model.set_input_defaults('T', 4000., units='degK')
+        p.model.set_input_defaults('P', 1.034210, units="bar")
         r = p.model
-        r.add_subsystem(
-            'n_init',
-            IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
-            promotes=["*"])
-        r.add_subsystem('T_init', IndepVarComp('T', 4000., units='degK'), promotes=["*"])
-        r.add_subsystem('P_init', IndepVarComp('P', 1.034210, units="bar"), promotes=["*"])
 
         p.set_solver_print(level=2)
         p.setup(check=False)
@@ -55,7 +49,6 @@ class SetTotalTestCase(unittest.TestCase):
         p['P'] = 1.034210  # bar
         p.run_model()
 
-        # [0.00036, 0.99946, 0.00018])
         expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
         n = p['n']
         n_moles = p['n_moles']
@@ -74,26 +67,17 @@ class SetTotalTestCase(unittest.TestCase):
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="h")
         p.model.set_input_defaults('b0', thermo.b0)
+        p.model.set_input_defaults('h', 340, units='cal/g')
+        p.model.set_input_defaults('P', 1.034210, units='bar')
         p.model.suppress_solver_output = True
 
         r = p.model
-        r.add_subsystem(
-            'n_init',
-            IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
-            promotes=["*"])
-        r.add_subsystem('h_init', IndepVarComp('h', 340, units='cal/g'), promotes=["*"])
-        r.add_subsystem('P_init', IndepVarComp('P', 1.034210, units='bar'), promotes=["*"])
 
         p.set_solver_print(level=2)
 
         p.setup(check=False)
 
         p.run_model()
-
-        # goal_concentrations = np.array([0.61976,0.07037,0.30988]) # original
-        # cea mole fractions
 
         expected_concentrations = np.array([0.61989858, 0.07015213, 0.30994929])
 
@@ -114,16 +98,12 @@ class SetTotalTestCase(unittest.TestCase):
         p['n'] = np.array([.33333, .33333, .33333])
         p.run_model()
 
-        # [0.00036, 0.99946, 0.00018])
         expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
 
         n = p['n']
         n_moles = p['n_moles']
         concentrations = n / n_moles
 
-        # print(expected_concentrations)
-        # print(concentrations)
-        # print(p['T'])
         assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
         expected_n_moles = 0.022726185333
@@ -139,22 +119,10 @@ class SetTotalTestCase(unittest.TestCase):
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="S")
         p.model.set_input_defaults('b0', thermo.b0)
+        p.model.set_input_defaults('S', 2.35711010759, units="Btu/(lbm*degR)")
+        p.model.set_input_defaults('P', 1.034210, units="bar")
         p.model.suppress_solver_output = True
         r = p.model
-        r.add_subsystem(
-            'n_init',
-            IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
-            promotes=["*"])
-        r.add_subsystem(
-            'S_init',
-            IndepVarComp(
-                'S',
-                2.35711010759,
-                units="Btu/(lbm*degR)"),
-            promotes=["*"])
-        r.add_subsystem('P_init', IndepVarComp('P', 1.034210, units="bar"), promotes=["*"])
 
         p.set_solver_print(level=2)
 
@@ -164,11 +132,7 @@ class SetTotalTestCase(unittest.TestCase):
 
         np.seterr(all='raise')
 
-        # goal_concentrations = np.array([0.61976,0.07037,0.30988]) # original
-        # cea mole fractions
         expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-
-        # [  2.35337787e-01   1.16205327e+03   1.17668894e-01]
 
         n = p['n']
         n_moles = p['n_moles']
@@ -182,10 +146,8 @@ class SetTotalTestCase(unittest.TestCase):
 
         # 1500K
         p['S'] = 1.5852424435
-        # p.model.chem_eq.DEBUG=True
         p.run_model()
 
-        # [0.00036, 0.99946, 0.00018])
         expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
         n = p['n']
         n_moles = p['n_moles']
@@ -196,9 +158,6 @@ class SetTotalTestCase(unittest.TestCase):
         expected_n_moles = 0.022726185333
         assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16381209181, 1e-4)
-
-        # check = p.check_partial_derivatives()
-
 
 if __name__ == "__main__":
 

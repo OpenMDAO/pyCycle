@@ -6,6 +6,7 @@ from collections import OrderedDict
 from pycycle.cea.thermo_data import co2_co_o2
 from pycycle.cea.thermo_data import janaf
 from pycycle.cea.thermo_data import wet_air
+from pycycle import constants
 
 #from ad.admath import log
 from numpy import log
@@ -23,7 +24,7 @@ class Thermo(object):
         self.temp_ranges = None
         self.valid_temp_range = None
         self.wt_mole = None # array of mole weights
-        self.init_prod_amounts = None # concentrations (sum to 1)
+        # self.init_prod_amounts = None # concentrations (sum to 1)
         self.thermo_data_module = thermo_data_module
         self.prod_data = self.thermo_data_module.products
         self.init_reacts = init_reacts
@@ -50,7 +51,7 @@ class Thermo(object):
                          if self.elements.issuperset(prod_data['elements'])]
         
         elif init_elements is None and init_reacts is not None:
-            self.get_elements(init_reacts) #sets self.elements
+            self.get_elements() #sets self.elements
 
             self.products = [name for name, prod_data in self.prod_data.items()
                          if self.elements.issuperset(prod_data['elements'])]
@@ -151,50 +152,33 @@ class Thermo(object):
 
         if init_reacts is not None:
 
-            #expand the init_reacts out to include all products, not just those provided
-            full_init_react = OrderedDict()
-            for p in self.prod_data:
-                # initial amounts need to be given in mass ratios
-                if p in init_reacts:
-                    full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
-                else:
-                    full_init_react[p] = 0.
+            self.b0 = self.get_b0()
 
-            init_reacts = full_init_react
-
-            init_prod_amounts = [init_reacts[name] for name in init_reacts
-                                 if self.elements.issuperset(self.prod_data[name]['elements'])]
-
-            self.init_prod_amounts = np.array(init_prod_amounts)
-            self.init_prod_amounts = self.init_prod_amounts/np.sum(self.init_prod_amounts) # normalize to 1
-
-            self.init_prod_amounts /= self.wt_mole
-
-            self.b0 = np.sum(self.aij*self.init_prod_amounts, axis=1) #moles of each element per kg of mixture (right?)
+            self.b0 = self.b0*self.element_wt
+            self.b0 = self.b0/np.sum(self.b0)
+            self.b0 = self.b0/self.element_wt #moles of each element per kg of mixture
 
         else:
 
-            mag = 0.05582884488692894 #value for b0 magnitude that will help with convergence 
+            self.b0 = list(self.init_elements.values())
 
-            self.b0 = list(self.init_elements.values()) #unscaled
-            self.b0 = self.b0/np.linalg.norm(self.b0) #scale to 1
-            self.b0 = self.b0*mag #scale to desired magnitude
-
-            self.init_prod_amounts = -np.ones(self.num_prod) #set attribute to a nonsensical value
+            self.b0 = self.b0*self.element_wt
+            self.b0 = self.b0/np.sum(self.b0)
+            self.b0 = self.b0/self.element_wt #moles of each element per kg of mixture
 
         self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
 
-    def get_elements(self, reactants):#note, reactants is assumed to be a dictionary
+    def get_elements(self):#note, reactants is assumed to be a dictionary
 
         self.elements = set()
 
-        for name in reactants: # figure out which elements are present
-            if reactants[name] > 0:
+        for name in self.init_reacts: # figure out which elements are present
+            if self.init_reacts[name] > 0:
                 self.elements.update(self.prod_data[name]['elements'])
 
         return
 
-    def get_b0(self, reactants):#note, reactants is assumed to be a dictionary
+    def get_b0(self):#note, reactants is assumed to be a dictionary
 
         element_list = sorted(self.elements)
 
@@ -202,14 +186,14 @@ class Thermo(object):
 
         for e in element_list:
 
-            row = [self.prod_data[react]['elements'].get(e,0) for react in reactants]
+            row = [self.prod_data[react]['elements'].get(e,0) for react in self.init_reacts]
             aij.append(row)
 
         b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
 
         for i, element in enumerate(element_list):
-            for j, reactant in enumerate(reactants):
-                b_values[i] += aij[i][j]*reactants[reactant]
+            for j, reactant in enumerate(self.init_reacts):
+                b_values[i] += aij[i][j]*self.init_reacts[reactant]
 
         return(b_values)
 
@@ -250,7 +234,8 @@ class Thermo(object):
 
 if __name__ == "__main__":
 
-    thermo = Thermo(co2_co_o2, init_elements=co2_co_o2.default_elements)
+    # thermo = Thermo(co2_co_o2, init_elements=constants.co2_co_o2_default_elements)
+    thermo = Thermo(co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)
@@ -260,7 +245,6 @@ if __name__ == "__main__":
     HJ = thermo.H0_applyJ(T, 1.)
     SJ = thermo.S0_applyJ(T, 1)
     CpJ = thermo.Cp0_applyJ(T, 1)
-    n = thermo.init_prod_amounts
     b0 = thermo.b0
     print('\nT', T)
     print('\nH0', H0)
@@ -269,5 +253,4 @@ if __name__ == "__main__":
     print('\nHJ', HJ)
     print('\nSJ', SJ)
     print('\nCpJ', CpJ)
-    print('\nn', n)
     print('\nb0', b0, '\n')
