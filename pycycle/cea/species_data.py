@@ -154,7 +154,7 @@ class Thermo(object):
 
             # These two methods return slightly different b0 values. Possibly could be due to numerical differences between 
             # the molar weight of the products and the molar weight of the elements. In method 1, the molar weight of the products is used, and 
-            # in method 2 the molar weight of the elements is used. Theses weights are multiplied by their respective b0 or concentration values,
+            # in method 2 the molar weight of the elements is used. These weights are multiplied by their respective b0 or concentration values,
             # and then those multiplied results are summed together in order to normalize the total weight. Because of these mathematic operations,
             # some amount of numerical error could be introduced. That may be why test_mixer.py is failing (it has a very tight tolerance).
             # This hypothesis is supported by the fact that the more elements/products you include, the greater the deviation is between b0 calculated using methods 1 and 2.
@@ -165,27 +165,26 @@ class Thermo(object):
             # uncomment this section of code and comment method 2 to make all tests pass
 
 
-            # expand the init_reacts out to include all products, not just those provided
-            full_init_react = OrderedDict()
-            for p in self.prod_data:
-                # initial amounts need to be given in mass ratios
-                if p in init_reacts:
-                    full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
-                else:
-                    full_init_react[p] = 0.
+            # # expand the init_reacts out to include all products, not just those provided
+            # full_init_react = OrderedDict()
+            # for p in self.prod_data:
+            #     # initial amounts need to be given in mass ratios
+            #     if p in init_reacts:
+            #         full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
+            #     else:
+            #         full_init_react[p] = 0.
 
-            init_reacts = full_init_react
+            # init_reacts = full_init_react
 
-            init_prod_amounts = [init_reacts[name] for name in init_reacts
-                                 if self.elements.issuperset(self.prod_data[name]['elements'])]
+            # init_prod_amounts = [init_reacts[name] for name in init_reacts
+            #                      if self.elements.issuperset(self.prod_data[name]['elements'])]
 
-            init_prod_amounts = np.array(init_prod_amounts)
-            # print('molecular based total mass', np.sum(init_prod_amounts))
-            init_prod_amounts = init_prod_amounts/np.sum(init_prod_amounts) # normalize to 1kg of matter
+            # init_prod_amounts = np.array(init_prod_amounts)
+            # init_prod_amounts = init_prod_amounts/np.sum(init_prod_amounts) # normalize to 1kg of matter
 
-            init_prod_amounts /= self.wt_mole
+            # init_prod_amounts /= self.wt_mole
 
-            self.b0 = np.sum(self.aij*init_prod_amounts, axis=1) #moles of each element per kg of mixture 
+            # self.b0 = np.sum(self.aij*init_prod_amounts, axis=1) #moles of each element per kg of mixture 
 
 ################ END METHOD NUMBER ONE ############################################################################
 
@@ -197,7 +196,6 @@ class Thermo(object):
 
             self.b0 = self.get_b0()
             self.b0 = self.b0*self.element_wt
-            # print('elemental based total mass', np.sum(self.b0))
             self.b0 = self.b0/np.sum(self.b0)
             self.b0 = self.b0/self.element_wt  #moles of each element per kg of mixture 
 
@@ -280,8 +278,8 @@ class Thermo(object):
 if __name__ == "__main__":
 
     # thermo = Thermo(co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
-    # thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
-    thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
+    thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
+    # thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)

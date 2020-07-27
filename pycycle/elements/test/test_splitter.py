@@ -65,20 +65,18 @@ class splitterTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17., units='psi')
-        des_vars.add_output('T', 500., units='degR')
         des_vars.add_output('W', 10., units='lbm/s')
-        des_vars.add_output('MN1', 0.5)
-        des_vars.add_output('MN2', 0.5)
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
         self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect('MN1', 'splitter.MN1')
-        self.prob.model.connect('MN2', 'splitter.MN2')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('splitter', Splitter(elements=AIR_MIX))
+
+        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
+        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
+        self.prob.model.set_input_defaults('splitter.MN1', 0.5)
+        self.prob.model.set_input_defaults('splitter.MN2', 0.5)
 
         #total and static
         fl_src = "flow_start.Fl_O"
@@ -104,11 +102,11 @@ class splitterTestCase(unittest.TestCase):
             self.prob['splitter.BPR'] = data[h_map['BPR']]
 
             # input flowstation
-            self.prob['P'] = data[h_map['Fl_I.Pt']]
-            self.prob['T'] = data[h_map['Fl_I.Tt']]
+            self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
+            self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
             self.prob['W'] = data[h_map['Fl_I.W']]
-            self.prob['MN1'] = data[h_map['Fl_O1.MN']]
-            self.prob['MN2'] = data[h_map['Fl_O2.MN']]
+            self.prob['splitter.MN1'] = data[h_map['Fl_O1.MN']]
+            self.prob['splitter.MN2'] = data[h_map['Fl_O2.MN']]
             self.prob['splitter.Fl_I:stat:V'] = data[h_map['Fl_I.V']]
             self.prob.run_model()
 

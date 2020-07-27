@@ -53,31 +53,25 @@ class TurbineTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17.0, units='psi')
-        des_vars.add_output('T', 500.0, units='degR')
         des_vars.add_output('W', 100.0, units='lbm/s')
-        des_vars.add_output('PR', 4.0)
-        des_vars.add_output('MN', 0.0)
-        des_vars.add_output('Nmech', 1000.0, units='rpm')
-        des_vars.add_output('flow_start_MN', 0.0)
         des_vars.add_output('eff', 0.9)
-
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True,
                                                          elements=AIR_MIX))
 
+        self.prob.model.set_input_defaults('turbine.Nmech', 1000.0, units='rpm')
+        self.prob.model.set_input_defaults('flow_start.MN', 0.0)
+        self.prob.model.set_input_defaults('turbine.PR', 4.0)
+        self.prob.model.set_input_defaults('turbine.MN', 0.0)
+        self.prob.model.set_input_defaults('flow_start.P', 17.0, units='psi')
+        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
+
         connect_flow(self.prob.model, 'flow_start.Fl_O', 'turbine.Fl_I')
 
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
         self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("flow_start_MN", "flow_start.MN")
-
-        self.prob.model.connect("PR", "turbine.PR")
-        self.prob.model.connect("MN", "turbine.MN")
-        self.prob.model.connect("Nmech", "turbine.Nmech")
         self.prob.model.connect('eff','turbine.eff')
 
         self.prob.setup(check=False)
@@ -90,16 +84,16 @@ class TurbineTestCase(unittest.TestCase):
             print()
             print('---- Test Case,', i, '----')
 
-            self.prob['PR'] = data[h_map['PRdes']]
-            self.prob['Nmech'] = data[h_map['Nmech']]
+            self.prob['turbine.PR'] = data[h_map['PRdes']]
+            self.prob['turbine.Nmech'] = data[h_map['Nmech']]
             self.prob['eff'] = data[h_map['EffDes']]
-            self.prob['MN'] = data[h_map['Fl_O.MN']]
+            self.prob['turbine.MN'] = data[h_map['Fl_O.MN']]
 
             # input flowstation
-            self.prob['P'] = data[h_map['Fl_I.Pt']]
-            self.prob['T'] = data[h_map['Fl_I.Tt']]
+            self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
+            self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
             self.prob['W'] = data[h_map['Fl_I.W']]
-            self.prob['flow_start_MN'] = data[h_map['Fl_I.MN']]
+            self.prob['flow_start.MN'] = data[h_map['Fl_I.MN']]
 
             self.prob.run_model()
 
@@ -132,7 +126,7 @@ class TurbineTestCase(unittest.TestCase):
             assert_near_equal(npss , pyc , tol)
 
             npss = data[h_map['Fl_O.MN']]
-            pyc  = self.prob['MN'][0]
+            pyc  = self.prob['turbine.MN'][0]
             print('Fl_O.MN:', npss, pyc)
             assert_near_equal(npss , pyc , tol)
 

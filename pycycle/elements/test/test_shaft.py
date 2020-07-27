@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.shaft import Shaft
@@ -36,13 +36,12 @@ class ShaftTestCase(unittest.TestCase):
         self.top.model = Group()
         self.top.model.add_subsystem("shaft", Shaft(num_ports=3), promotes=["*"])
 
-        des_vars = self.top.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('trq_0', 17., units='ft*lbf')
-        des_vars.add_output('trq_1', 17., units='ft*lbf')
-        des_vars.add_output('trq_2', 17., units='ft*lbf')
-        des_vars.add_output('Nmech', 17., units='rpm')
-        des_vars.add_output('HPX', 17., units='hp')
-        des_vars.add_output('fracLoss', 17.)
+        self.top.model.set_input_defaults('trq_0', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('trq_1', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('trq_2', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('Nmech', 17., units='rpm')
+        self.top.model.set_input_defaults('HPX', 17., units='hp')
+        self.top.model.set_input_defaults('fracLoss', 17.)
 
         self.top.setup(check=False)
 

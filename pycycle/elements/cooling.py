@@ -255,14 +255,14 @@ class TurbineCooling(om.Group):
 
         primary_thermo = species_data.Thermo(thermo_data, init_reacts=self.options['primary_elements'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_I', num_prods=len(primary_thermo.products), num_elements=len(primary_thermo.elements))
+        in_flow = FlowIn(fl_name='Fl_turb_I', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
         self.add_subsystem('turb_in_flow', in_flow, promotes_inputs=['Fl_turb_I:tot:*', 'Fl_turb_I:stat:*'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_O', num_prods=len(primary_thermo.products), num_elements=len(primary_thermo.elements))
+        in_flow = FlowIn(fl_name='Fl_turb_O', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
         self.add_subsystem('turb_out_flow', in_flow, promotes_inputs=['Fl_turb_O:tot:*', 'Fl_turb_O:stat:*'])
 
         cool_thermo = species_data.Thermo(thermo_data, init_reacts=self.options['cool_elements'])
-        in_flow = FlowIn(fl_name='Fl_cool', num_prods=len(cool_thermo.products), num_elements=len(cool_thermo.elements))
+        in_flow = FlowIn(fl_name='Fl_cool', num_prods=cool_thermo.num_prod, num_elements=cool_thermo.num_element)
         self.add_subsystem('cool_in_flow', in_flow, promotes_inputs=['Fl_cool:tot:*', 'Fl_cool:stat:*'])
 
 

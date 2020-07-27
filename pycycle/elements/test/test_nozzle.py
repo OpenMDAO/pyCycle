@@ -33,16 +33,19 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17.0, units='psi')
-        des_vars.add_output('T', 500.0, units='degR')
         des_vars.add_output('W', 100.0, units='lbm/s')
-        des_vars.add_output('MN', 0.0)
-        des_vars.add_output('Ps_exhaust', 10.0, units='lbf/inch**2')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_MIX))
         self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_MIX, lossCoef='Cfg', internal_solver=True))
+
+        self.prob.model.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
+        self.prob.model.set_input_defaults('flow_start.MN', 0.0)
+        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
+        self.prob.model.set_input_defaults('flow_start.P', 17.0, units='psi')
+
 
         fl_src = "flow_start.Fl_O"
         fl_target = "nozzle.Fl_I"
@@ -58,10 +61,6 @@ class NozzleTestCase(unittest.TestCase):
                 (fl_target, v_name))
 
         self.prob.model.connect('W', 'flow_start.W')
-        self.prob.model.connect('P', 'flow_start.P')
-        self.prob.model.connect('T', 'flow_start.T')
-        self.prob.model.connect('MN', 'flow_start.MN')
-        self.prob.model.connect('Ps_exhaust', 'nozzle.Ps_exhaust')
 
         self.prob.setup(check=False)
 
@@ -69,13 +68,13 @@ class NozzleTestCase(unittest.TestCase):
         for i, data in enumerate(ref_data):
 
             self.prob['nozzle.Cfg'] = data[h_map['Cfg']]
-            self.prob['Ps_exhaust'] = data[h_map['PsExh']]
+            self.prob['nozzle.Ps_exhaust'] = data[h_map['PsExh']]
             # input flowstation
 
-            self.prob['P'] = data[h_map['Fl_I.Pt']]
-            self.prob['T'] = data[h_map['Fl_I.Tt']]
+            self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
+            self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
             self.prob['W'] = data[h_map['Fl_I.W']]
-            self.prob['MN'] = data[h_map['Fl_I.MN']]
+            self.prob['flow_start.MN'] = data[h_map['Fl_I.MN']]
 
             self.prob.run_model()
 

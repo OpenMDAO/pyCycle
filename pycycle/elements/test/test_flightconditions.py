@@ -26,16 +26,11 @@ class FlightConditionsTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = om.Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
-        des_vars.add_output('MN', 0.0)
-        des_vars.add_output('alt', 0.0, units="ft")
-        des_vars.add_output('dTs', 0.0, units='degR')
+        self.prob.model.set_input_defaults('fc.MN', 0.0)
+        self.prob.model.set_input_defaults('fc.alt', 0.0, units="ft")
+        self.prob.model.set_input_defaults('fc.dTs', 0.0, units='degR')
 
         self.prob.model.add_subsystem('fc', FlightConditions())
-
-        self.prob.model.connect('MN', 'fc.MN')
-        self.prob.model.connect('alt', 'fc.alt')
-        self.prob.model.connect('dTs', 'fc.dTs')
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
@@ -44,12 +39,12 @@ class FlightConditionsTestCase(unittest.TestCase):
 
         # 6 cases to check against
         for i, data in enumerate(ref_data):
-            self.prob['alt'] = data[h_map['alt']]
-            self.prob['MN'] = data[h_map['MN']]
-            self.prob['dTs'] = data[h_map['dTs']]
+            self.prob['fc.alt'] = data[h_map['alt']]
+            self.prob['fc.MN'] = data[h_map['MN']]
+            self.prob['fc.dTs'] = data[h_map['dTs']]
 
-            if self.prob['MN'] < 1e-10:
-                self.prob['MN'] += 1e-6
+            if self.prob['fc.MN'] < 1e-10:
+                self.prob['fc.MN'] += 1e-6
 
             self.prob.run_model()
 

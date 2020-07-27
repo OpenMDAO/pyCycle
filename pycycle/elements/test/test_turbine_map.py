@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 from openmdao.utils.assert_utils import assert_near_equal
 
@@ -71,20 +71,18 @@ class TurbineMapTestCase(unittest.TestCase):
     def setUp(self):
         print('\n')
         self.prob = Problem()
-
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wp', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Np', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('effDes', 1.0)
-        des_vars.add_output('PR', 5.0)
-
+        
         self.prob.model.add_subsystem(
             'map',
             TurbineMap(
                 map_data=LPT2269,
                 design=True),
             promotes=['*'])
+
+        self.prob.model.set_input_defaults('PR', 5.0)
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
+        self.prob.model.set_input_defaults('Wp', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Np', 172.11870165984794, units='rpm')
 
         self.prob.setup(check=False)
 
@@ -155,20 +153,21 @@ class TurbineMapODTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wp', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Np', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('s_Np', 1.721074624)
-        des_vars.add_output('s_PR', 0.147473296)
-        des_vars.add_output('s_Wp', 2.152309293)
-        des_vars.add_output('s_eff', 0.9950409659)
         self.prob.model.add_subsystem(
             'map',
             TurbineMap(
                 map_data=LPT2269,
                 design=False),
             promotes=['*'])
+
+
+        self.prob.model.set_input_defaults('s_Wp', 2.152309293)
+        self.prob.model.set_input_defaults('s_eff', 0.9950409659)
+        self.prob.model.set_input_defaults('s_Np', 1.721074624)
+        self.prob.model.set_input_defaults('s_PR', 0.147473296)
+        self.prob.model.set_input_defaults('Wp', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Np', 172.11870165984794, units='rpm')
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
 
         self.prob.setup(check=False)
 

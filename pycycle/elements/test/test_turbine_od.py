@@ -80,14 +80,10 @@ class TurbineODTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17., units='psi'),
-        des_vars.add_output('T', 500.0, units='degR'),
         des_vars.add_output('W', 0., units='lbm/s'),
-        des_vars.add_output('Nmech', 1000., units='rpm'),
         des_vars.add_output('area_targ', 150., units='inch**2')
-        des_vars.add_output('burner_MN', .01, units=None)
-        des_vars.add_output('burner_FAR', .01, units=None)
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('burner', Combustor(thermo_data=janaf,
@@ -101,16 +97,18 @@ class TurbineODTestCase(unittest.TestCase):
                 design=False,
                 elements=AIR_FUEL_MIX))
 
+
+        self.prob.model.set_input_defaults('burner.MN', .01, units=None)
+        self.prob.model.set_input_defaults('burner.Fl_I:FAR', .01, units=None)
+        self.prob.model.set_input_defaults('turbine.Nmech', 1000., units='rpm'),
+        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi'),
+        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR'),
+
         connect_flow(self.prob.model, "flow_start.Fl_O", "burner.Fl_I")
         connect_flow(self.prob.model, "burner.Fl_O", "turbine.Fl_I")
 
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
         self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("Nmech", "turbine.Nmech")
         self.prob.model.connect("area_targ", "turbine.area")
-        self.prob.model.connect("burner_MN", "burner.MN")
-        self.prob.model.connect("burner_FAR", "burner.Fl_I:FAR")
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -129,17 +127,17 @@ class TurbineODTestCase(unittest.TestCase):
             self.prob['turbine.map.PRmap']= data[h_map['turb.PRmap']]
 
             # input flowstation variables
-            self.prob['P'] = data[h_map['burn.Fl_I.Pt']]
-            self.prob['T'] = data[h_map['burn.Fl_I.Tt']]
+            self.prob['flow_start.P'] = data[h_map['burn.Fl_I.Pt']]
+            self.prob['flow_start.T'] = data[h_map['burn.Fl_I.Tt']]
             self.prob['W'] = data[h_map['burn.Fl_I.W']]
-            self.prob['burner_MN'] = data[h_map['burn.Fl_I.MN']]
+            self.prob['burner.MN'] = data[h_map['burn.Fl_I.MN']]
             self.prob['turbine.PR'] = data[h_map['turb.PR']]
 
             # input shaft variable
-            self.prob['Nmech'] = data[h_map['shaft.Nmech']]
+            self.prob['turbine.Nmech'] = data[h_map['shaft.Nmech']]
 
             # input burner variable
-            self.prob['burner_FAR'] = data[h_map['burn.FAR']]
+            self.prob['burner.Fl_I:FAR'] = data[h_map['burn.FAR']]
 
             self.prob['area_targ'] = data[h_map['turb.Fl_O.A']]
 

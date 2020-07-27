@@ -26,19 +26,19 @@ class MixerTestcase(unittest.TestCase):
 
         p = Problem()
 
+        p.model.set_input_defaults('P', 17., units='psi')
+        p.model.set_input_defaults('T', 500., units='degR')
+        p.model.set_input_defaults('MN', 0.5)
+        p.model.set_input_defaults('mixer.Fl_I1:tot:b0', thermo.b0)
+
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('P', 17., units='psi')
-        des_vars.add_output('T', 500., units='degR')
         des_vars.add_output('W', 100., units='lbm/s')
-        des_vars.add_output('MN', 0.5)
 
-        p.model.add_subsystem('start1', FlowStart())
-        p.model.add_subsystem('start2', FlowStart())
+        p.model.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN'])
+        p.model.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN'])
 
-        p.model.connect('des_vars.P', ['start1.P', 'start2.P'])
-        p.model.connect('des_vars.T', ['start1.T', 'start2.T'])
         p.model.connect('des_vars.W', ['start1.W', 'start2.W'])
-        p.model.connect('des_vars.MN', ['start1.MN', 'start2.MN'])
 
         p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
 
@@ -46,14 +46,12 @@ class MixerTestcase(unittest.TestCase):
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
         p.set_solver_print(level=-1)
 
-        p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
-
         p.setup()
         p['mixer.balance.P_tot'] = 17
         p.run_model()
         tol = 2e-7
         assert_near_equal(p['mixer.Fl_O:stat:area'], 2*p['start1.Fl_O:stat:area'], tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], p['des_vars.P'], tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], p['P'], tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1, tolerance=tol)
 
     def test_mix_diff(self):
@@ -63,21 +61,20 @@ class MixerTestcase(unittest.TestCase):
 
         p = Problem()
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('P1', 17., units='psi')
-        des_vars.add_output('P2', 15., units='psi')
-        des_vars.add_output('T', 500., units='degR')
         des_vars.add_output('W', 100., units='lbm/s')
-        des_vars.add_output('MN', 0.5)
 
-        p.model.add_subsystem('start1', FlowStart())
-        p.model.add_subsystem('start2', FlowStart())
+        p.model.set_input_defaults('start1.P', 17., units='psi')
+        p.model.set_input_defaults('start2.P', 15., units='psi')
+        p.model.set_input_defaults('T', 500., units='degR')
+        p.model.set_input_defaults('MN', 0.5)
+        p.model.set_input_defaults('mixer.Fl_I1:tot:b0', thermo.b0)
 
-        p.model.connect('des_vars.P1', 'start1.P')
-        p.model.connect('des_vars.P2', 'start2.P')
-        p.model.connect('des_vars.T', ['start1.T', 'start2.T'])
+        p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T'])
+        p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T'])
+
         p.model.connect('des_vars.W', ['start1.W', 'start2.W'])
-        p.model.connect('des_vars.MN', ['start1.MN', 'start2.MN'])
 
         p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
 
@@ -85,8 +82,6 @@ class MixerTestcase(unittest.TestCase):
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
 
         p.set_solver_print(level=-1)
-
-        p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
 
         p.setup()
         p.run_model()
@@ -99,30 +94,24 @@ class MixerTestcase(unittest.TestCase):
 
             p = Problem()
 
+            # Remaining des_vars will be removed once set_input_defaults is fixed
             des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-            des_vars.add_output('P1', 9.218, units='psi')
-            des_vars.add_output('T1', 1524.32, units='degR')
             des_vars.add_output('W1', 161.49, units='lbm/s')
-            des_vars.add_output('MN1', 0.4463)
-
-            des_vars.add_output('P2', 8.68, units='psi')
-            des_vars.add_output('T2', 524., units='degR')
             des_vars.add_output('W2', 158., units='lbm/s')
-            des_vars.add_output('MN2', 0.4463)
+            
+            p.model.set_input_defaults('start1.P', 9.218, units='psi')
+            p.model.set_input_defaults('start1.T', 1524.32, units='degR')
+            p.model.set_input_defaults('start1.MN', 0.4463)
+
+            p.model.set_input_defaults('start2.P', 8.68, units='psi')
+            p.model.set_input_defaults('start2.T', 524., units='degR')
+            p.model.set_input_defaults('start2.MN', 0.4463)
 
             p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_MIX))
             p.model.add_subsystem('start2', FlowStart(elements=AIR_MIX))
 
-            p.model.connect('des_vars.P1', 'start1.P' )
-            p.model.connect('des_vars.T1', 'start1.T' )
             p.model.connect('des_vars.W1',  'start1.W' )
-            p.model.connect('des_vars.MN1', 'start1.MN' )
-
-
-            p.model.connect('des_vars.P2', 'start2.P' )
-            p.model.connect('des_vars.T2', 'start2.T' )
             p.model.connect('des_vars.W2',  'start2.W' )
-            p.model.connect('des_vars.MN2', 'start2.MN' )
 
             p.model.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream,
                                                  Fl_I1_elements=AIR_FUEL_MIX, Fl_I2_elements=AIR_MIX))

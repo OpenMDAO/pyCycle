@@ -39,18 +39,16 @@ class FlowStartTestCase(unittest.TestCase):
     def setUp(self):
 
         self.prob = Problem()
+        self.prob.model.set_input_defaults('fl_start.P', 17., units='psi')
+        self.prob.model.set_input_defaults('fl_start.T', 500., units='degR')
+        self.prob.model.set_input_defaults('fl_start.MN', 0.5)
 
+        # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('P', 17., units='psi')
-        des_vars.add_output('T', 500., units='degR')
         des_vars.add_output('W', 100., units='lbm/s')
-        des_vars.add_output('MN', 0.5)
 
         self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
-        self.prob.model.connect('des_vars.P', 'fl_start.P')
-        self.prob.model.connect('des_vars.T', 'fl_start.T')
         self.prob.model.connect('des_vars.W', 'fl_start.W')
-        self.prob.model.connect('des_vars.MN', 'fl_start.MN')
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -59,10 +57,10 @@ class FlowStartTestCase(unittest.TestCase):
         np.seterr(divide='raise')
         # 6 cases to check against
         for i, data in enumerate(ref_data):
-            self.prob['des_vars.P'] = data[h_map['Pt']]
-            self.prob['des_vars.T'] = data[h_map['Tt']]
+            self.prob['fl_start.P'] = data[h_map['Pt']]
+            self.prob['fl_start.T'] = data[h_map['Tt']]
             self.prob['des_vars.W'] = data[h_map['W']]
-            self.prob['des_vars.MN'] = data[h_map['MN']]
+            self.prob['fl_start.MN'] = data[h_map['MN']]
 
             self.prob.run_model()
 

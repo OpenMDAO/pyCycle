@@ -102,7 +102,7 @@ class Splitter(om.Group):
 
         thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         num_prod = thermo.num_prod
-        num_element = len(thermo.elements)
+        num_element = thermo.num_element
 
         # Create inlet flowstation
         flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)

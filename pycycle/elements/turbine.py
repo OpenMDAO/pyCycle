@@ -591,13 +591,13 @@ class Turbine(om.Group):
         gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
         self.num_prod = len(self.gas_prods)
-        num_element = len(gas_thermo.elements)
+        num_element = gas_thermo.num_element
 
         bld_thermo = species_data.Thermo(
             thermo_data, init_reacts=bleed_elements)
         self.bld_prods = bld_thermo.products
         self.num_bld_prod = len(self.bld_prods)
-        num_bld_element = len(bld_thermo.elements)
+        num_bld_element = bld_thermo.num_element
 
         # Create inlet flow station
         in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_prod, num_elements=num_element)

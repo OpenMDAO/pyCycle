@@ -322,8 +322,8 @@ class Nozzle(om.Group):
         gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
 
-        num_prod = len(self.gas_prods)
-        num_element = len(gas_thermo.elements)
+        num_prod = gas_thermo.num_prod
+        num_element = gas_thermo.num_element
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 

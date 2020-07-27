@@ -245,8 +245,8 @@ class Combustor(om.Group):
         self.air_prods = air_thermo.products
 
         self.num_air_fuel_prod = len(self.air_fuel_prods)
-        self.num_air_prod = len(self.air_prods)
-        num_air_element = len(air_thermo.elements)
+        self.num_air_prod = air_thermo.num_prod
+        num_air_element = air_thermo.num_element
 
         # Create combustor flow station
         in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_air_prod, num_elements=num_air_element)
