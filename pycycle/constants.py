@@ -1,5 +1,6 @@
 AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
 AIR_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319} # {'O':1, 'C':1, 'N':1, 'Ar':1}
+WET_AIR_MIX = {'N2': 78.2, 'O2': 20.78, 'H2O':1.0, 'CO2':.01, 'Ar':0.01}
 
 # Note: the actual amounts don't matter here. All that matters is that you have some amount of the correct atoms
 OXYGEN = {'O': 1}

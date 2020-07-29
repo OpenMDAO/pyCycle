@@ -3,7 +3,7 @@ import numpy as np
 from pycycle.maps.map_data import MapData
 
 
-"""Python version of CFM56 Fan map from NPSS"""
+"""Python version of HBTF Fan map from NPSS"""
 FanMap = MapData()
 
 # Map design point values

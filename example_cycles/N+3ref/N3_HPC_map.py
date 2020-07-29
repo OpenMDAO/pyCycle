@@ -3,7 +3,7 @@ import numpy as np
 from pycycle.maps.map_data import MapData
 
 
-"""Python version of CFM56 HPC map from NPSS"""
+"""Python version of HBTF HPC map from NPSS"""
 HPCMap = MapData()
 
 # Map design point values

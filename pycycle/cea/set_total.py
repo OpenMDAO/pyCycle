@@ -119,6 +119,7 @@ class SetTotal(om.Group):
                                    promotes_outputs=['MN', 'V', 'Vsonic', 'area']
                                    )
 
+            self.set_input_defaults('W', units='kg/s')
         else:
             self.add_subsystem('flow', EngUnitProps(thermo=thermo, fl_name=fl_name),
                                promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R'),

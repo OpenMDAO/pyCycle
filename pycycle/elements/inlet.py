@@ -86,6 +86,12 @@ class Inlet(om.Group):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
 
+        self.default_des_od_conns = [
+            # (design src, off-design target)
+            ('Fl_O:stat:area', 'area'),
+        ]
+
+
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
@@ -148,16 +154,28 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
+        # if not design: 
+        #     self.set_input_defaults('area', val=1, units='in**2') 
+
 
 if __name__ == "__main__":
 
     p = om.Problem()
     p.model = Inlet()
 
+    thermo = species_data.Thermo(species_data.janaf)
+    p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
+    p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
+    p.model.set_input_defaults('Fl_I:tot:n', thermo.init_prod_amounts)
+    p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
+    p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
+
     p.setup()
 
     #view_model(p)
     p.run_model()
+    # print(p.get_val('Fl_I:tot:T', units='degK'))
+    p.model.list_outputs(units=True)
 
     # generates regression testing setup
     #regression_generator(p)
