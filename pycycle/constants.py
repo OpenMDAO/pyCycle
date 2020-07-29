@@ -1,6 +1,8 @@
-AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
-AIR_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319} # {'O':1, 'C':1, 'N':1, 'Ar':1}
+# AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
+AIR_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319} 
 WET_AIR_MIX = {'N2': 78.2, 'O2': 20.78, 'H2O':1.0, 'CO2':.01, 'Ar':0.01}
+
+AIR_FUEL_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319, 'C2H4':20, 'H':7} 
 
 ####
 janaf_init_prod_amounts = AIR_MIX 
@@ -30,4 +32,3 @@ P_STDeng = 14.695951 #psi
 
 P_REF = 1.01325 # 1 atm
 # P_REF = 1.0162 # Not sure why, but this seems to match the SP set to the TP better
-

@@ -278,8 +278,8 @@ class Thermo(object):
 if __name__ == "__main__":
 
     # thermo = Thermo(co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
-    thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
-    # thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
+    # thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
+    thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)

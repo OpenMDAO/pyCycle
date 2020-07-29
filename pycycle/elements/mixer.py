@@ -310,6 +310,8 @@ class Mixer(om.Group):
                 self.add_subsystem('area_calc', AreaSum(), promotes_inputs=['Fl_I2:stat:area'],
                                    promotes_outputs=[('area_sum', 'area')])
                 self.connect('Fl_I1_calc:stat:area', 'area_calc.Fl_I1:stat:area')
+
+                self.set_input_defaults('Fl_I1:tot:b0', flow1_thermo.b0)
             else:
                 Fl2_stat = SetStatic(mode="Ps", thermo_data=thermo_data,
                                     init_reacts=flow2_elements,
@@ -323,6 +325,7 @@ class Mixer(om.Group):
                                    promotes_outputs=[('area_sum', 'area')])
                 self.connect('Fl_I2_calc:stat:area', 'area_calc.Fl_I2:stat:area')
 
+                self.set_input_defaults('Fl_I2:tot:b0', flow2_thermo.b0)
         else:
             if self.options['designed_stream'] == 1:
                 Fl1_stat = SetStatic(mode="area", thermo_data=thermo_data,
@@ -333,6 +336,8 @@ class Mixer(om.Group):
                                                      ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'),
                                                      ('guess:Pt', 'Fl_I1:tot:P'), ('guess:gamt', 'Fl_I1:tot:gamma')],
                                     promotes_outputs=['Fl_I1_calc:stat*'])
+
+                self.set_input_defaults('Fl_I1:tot:b0', flow1_thermo.b0)
             else:
                 Fl2_stat = SetStatic(mode="area", thermo_data=thermo_data,
                                         init_reacts=flow2_elements,
@@ -342,6 +347,8 @@ class Mixer(om.Group):
                                                      ('ht', 'Fl_I2:tot:h'), ('W', 'Fl_I2:stat:W'),
                                                      ('guess:Pt', 'Fl_I2:tot:P'), ('guess:gamt', 'Fl_I2:tot:gamma')],
                                     promotes_outputs=['Fl_I2_calc:stat*'])
+
+                self.set_input_defaults('Fl_I2:tot:b0', flow2_thermo.b0)
 
         self.add_subsystem('extraction_ratio', om.ExecComp('ER=Pt1/Pt2', Pt1={'units':'Pa'}, Pt2={'units':'Pa'}),
                             promotes_inputs=[('Pt1', 'Fl_I1:tot:P'), ('Pt2', 'Fl_I2:tot:P')],

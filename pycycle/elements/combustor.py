@@ -113,7 +113,6 @@ class MixFuel(om.ExplicitComponent):
 
         self.init_stuff = (self.init_air_amounts + self.init_fuel_amounts)
         self.sum_stuff = np.sum(self.init_stuff)
-        # print('sum_stuff',self.sum_stuff)
         self.norm_init_stuff = self.init_stuff/self.sum_stuff
         outputs['init_prod_amounts'] = self.norm_init_stuff/self.air_fuel_wt_mole
 
@@ -309,6 +308,7 @@ class Combustor(om.Group):
 
         self.add_subsystem('FAR_pass_thru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0),
                            promotes=['*'])
+        self.set_input_defaults('Fl_I:tot:n', units=None)
 
 
 if __name__ == "__main__":
