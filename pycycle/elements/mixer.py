@@ -253,7 +253,7 @@ class Mixer(om.Group):
     def initialize(self):
 
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set', recordable=False)
+                              desc='thmodynamic data set', recordable=False)
         self.options.declare('Fl_I1_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,

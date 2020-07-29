@@ -173,10 +173,11 @@ if __name__ == "__main__":
     # Design point inputs
     des_vars.add_output('alt', 0.0, units='ft'),
     des_vars.add_output('MN', 0.000001),
-    des_vars.add_output('T4max', 2370.0, units='degR'),
+    des_vars.add_output('T4max', 2500.0, units='degR'),
     # des_vars.add_output('Fn_des', 11800.0, units='lbf'),
     des_vars.add_output('pwr_des', 4000.0, units='hp')
     des_vars.add_output('nozz_PR', 1.2)
+    
     des_vars.add_output('comp:PRdes', 13.5),
     des_vars.add_output('comp:effDes', 0.83),
     des_vars.add_output('burn:dPqP', 0.03),
@@ -185,6 +186,7 @@ if __name__ == "__main__":
     des_vars.add_output('nozz:Cv', 0.99),
     des_vars.add_output('HP_shaft:Nmech', 8070.0, units='rpm'),
     des_vars.add_output('LP_shaft:Nmech', 5000.0, units='rpm'),
+    
     des_vars.add_output('inlet:MN_out', 0.60),
     des_vars.add_output('comp:MN_out', 0.20),
     des_vars.add_output('burner:MN_out', 0.20),
@@ -223,7 +225,7 @@ if __name__ == "__main__":
     prob.model.connect('turb:MN_out', 'DESIGN.turb.MN')
 
     # Connect off-design and required design inputs to model
-    pts = ['OD1']
+    pts = []
 
     for pt in pts:
         prob.model.add_subsystem(pt, Turboshaft(design=False))
@@ -269,15 +271,15 @@ if __name__ == "__main__":
     prob['DESIGN.balance.W'] = 27.265
     prob['DESIGN.balance.turb_PR'] = 3.8768
     prob['DESIGN.balance.pt_PR'] = 2.8148
-    prob['DESIGN.fc.balance.Pt'] = 14.6955113159
-    prob['DESIGN.fc.balance.Tt'] = 518.665288153
+    #prob['DESIGN.fc.balance.Pt'] = 14.6955113159
+    #prob['DESIGN.fc.balance.Tt'] = 518.665288153
 
     for pt in pts:
         prob[pt+'.balance.W'] = 27.265
         prob[pt+'.balance.FAR'] = 0.0175506829934
         # prob[pt+'.balance.Nmech'] = 8070.0
-        prob[pt+'.fc.balance.Pt'] = 15.703
-        prob[pt+'.fc.balance.Tt'] = 558.31
+        #prob[pt+'.fc.balance.Pt'] = 15.703
+        #prob[pt+'.fc.balance.Tt'] = 558.31
         prob[pt+'.turb.PR'] = 3.8768
         prob[pt+'.pt.PR'] = 2.8148
 

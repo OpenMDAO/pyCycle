@@ -1,4 +1,4 @@
-import numpy as np
+dimport numpy as np
 import time
 import pickle
 from pprint import pprint

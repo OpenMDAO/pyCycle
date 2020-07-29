@@ -160,12 +160,15 @@ if __name__ == "__main__":
     des_vars.add_output('MN', 0.000001),
     des_vars.add_output('T4max', 2370.0, units='degR'),
     des_vars.add_output('Fn_des', 11800.0, units='lbf'),
+    des_vars.add_output('ram_recovery', 0.95)
+   
     des_vars.add_output('comp:PRdes', 13.5),
     des_vars.add_output('comp:effDes', 0.83),
     des_vars.add_output('burn:dPqP', 0.03),
     des_vars.add_output('turb:effDes', 0.86),
     des_vars.add_output('nozz:Cv', 0.99),
     des_vars.add_output('shaft:Nmech', 8070.0, units='rpm'),
+    
     des_vars.add_output('inlet:MN_out', 0.60),
     des_vars.add_output('comp:MN_out', 0.20),
     des_vars.add_output('burner:MN_out', 0.20),
@@ -186,7 +189,8 @@ if __name__ == "__main__":
     prob.model.connect('MN', 'DESIGN.fc.MN')
     prob.model.connect('Fn_des', 'DESIGN.balance.rhs:W')
     prob.model.connect('T4max', 'DESIGN.balance.rhs:FAR')
-
+    
+    prob.model.connect('ram_recovery', 'DESIGN.inlet.ram_recovery')
     prob.model.connect('comp:PRdes', 'DESIGN.comp.PR')
     prob.model.connect('comp:effDes', 'DESIGN.comp.eff')
     prob.model.connect('burn:dPqP', 'DESIGN.burner.dPqP')
@@ -200,7 +204,7 @@ if __name__ == "__main__":
     prob.model.connect('turb:MN_out', 'DESIGN.turb.MN')
 
     # Connect off-design and required design inputs to model
-    pts = ['OD1']
+    pts = []
 
     for pt in pts:
         prob.model.add_subsystem(pt, Turbojet(design=False))
