@@ -373,8 +373,7 @@ class MPhbtf(pyc.MPCycle):
         self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
         self.pyc_add_cycle_param('hp_shaft.HPX', 250.0, units='hp')
 
-        # self.od_pts = ['OD', 'OD2', 'OD3', 'OD4'] 
-        self.od_pts = ['OD']
+        self.od_pts = ['OD0', 'OD1', 'OD2', 'OD3'] 
 
         self.od_MNs = [0.8, 0.8, 0.25, 0.00001]
         self.od_alts = [35000.0, 35000.0, 0.0, 0.0]

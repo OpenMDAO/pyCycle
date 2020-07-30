@@ -2,7 +2,6 @@ import numpy as np
 
 from pycycle.maps.map_data import MapData
 
-"""Python version of CFM56 HPT map from NPSS"""
 
 HPTMap = MapData()
 

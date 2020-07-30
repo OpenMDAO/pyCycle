@@ -11,6 +11,6 @@ setup(name='pycycle',
       ],
 
       install_requires=[
-        'openmdao>=2.8.0',
+        'openmdao>=3.2.0',
       ]
 )

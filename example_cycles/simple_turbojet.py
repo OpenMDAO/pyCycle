@@ -43,6 +43,7 @@ class Turbojet(pyc.Cycle):
         self.pyc_connect_flow('burner.Fl_O', 'turb.Fl_I')
         self.pyc_connect_flow('turb.Fl_O', 'nozz.Fl_I')
 
+        # Make other non-flow connections
         # Connect turbomachinery elements to shaft
         self.connect('comp.trq', 'shaft.trq_0')
         self.connect('turb.trq', 'shaft.trq_1')
@@ -88,7 +89,7 @@ class Turbojet(pyc.Cycle):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['balance', 'fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf'])
+        self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
@@ -98,12 +99,7 @@ class Turbojet(pyc.Cycle):
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
-        newton.linesearch = om.BoundsEnforceLS()
-        # newton.linesearch = ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
-        newton.linesearch.options['iprint'] = -1
-
+        
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
 def viewer(prob, pt, file=sys.stdout):
@@ -169,7 +165,6 @@ class MPTurbojet(pyc.MPCycle):
         
         # define the off-design conditions we want to run
         self.od_pts = ['OD0', 'OD1']
-        # self.od_pts = ['OD'] #use this for running benchmark
         self.od_MNs = [0.000001, 0.2]
         self.od_alts = [0.0, 5000]
         self.od_Fns =[11000.0, 8000.0]

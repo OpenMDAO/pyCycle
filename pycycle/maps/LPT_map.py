@@ -2,7 +2,7 @@ import numpy as np
 
 from pycycle.maps.map_data import MapData
 
-"""Python version of CFM56 LPT map from NPSS"""
+"""Python version of HBTF LPT map from NPSS"""
 
 LPTMap = MapData()
 
