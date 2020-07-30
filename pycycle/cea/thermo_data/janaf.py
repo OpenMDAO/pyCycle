@@ -282,7 +282,7 @@ reactants = { # used to compute the correct amounts of each product for an initi
   'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319)]), #percentage by volume
   # 'air': {'N': 1.5616, 'O':.41959, 'Ar': .00936, 'C': .00032},
   #'JP-7': {'C': 1.00, 'H': 2.0044},
-  'JP-7': OrderedDict([('C2H4', 20), ('H', 7)]), 
+  'JP-7': OrderedDict([('C2H4', 1.00), ('H', 0.0044)]), 
   'Jet-A(g)': OrderedDict([('C2H4', 6), ('H', -1.)]), 
   'H2': OrderedDict([('H2', 1.00)]), 
   'Methane': OrderedDict([('CH4', 1.00)])

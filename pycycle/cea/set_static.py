@@ -71,8 +71,9 @@ class SetStatic(om.Group):
         # self.set_order(['statics', 'flow', 'flow_static'])
 
 if __name__ == "__main__":
+    from pycycle import constants
 
-    thermo=species_data.Thermo(species_data.janaf)
+    thermo=species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
 
     # p = om.Problem()
     # p.model = SetStatic(mode='area', thermo_data=species_data.janaf)

@@ -160,8 +160,9 @@ if __name__ == "__main__":
     import scipy
 
     from pycycle.cea import species_data
+    from pycycle import constants
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Thermo(species_data.co2_co_o2, constants.co2_co_o2_init_prod_amounts)
     # thermo = species_data.Thermo(species_data.janaf)
 
     prob = om.Problem()
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     prob.model.add_subsystem('totals',
                              SetTotal(thermo_data=species_data.janaf,
                                       fl_name="flow",
-                                      init_reacts=species_data.co2_co_o2.init_prod_amounts,
+                                      init_reacts=constants.co2_co_o2_init_prod_amounts,
                                       mode="h"),
                              promotes_inputs=['h', 'P', 'b0'],
                              promotes_outputs=['flow:*'])
@@ -211,7 +212,7 @@ if __name__ == "__main__":
     prob.model.add_subsystem('totals',
                              SetTotal(thermo_data=species_data.janaf,
                                       fl_name="flow", for_statics='area',
-                                      init_reacts=species_data.co2_co_o2.init_prod_amounts,
+                                      init_reacts=constants.co2_co_o2_init_prod_amounts,
                                       mode="h"),
                              promotes_inputs=['h', 'P', 'b0'])
 
