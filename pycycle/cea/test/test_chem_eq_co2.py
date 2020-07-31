@@ -12,7 +12,7 @@ from pycycle import constants
 class ChemEqTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
+        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
         p = self.p = Problem(model=Group())
         p.model.suppress_solver_output = True
         p.model.set_input_defaults('P', 1.034210, units="bar")

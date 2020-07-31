@@ -27,7 +27,7 @@ class TestSetStaticArea(unittest.TestCase):
 
     def test_case_Area(self):
 
-        thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
+        thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
 
         p = Problem()
 

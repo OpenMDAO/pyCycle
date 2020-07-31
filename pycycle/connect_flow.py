@@ -11,7 +11,7 @@ def connect_flow(group, fl_src, fl_target, connect_stat=True, connect_tot=True, 
         for v_name in ('V', 'Vsonic'):  # ('Wc', 'W', 'FAR'):
             group.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
-        for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho'):
+        for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho', 'b0'):
             group.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
     if connect_w:

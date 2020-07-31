@@ -10,7 +10,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.connect_flow import connect_flow
-from pycycle.constants import AIR_MIX, janaf_init_prod_amounts
+from pycycle.constants import AIR_MIX
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
@@ -49,7 +49,7 @@ class TurbineTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf, janaf_init_prod_amounts)
+        thermo = Thermo(janaf, AIR_MIX)
         self.prob = Problem()
         self.prob.model = Group()
 

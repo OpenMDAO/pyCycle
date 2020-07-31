@@ -5,7 +5,7 @@ import os
 from openmdao.api import Problem, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.constants import AIR_MIX, janaf_init_prod_amounts
+from pycycle.constants import AIR_MIX
 from pycycle.cea.species_data import janaf, Thermo
 
 from pycycle.elements.splitter import Splitter
@@ -61,7 +61,7 @@ class splitterTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf, janaf_init_prod_amounts)
+        thermo = Thermo(janaf, AIR_MIX)
 
         self.prob = Problem()
 

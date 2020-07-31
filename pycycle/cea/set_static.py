@@ -51,7 +51,7 @@ class SetStatic(om.Group):
                                promotes_outputs=['V', 'Vsonic', 'MN',
                                                  'Ps', 'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
 
-        p_inputs = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles')
+        p_inputs = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'b0')
         p_outputs = tuple(['{0}:{1}'.format(fl_name, in_name) for in_name in p_inputs])
         # need to redefine this so that P gets promoted as P. Needed the first definition for the list comprehension
         p_inputs = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles')
@@ -73,7 +73,7 @@ class SetStatic(om.Group):
 if __name__ == "__main__":
     from pycycle import constants
 
-    thermo=species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
+    thermo=species_data.Thermo(species_data.janaf, constants.AIR_MIX)
 
     # p = om.Problem()
     # p.model = SetStatic(mode='area', thermo_data=species_data.janaf)

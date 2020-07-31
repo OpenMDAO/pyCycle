@@ -1,6 +1,7 @@
 import openmdao.api as om
 
 import pycycle.api as pyc
+from pycycle.constants import wet_air_init_prod_amounts
 
 
 class WetPropulsor(pyc.Cycle):
@@ -14,12 +15,12 @@ class WetPropulsor(pyc.Cycle):
         design = self.options['design']
 
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
-                                                  elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                                  elements=wet_air_init_prod_amounts))#WET_AIR_MIX contains standard dry air compounds as well as H2O
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=wet_air_init_prod_amounts))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=wet_air_init_prod_amounts,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=wet_air_init_prod_amounts))
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 

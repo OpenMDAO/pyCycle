@@ -9,12 +9,13 @@ from openmdao.api import Problem, Group, IndepVarComp
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX, janaf_init_prod_amounts
+from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
 from pycycle.elements.test.util import check_element_partials
 from pycycle.cea.species_data import Thermo, janaf
+# from pycycle.cea.thermo_data import janaf2
 
 
 class MixerTestcase(unittest.TestCase):
@@ -22,14 +23,13 @@ class MixerTestcase(unittest.TestCase):
     def test_mix_same(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
 
-        thermo = Thermo(janaf, janaf_init_prod_amounts)
+        thermo = Thermo(janaf, AIR_MIX)
 
         p = Problem()
 
         p.model.set_input_defaults('P', 17., units='psi')
         p.model.set_input_defaults('T', 500., units='degR')
         p.model.set_input_defaults('MN', 0.5)
-        p.model.set_input_defaults('mixer.Fl_I1:tot:b0', thermo.b0)
 
         # Remaining des_vars will be removed once set_input_defaults is fixed
         des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
@@ -57,7 +57,7 @@ class MixerTestcase(unittest.TestCase):
     def test_mix_diff(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
 
-        thermo = Thermo(janaf, janaf_init_prod_amounts)
+        thermo = Thermo(janaf, AIR_MIX)
 
         p = Problem()
 
@@ -69,7 +69,6 @@ class MixerTestcase(unittest.TestCase):
         p.model.set_input_defaults('start2.P', 15., units='psi')
         p.model.set_input_defaults('T', 500., units='degR')
         p.model.set_input_defaults('MN', 0.5)
-        p.model.set_input_defaults('mixer.Fl_I1:tot:b0', thermo.b0)
 
         p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T'])
         p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T'])
@@ -118,13 +117,6 @@ class MixerTestcase(unittest.TestCase):
 
             connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
             connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
-
-            if designed_stream == 1:
-                thermo = Thermo(janaf, AIR_FUEL_MIX)
-                p.model.mixer.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
-            else:
-                thermo = Thermo(janaf, AIR_MIX)
-                p.model.mixer.set_input_defaults('Fl_I2:tot:b0', thermo.b0)
 
             p.setup(force_alloc_complex=complex)
 

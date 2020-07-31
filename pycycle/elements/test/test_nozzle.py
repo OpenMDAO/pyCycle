@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.cea.species_data import janaf, Thermo
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
-from pycycle.constants import AIR_MIX, janaf_init_prod_amounts
+from pycycle.constants import AIR_MIX
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -28,7 +28,7 @@ class NozzleTestCase(unittest.TestCase):
 
     def test_case1(self):
 
-        thermo = Thermo(janaf, janaf_init_prod_amounts)
+        thermo = Thermo(janaf, AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()

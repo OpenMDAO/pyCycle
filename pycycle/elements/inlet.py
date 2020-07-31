@@ -167,11 +167,11 @@ if __name__ == "__main__":
     p = om.Problem()
     p.model = Inlet()
 
-    thermo = species_data.Thermo(species_data.janaf, constants.janaf_init_prod_amounts)
+    thermo = species_data.Thermo(species_data.janaf, constants.AIR_MIX)
     p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
     p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
     # p.model.set_input_defaults('Fl_I:tot:n', thermo.init_prod_amounts)
-    p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+    # p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
     p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
     p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
 

@@ -54,7 +54,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case1(self):
 
-        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
+        thermo = Thermo(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -115,7 +115,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case_with_dPqP_MN(self):
 
-        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
+        thermo = Thermo(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()

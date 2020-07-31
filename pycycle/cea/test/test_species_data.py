@@ -7,7 +7,7 @@ import openmdao.api as om
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea import species_data
-from pycycle.constants import co2_co_o2_default_elements, co2_co_o2_init_prod_amounts, janaf_default_elements, janaf_init_prod_amounts
+from pycycle.constants import CO2_CO_O2_ELEMENTS, CO2_CO_O2_MIX, AIR_ELEMENTS, AIR_MIX
 
 
 class SpeciesDataTestCase(unittest.TestCase):
@@ -38,7 +38,7 @@ class SpeciesDataTestCase(unittest.TestCase):
 
         with self.assertRaises(ValueError) as cm:
 
-            thermo = species_data.Thermo(thermo_data_module=species_data.co2_co_o2, init_reacts=co2_co_o2_init_prod_amounts, init_elements=co2_co_o2_default_elements)
+            thermo = species_data.Thermo(thermo_data_module=species_data.co2_co_o2, init_reacts=CO2_CO_O2_MIX, init_elements=CO2_CO_O2_ELEMENTS)
 
             self.assertEqual(str(cm.exception), 'You have provided both elements and initial reactants (init_reacts). In order to set thermodynamic data, you must only provide one or the other.')
 
@@ -69,9 +69,9 @@ class SpeciesDataTestCase(unittest.TestCase):
         assert_near_equal(proportions2, expected_proportions2, 1e-4)
 
     def test_values(self):
-        thermo1 = species_data.Thermo(thermo_data_module=species_data.janaf, init_reacts=janaf_init_prod_amounts)
-        thermo2 = species_data.Thermo(thermo_data_module=species_data.janaf, init_elements=janaf_default_elements)
-        thermo3 = species_data.Thermo(thermo_data_module=species_data.co2_co_o2, init_elements=co2_co_o2_default_elements)
+        thermo1 = species_data.Thermo(thermo_data_module=species_data.janaf, init_reacts=AIR_MIX)
+        thermo2 = species_data.Thermo(thermo_data_module=species_data.janaf, init_elements=AIR_ELEMENTS)
+        thermo3 = species_data.Thermo(thermo_data_module=species_data.co2_co_o2, init_elements=CO2_CO_O2_ELEMENTS)
 
         T1 = np.ones(thermo1.num_prod)*800
         T2 = np.ones(thermo2.num_prod)*800

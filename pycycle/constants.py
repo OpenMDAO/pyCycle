@@ -1,16 +1,13 @@
-# AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
+AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
 AIR_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319} 
 WET_AIR_MIX = {'N2': 78.2, 'O2': 20.78, 'H2O':1.0, 'CO2':.01, 'Ar':0.01}
 
-AIR_FUEL_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319, 'C2H4':20, 'H':7} 
-
 ####
-janaf_init_prod_amounts = AIR_MIX 
-janaf_default_elements = {'Ar':3.23319258e-04, 'C':1.10132241e-05, 'N':5.39157736e-02, 'O':1.44860147e-02}
-co2_co_o2_init_prod_amounts = {'CO':0, 'CO2':1, 'O2':0}
-co2_co_o2_default_elements = {'C':0.02272237, 'O':0.04544473}
+AIR_ELEMENTS = {'Ar':3.23319258e-04, 'C':1.10132241e-05, 'N':5.39157736e-02, 'O':1.44860147e-02}
+CO2_CO_O2_MIX = {'CO':0, 'CO2':1, 'O2':0}
+CO2_CO_O2_ELEMENTS = {'C':0.02272237, 'O':0.04544473}
 wet_air_init_prod_amounts = {'N2':78.084, 'O2':20.9476, 'Ar':.9365, 'CO2':.0319, 'H2O':1}
-wet_air_default_elements = {'Ar':3.21320761e-04, 'C':1.09451493e-05, 'H':6.86216254e-04, 'N':5.35825100e-02, 'O':1.47395820e-02}
+WET_AIR_ELEMENTS = {'Ar':3.21320761e-04, 'C':1.09451493e-05, 'H':6.86216254e-04, 'N':5.35825100e-02, 'O':1.47395820e-02}
 ####
 
 OXYGEN = {'O': 1}

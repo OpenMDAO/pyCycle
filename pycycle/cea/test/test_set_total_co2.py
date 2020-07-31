@@ -15,7 +15,7 @@ class SetTotalTestCase(unittest.TestCase):
 
     def test_set_total_tp(self):
 
-        thermo = species_data.Thermo(species_data.co2_co_o2, constants.co2_co_o2_init_prod_amounts)
+        thermo = species_data.Thermo(species_data.co2_co_o2, constants.CO2_CO_O2_MIX)
         init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k
@@ -60,7 +60,7 @@ class SetTotalTestCase(unittest.TestCase):
 
     def test_set_total_hp(self):
 
-        thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
+        thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
         init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k
@@ -112,7 +112,7 @@ class SetTotalTestCase(unittest.TestCase):
 
     def test_set_total_sp(self):
 
-        thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.co2_co_o2_init_prod_amounts)
+        thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
         init_reacts = {'CO':1, 'CO2':1, 'O2':1}
 
         # 4000k

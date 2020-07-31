@@ -24,7 +24,7 @@ class TestSetStaticMN(unittest.TestCase):
 
     def test_case_MN(self):
 
-        thermo = Thermo(janaf, init_reacts=constants.janaf_init_prod_amounts)
+        thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
 
         p = Problem()
 

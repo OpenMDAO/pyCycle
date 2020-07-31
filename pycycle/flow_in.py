@@ -38,6 +38,7 @@ class FlowIn(om.ExplicitComponent):
         self.add_input('%s:tot:n'%fl_name, val=np.zeros(num_prods), desc='concentrations of products in mixture')
         # self.add_input('%s:tot:n_moles'%fl_name, val=1.0, desc='moles/gram of gas')
         self.add_input('%s:tot:R'%fl_name, val=1.0, desc='total gas constant', units='Btu/(lbm*degR)')
+        self.add_input('%s:tot:b0'%fl_name, val=np.ones(num_elements)/(10*num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
 
         self.add_input('%s:stat:h'%fl_name, val=1.0, desc='static enthalpy', units='Btu/lbm')
         self.add_input('%s:stat:T'%fl_name, val=518., desc='static temperature', units='degR')
@@ -50,7 +51,7 @@ class FlowIn(om.ExplicitComponent):
         self.add_input('%s:stat:n'%fl_name, val=np.zeros(num_prods), desc='concentrations of products in mixture')
         # self.add_input('%s:stat:n_moles'%fl_name, val=1.0, desc='moles/gram of gas')
         self.add_input('%s:stat:R'%fl_name, val=1.0, desc='static gas constant', units='Btu/(lbm*degR)')
-        self.add_input('%s:tot:b0'%fl_name, val=np.ones(num_elements)/(10*num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
+        self.add_input('%s:stat:b0'%fl_name, val=np.ones(num_elements)/(10*num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
 
         # TODO takes these out of static (keep them top level)
         self.add_input('%s:stat:V'%fl_name, val=1.0, desc='Velocity', units='ft/s')

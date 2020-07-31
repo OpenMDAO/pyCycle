@@ -414,5 +414,31 @@ class Mixer(om.Group):
         conv.connect('imp_out.impulse', 'balance.lhs:P_tot')
         self.connect('mix_flow.impulse_mix', 'balance.rhs:P_tot') #note that this connection comes from outside the convergence group
 
+if __name__ == "__main__":
 
+    from pycycle.cea.species_data import Thermo, janaf
+    from pycycle import constants
 
+    prob = om.Problem()
+    prob.model = Mixer(design=True, Fl_I1_elements=constants.AIR_MIX, Fl_I2_elements=constants.AIR_MIX)
+
+    thermo = Thermo(janaf, constants.AIR_MIX)
+
+    prob.model.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
+    prob.model.set_input_defaults('Fl_I1:tot:h', val=1.0,  units='Btu/lbm')
+    prob.model.set_input_defaults('Fl_I2:tot:h', val=1.0,  units='Btu/lbm')
+    prob.model.set_input_defaults('Fl_I1:tot:S', val=1.0, units='Btu/(lbm*degR)')
+    # p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
+    prob.model.set_input_defaults('Fl_I1:tot:P', 5.0, units='lbf/inch**2')
+    prob.model.set_input_defaults('Fl_I2:tot:P', 5.0, units='lbf/inch**2')
+    prob.model.set_input_defaults('Fl_I2:stat:P', 5.0, units='lbf/inch**2')
+    # # p.model.set_input_defaults('Fl_I:tot:n', thermo.init_prod_amounts)
+    # p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+    prob.model.set_input_defaults('Fl_I2:stat:V', 0.0, units='ft/s')#keep
+    prob.model.set_input_defaults('Fl_I2:stat:area', 1.0, units='inch**2')#keep
+    prob.model.set_input_defaults('Fl_I1:stat:W', 1, units='kg/s')
+    prob.model.set_input_defaults('Fl_I2:stat:W', 1, units='kg/s')
+
+    prob.setup(force_alloc_complex=True)
+    prob.run_model()
+    prob.check_partials(method='cs', compact_print=True)

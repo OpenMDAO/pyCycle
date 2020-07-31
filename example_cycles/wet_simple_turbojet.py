@@ -3,6 +3,7 @@ import sys
 import openmdao.api as om
 
 import pycycle.api as pyc
+from pycycle.constants import wet_air_init_prod_amounts
 
 
 class WetTurbojet(pyc.Cycle):
@@ -19,11 +20,11 @@ class WetTurbojet(pyc.Cycle):
 
         # Add engine elements
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec, use_WAR=True,
-                                    elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                    elements=wet_air_init_prod_amounts))#WET_AIR_MIX contains standard dry air compounds as well as H2O
         self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
-                                    elements=pyc.WET_AIR_MIX))
+                                    elements=wet_air_init_prod_amounts))
         self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=wet_thermo_spec, elements=pyc.WET_AIR_MIX,),
+                                    thermo_data=wet_thermo_spec, elements=wet_air_init_prod_amounts,),
                                     promotes_inputs=['Nmech'])
 
         ###Note###
@@ -37,7 +38,7 @@ class WetTurbojet(pyc.Cycle):
         #a difficult time converging the trace amount of hydrocarbons "present" in the original flow.
 
         self.pyc_add_element('burner', pyc.Combustor(design=design,inflow_thermo_data=wet_thermo_spec,
-                                    thermo_data=janaf_thermo_spec, inflow_elements=pyc.WET_AIR_MIX,
+                                    thermo_data=janaf_thermo_spec, inflow_elements=wet_air_init_prod_amounts,
                                     air_fuel_elements=pyc.AIR_FUEL_MIX,
                                     fuel_type='JP-7'))
         self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,

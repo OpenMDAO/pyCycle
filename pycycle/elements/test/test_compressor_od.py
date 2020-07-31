@@ -23,7 +23,7 @@ class CompressorODTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf, constants.janaf_init_prod_amounts)
+        thermo = Thermo(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
 

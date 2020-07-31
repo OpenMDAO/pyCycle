@@ -194,7 +194,7 @@ class HBTF(pyc.Cycle):
         newton.options['atol'] = 1e-8
         newton.options['rtol'] = 1e-8
         newton.options['iprint'] = 2
-        newton.options['maxiter'] = 50
+        newton.options['maxiter'] = 10
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
