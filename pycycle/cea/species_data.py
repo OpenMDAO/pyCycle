@@ -165,26 +165,26 @@ class Thermo(object):
             # uncomment this section of code and comment method 2 to make all tests pass
 
 
-            # expand the init_reacts out to include all products, not just those provided
-            full_init_react = OrderedDict()
-            for p in self.prod_data:
-                # initial amounts need to be given in mass ratios
-                if p in init_reacts:
-                    full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
-                else:
-                    full_init_react[p] = 0.
+            # # expand the init_reacts out to include all products, not just those provided
+            # full_init_react = OrderedDict()
+            # for p in self.prod_data:
+            #     # initial amounts need to be given in mass ratios
+            #     if p in init_reacts:
+            #         full_init_react[p] = init_reacts[p] * self.prod_data[p]['wt']
+            #     else:
+            #         full_init_react[p] = 0.
 
-            init_reacts = full_init_react
+            # init_reacts = full_init_react
 
-            init_prod_amounts = [init_reacts[name] for name in init_reacts
-                                 if self.elements.issuperset(self.prod_data[name]['elements'])]
+            # init_prod_amounts = [init_reacts[name] for name in init_reacts
+            #                      if self.elements.issuperset(self.prod_data[name]['elements'])]
 
-            init_prod_amounts = np.array(init_prod_amounts)
-            init_prod_amounts = init_prod_amounts/np.sum(init_prod_amounts) # normalize to 1kg of matter
+            # init_prod_amounts = np.array(init_prod_amounts)
+            # init_prod_amounts = init_prod_amounts/np.sum(init_prod_amounts) # normalize to 1kg of matter
 
-            init_prod_amounts /= self.wt_mole
+            # init_prod_amounts /= self.wt_mole
 
-            self.b0 = np.sum(self.aij*init_prod_amounts, axis=1) #moles of each element per kg of mixture 
+            # self.b0 = np.sum(self.aij*init_prod_amounts, axis=1) #moles of each element per kg of mixture 
 
 ################ END METHOD NUMBER ONE ############################################################################
 
@@ -194,10 +194,10 @@ class Thermo(object):
 ################ METHOD NUMBER TWO ###############################################################################
             # uncomment this section of code and comment method 1 to simplify code (one of the mixer tests will fail)
 
-            # self.b0 = self.get_b0()
-            # self.b0 = self.b0*self.element_wt
-            # self.b0 = self.b0/np.sum(self.b0)
-            # self.b0 = self.b0/self.element_wt  #moles of each element per kg of mixture 
+            self.b0 = self.get_b0()
+            self.b0 = self.b0*self.element_wt
+            self.b0 = self.b0/np.sum(self.b0)
+            self.b0 = self.b0/self.element_wt  #moles of each element per kg of mixture 
 
 ################## END METHOD NUMBER TWO #############################################################
 
@@ -224,19 +224,33 @@ class Thermo(object):
     def get_b0(self):#note, reactants is assumed to be a dictionary
 
         element_list = sorted(self.elements)
+        complex_check = False
 
         aij = []
 
         for e in element_list:
+            row = []
+            for react in self.init_reacts:
+                row.append(self.prod_data[react]['elements'].get(e,0))
 
-            row = [self.prod_data[react]['elements'].get(e,0) for react in self.init_reacts]
+                if isinstance(self.init_reacts[react], np.ndarray):
+                    if isinstance(self.init_reacts[react][0], complex):
+                        complex_check = True
+
             aij.append(row)
 
         b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
 
+        if complex_check is True:
+            init_reacts = np.fromiter(self.init_reacts.values(), dtype=complex)
+            b_values = b_values.astype(np.complex)
+
+        else:
+            init_reacts = np.fromiter(self.init_reacts.values(), dtype=float)    
+
         for i, element in enumerate(element_list):
-            for j, reactant in enumerate(self.init_reacts):
-                b_values[i] += aij[i][j]*self.init_reacts[reactant]
+            for j, reactant in enumerate(init_reacts):
+                b_values[i] += aij[i][j]*reactant
 
         return(b_values)
 
