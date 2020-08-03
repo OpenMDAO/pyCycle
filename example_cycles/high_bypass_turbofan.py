@@ -493,23 +493,3 @@ if __name__ == "__main__":
 
     print()
     print("Run time", time.time() - st)
-
-    print("DESIGN.inlet.Fl_O:stat:W:", '\tactual - ', prob['DESIGN.inlet.Fl_O:stat:W'][0], '\texpected - 321.2576516992752')
-    print("DESIGN.perf.OPR:", '\t\tactual - ', prob['DESIGN.perf.OPR'][0], '\texpected - 30.093715097383036')
-    print("DESIGN.balance.FAR:", '\t\tactual - ', prob['DESIGN.balance.FAR'][0], '\texpected - 0.02490864067635393')
-    print("DESIGN.balance.hpt_PR:", '\t\tactual - ', prob['DESIGN.balance.hpt_PR'][0], '\texpected - 3.622786486597859')
-    print("DESIGN.balance.lpt_PR:", '\t\tactual - ', prob['DESIGN.balance.lpt_PR'][0], '\texpected - 4.368917011016975')
-    print("DESIGN.perf.Fg:", '\t\tactual - ', prob['DESIGN.perf.Fg'][0], '\texpected - 13274.518064890453')
-    print("DESIGN.perf.TSFC:", '\t\tactual - ', prob['DESIGN.perf.TSFC'][0], '\texpected - 0.6310187288023835')
-    print("DESIGN.bld3.Fl_O:tot:T:", '\tactual - ', prob['DESIGN.bld3.Fl_O:tot:T'][0], '\texpected - 1276.4761356620097')
-    print()
-    
-    print("OD.inlet.Fl_O:stat:W:", '\t\tactual - ', prob['OD.inlet.Fl_O:stat:W'][0], '\texpected - 321.2576516883559')
-    print("OD.perf.OPR:", '\t\t\tactual - ', prob['OD.perf.OPR'][0], '\texpected - 30.093715093698908')
-    print("OD.balance.FAR;", '\t\tactual - ', prob['OD.balance.FAR'][0], '\texpected - 0.02490864067399154')
-    print("OD.balance.hp_Nmech:", '\t\tactual - ', prob['OD.balance.hp_Nmech'][0], '\texpected - 14705.699999593722')
-    print("OD.balance.lp_Nmech:", '\t\tactual - ', prob['OD.balance.lp_Nmech'][0], '\texpected - 4666.099999613648')
-    print("OD.perf.Fg:", '\t\t\tactual - ', prob['OD.perf.Fg'][0], '\texpected - 13274.51807222065')
-    print("OD.perf.TSFC:", '\t\t\tactual - ', prob['OD.perf.TSFC'][0], '\texpected - 0.6310187278146049')
-    print("OD.bld3.Fl_O:tot:T:", '\t\tactual - ', prob['OD.bld3.Fl_O:tot:T'][0], '\texpected - 1276.4761355970347')
-    print("OD.balance.BPR:", '\t\tactual - ', prob['OD.balance.BPR'][0], '\texpected - 5.105000000340247')
