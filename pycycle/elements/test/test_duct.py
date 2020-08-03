@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -64,16 +64,11 @@ class DuctTestCase(unittest.TestCase):
 
         connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct.Fl_I')
 
-        # Remaining des_vars will be removed after set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 500., units='lbm/s')
-
         self.prob.model.set_input_defaults('MN', 0.5)
         self.prob.model.set_input_defaults('duct.dPqP', 0.0)
         self.prob.model.set_input_defaults('P', 17., units='psi')
         self.prob.model.set_input_defaults('T', 500., units='degR')
-
-        self.prob.model.connect("W", "flow_start.W")
+        self.prob.model.set_input_defaults('flow_start.W', 500., units='lbm/s')
 
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
@@ -87,7 +82,7 @@ class DuctTestCase(unittest.TestCase):
             self.prob['P'] = data[h_map['Fl_I.Pt']]
             self.prob['T'] = data[h_map['Fl_I.Tt']]
             self.prob['MN'] = data[h_map['Fl_O.MN']]
-            self.prob['W'] = data[h_map['Fl_I.W']]
+            self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
             self.prob['duct.Fl_I:stat:V'] = data[h_map['Fl_I.V']]
 
             # give a decent initial guess for Ps
@@ -120,9 +115,9 @@ class DuctTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX), promotes=['P', 'T', 'MN'])
+                                                              elements=AIR_MIX), promotes=['P', 'T', 'MN', 'W'])
         self.prob.model.add_subsystem('flow_start_OD', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX), promotes=['P', 'T'])
+                                                              elements=AIR_MIX), promotes=['P', 'T', 'W'])
 
         expMN = 1.0
         self.prob.model.add_subsystem('duct_des', Duct(elements=AIR_MIX, expMN=expMN), promotes=['MN'])
@@ -131,17 +126,13 @@ class DuctTestCase(unittest.TestCase):
         connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct_des.Fl_I')
         connect_flow(self.prob.model, 'flow_start_OD.Fl_O', 'duct_OD.Fl_I')
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 500., units='lbm/s')
-
         self.prob.model.set_input_defaults('P', 17., units='psi')
         self.prob.model.set_input_defaults('T', 500., units='degR')
         self.prob.model.set_input_defaults('MN', 0.5)
         self.prob.model.set_input_defaults('flow_start_OD.MN', 0.25)
         self.prob.model.set_input_defaults('duct_des.dPqP', 0.0)
+        self.prob.model.set_input_defaults('W', 500., units='lbm/s')
 
-        self.prob.model.connect("W", ["flow_start.W", 'flow_start_OD.W'])
         self.prob.model.connect("duct_des.s_dPqP", "duct_OD.s_dPqP")
         self.prob.model.connect("duct_des.Fl_O:stat:area", "duct_OD.area")
 

@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -31,22 +31,17 @@ class TestSetStaticArea(unittest.TestCase):
 
         p = Problem()
 
-        #the rest of the indep var comp can be removed once set_input_defaults is fixed to allow overwriting
-        indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
-        indeps.add_output('W', val=1.5, units='lbm/s')
-        indeps.add_output('area', val=np.inf, units='inch**2')
-
         p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes_inputs=['b0', 'P'])
         p.model.add_subsystem('set_static_A', SetStatic(mode='area', thermo_data=janaf), promotes_inputs=['b0', ('guess:Pt', 'P')])
         p.model.set_input_defaults('b0', thermo.b0)
         p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
 
         p.model.set_input_defaults('P', val=14.7, units='psi')
+        p.model.set_input_defaults('set_static_A.W', val=1.5, units='lbm/s')
+        p.model.set_input_defaults('set_static_A.area', val=np.inf, units='inch**2')
 
         p.model.connect('set_total_TP.flow:S', 'set_static_A.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_A.ht')
-        p.model.connect('W', 'set_static_A.W')
-        p.model.connect('area', 'set_static_A.area')
         p.model.connect('set_total_TP.flow:gamma', 'set_static_A.guess:gamt')
 
         p.set_solver_print(level=-1)
@@ -58,8 +53,8 @@ class TestSetStaticArea(unittest.TestCase):
             p['set_total_TP.T'] = data[h_map['Tt']]
             p['P'] = data[h_map['Pt']]
 
-            p['area'] = data[h_map['A']]
-            p['W'] = data[h_map['W']]
+            p['set_static_A.area'] = data[h_map['A']]
+            p['set_static_A.W'] = data[h_map['W']]
 
             if i is 5:  # supersonic case
                 p['set_static_A.guess:MN'] = 3.
@@ -77,7 +72,7 @@ class TestSetStaticArea(unittest.TestCase):
             rhos_computed = p['set_static_A.flow:rho']
             gams_computed = p['set_static_A.flow:gamma']
             V_computed = p['set_static_A.flow:V']
-            A_computed = p['area']
+            A_computed = p['set_static_A.area']
             MN_computed = p['set_static_A.MN']
 
             tol = 1.0e-4

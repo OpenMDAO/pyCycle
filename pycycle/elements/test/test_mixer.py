@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
@@ -30,15 +30,10 @@ class MixerTestcase(unittest.TestCase):
         p.model.set_input_defaults('P', 17., units='psi')
         p.model.set_input_defaults('T', 500., units='degR')
         p.model.set_input_defaults('MN', 0.5)
+        p.model.set_input_defaults('W', 100., units='lbm/s')
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('W', 100., units='lbm/s')
-
-        p.model.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN'])
-        p.model.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN'])
-
-        p.model.connect('des_vars.W', ['start1.W', 'start2.W'])
+        p.model.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
+        p.model.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
 
         p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
 
@@ -61,19 +56,14 @@ class MixerTestcase(unittest.TestCase):
 
         p = Problem()
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('W', 100., units='lbm/s')
-
         p.model.set_input_defaults('start1.P', 17., units='psi')
         p.model.set_input_defaults('start2.P', 15., units='psi')
         p.model.set_input_defaults('T', 500., units='degR')
         p.model.set_input_defaults('MN', 0.5)
+        p.model.set_input_defaults('W', 100., units='lbm/s')
 
-        p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T'])
-        p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T'])
-
-        p.model.connect('des_vars.W', ['start1.W', 'start2.W'])
+        p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T', 'W'])
+        p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T', 'W'])
 
         p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
 
@@ -92,25 +82,19 @@ class MixerTestcase(unittest.TestCase):
     def _build_problem(self, designed_stream=1, complex=False):
 
             p = Problem()
-
-            # Remaining des_vars will be removed once set_input_defaults is fixed
-            des_vars = p.model.add_subsystem('des_vars', IndepVarComp())
-            des_vars.add_output('W1', 161.49, units='lbm/s')
-            des_vars.add_output('W2', 158., units='lbm/s')
             
             p.model.set_input_defaults('start1.P', 9.218, units='psi')
             p.model.set_input_defaults('start1.T', 1524.32, units='degR')
             p.model.set_input_defaults('start1.MN', 0.4463)
+            p.model.set_input_defaults('start1.W', 161.49, units='lbm/s')
 
             p.model.set_input_defaults('start2.P', 8.68, units='psi')
             p.model.set_input_defaults('start2.T', 524., units='degR')
             p.model.set_input_defaults('start2.MN', 0.4463)
+            p.model.set_input_defaults('start2.W', 158., units='lbm/s')
 
             p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_MIX))
             p.model.add_subsystem('start2', FlowStart(elements=AIR_MIX))
-
-            p.model.connect('des_vars.W1',  'start1.W' )
-            p.model.connect('des_vars.W2',  'start2.W' )
 
             p.model.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream,
                                                  Fl_I1_elements=AIR_FUEL_MIX, Fl_I2_elements=AIR_MIX))
@@ -130,8 +114,8 @@ class MixerTestcase(unittest.TestCase):
         p.run_model()
 
         tol = 5e-7
-        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.58258193, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.88271201, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.54161119, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8823286, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
         p = self._build_problem(designed_stream=2)

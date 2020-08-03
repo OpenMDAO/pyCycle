@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -59,10 +59,7 @@ class InletTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
         self.prob.model.set_input_defaults('inlet.MN', 0.5)
         self.prob.model.set_input_defaults('inlet.Fl_I:stat:V', 1., units='ft/s')
-
-        # Remaining des_vars will be removed when set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 1., units='lbm/s')
+        self.prob.model.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('inlet', Inlet(elements=AIR_MIX))
@@ -79,8 +76,6 @@ class InletTestCase(unittest.TestCase):
             self.prob.model.connect('%s:stat:%s' % (
                 fl_src, v_name), '%s:stat:%s' % (fl_target, v_name))
 
-        self.prob.model.connect("W", "flow_start.W")
-
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
 
@@ -93,7 +88,7 @@ class InletTestCase(unittest.TestCase):
             self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
             self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
             self.prob['inlet.MN'] = data[h_map['Fl_O.MN']]
-            self.prob['W'] = data[h_map['Fl_I.W']]
+            self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
             self.prob['inlet.Fl_I:stat:V'] = data[h_map['Fl_I.V']]
 
             self.prob.run_model()

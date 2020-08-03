@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.units import convert_units as cu
 
@@ -29,20 +29,16 @@ class TestSetStaticPs(unittest.TestCase):
 
         p = Problem()
 
-        # the remaining indeps will be removed when set_input_defaults is fixed
-        indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
-        indeps.add_output('W', val=1., units='lbm/s')
-
         p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0'])
         p.model.add_subsystem('set_static_Ps', SetStatic(mode='Ps', thermo_data=janaf), promotes=['b0'])
         p.model.set_input_defaults('b0', thermo.b0)
         p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
         p.model.set_input_defaults('set_total_TP.P', val=14.7, units='psi')
         p.model.set_input_defaults('set_static_Ps.Ps', val=13.0, units='psi')
+        p.model.set_input_defaults('set_static_Ps.W', val=1., units='lbm/s')
 
         p.model.connect('set_total_TP.flow:S', 'set_static_Ps.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_Ps.ht')
-        p.model.connect('W', 'set_static_Ps.W')
 
         p.setup(check=False)
         p.set_solver_print(level=-1)
@@ -54,7 +50,7 @@ class TestSetStaticPs(unittest.TestCase):
             p['set_total_TP.P'] = data[h_map['Pt']]
 
             p['set_static_Ps.Ps'] = data[h_map['Ps']]
-            p['W'] = data[h_map['W']]
+            p['set_static_Ps.W'] = data[h_map['W']]
 
             p.run_model()
 

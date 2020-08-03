@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -26,10 +26,6 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
-        # Remaining des_vars will be removed when set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 0.0, units='lbm/s')
-
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
                                                        thermo_data=janaf, elements=AIR_MIX,
@@ -40,10 +36,9 @@ class NozzleTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
         self.prob.model.set_input_defaults('flow_start.MN', 0.2)
         self.prob.model.set_input_defaults('nozzle.Ps_exhaust', 17.0, units='psi')
+        self.prob.model.set_input_defaults('flow_start.W', 0.0, units='lbm/s')
 
         connect_flow(self.prob.model, "flow_start.Fl_O", "nozzle.Fl_I")
-
-        self.prob.model.connect("W", "flow_start.W")
 
         if LossType == 'Cv':
             self.prob.model.set_input_defaults('nozzle.Cv', 0.99)
@@ -103,7 +98,7 @@ class NozzleTestCase(unittest.TestCase):
 
             self.prob['flow_start.T'] = data[self.h_map['Fl_I.Tt']]
             self.prob['flow_start.P'] = data[self.h_map['Fl_I.Pt']]
-            self.prob['W'] = data[self.h_map['Fl_I.W']]
+            self.prob['flow_start.W'] = data[self.h_map['Fl_I.W']]
             self.prob['flow_start.MN'] = data[self.h_map['Fl_I.MN']]
             self.prob['nozzle.Ps_exhaust'] = data[self.h_map['PsExh']]
 

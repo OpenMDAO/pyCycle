@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.constants import AIR_MIX
@@ -53,21 +53,15 @@ class CompressorTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 10., units='lbm/s')
-        des_vars.add_output('PR', 6.)
-        des_vars.add_output('eff', 0.9)
-        self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect('PR', 'compressor.PR')
-        self.prob.model.connect('eff', 'compressor.eff')
-
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('compressor', Compressor(design=True, elements=AIR_MIX))
 
         self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
         self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
         self.prob.model.set_input_defaults('compressor.MN', 0.5)
+        self.prob.model.set_input_defaults('flow_start.W', 10., units='lbm/s')
+        self.prob.model.set_input_defaults('compressor.PR', 6.)
+        self.prob.model.set_input_defaults('compressor.eff', 0.9)
 
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
 
@@ -78,14 +72,14 @@ class CompressorTestCase(unittest.TestCase):
         np.seterr(divide='raise')
         # 6 cases to check against
         for i, data in enumerate(ref_data):
-            self.prob['PR'] = data[h_map['comp.PRdes']]
-            self.prob['eff'] = data[h_map['comp.effDes']]
+            self.prob['compressor.PR'] = data[h_map['comp.PRdes']]
+            self.prob['compressor.eff'] = data[h_map['comp.effDes']]
             self.prob['compressor.MN'] = data[h_map['comp.Fl_O.MN']]
 
             # input flowstation
             self.prob['flow_start.P'] = data[h_map['start.Pt']]
             self.prob['flow_start.T'] = data[h_map['start.Tt']]
-            self.prob['W'] = data[h_map['start.W']]
+            self.prob['flow_start.W'] = data[h_map['start.W']]
             self.prob.run_model()
 
             tol = 1e-3

@@ -184,25 +184,20 @@ class Thermo(object):
 
         aij = []
 
+        b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
+        init_reacts = np.fromiter(self.init_reacts.values(), dtype=float) 
+
         for e in element_list:
             row = []
             for react in self.init_reacts:
                 row.append(self.prod_data[react]['elements'].get(e,0))
 
-                if isinstance(self.init_reacts[react], np.ndarray):
+                if isinstance(self.init_reacts[react], np.ndarray): ## <- fix...?
                     if isinstance(self.init_reacts[react][0], complex):
-                        complex_check = True
+                        init_reacts = np.fromiter(self.init_reacts.values(), dtype=complex)
+                        b_values = b_values.astype(np.complex)
 
-            aij.append(row)
-
-        b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
-
-        if complex_check is True:
-            init_reacts = np.fromiter(self.init_reacts.values(), dtype=complex)
-            b_values = b_values.astype(np.complex)
-
-        else:
-            init_reacts = np.fromiter(self.init_reacts.values(), dtype=float)    
+            aij.append(row) 
 
         for i, element in enumerate(element_list):
             for j, reactant in enumerate(init_reacts):
@@ -247,9 +242,10 @@ class Thermo(object):
 
 if __name__ == "__main__":
 
-    thermo = Thermo(co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
+    # thermo = Thermo(co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
     # thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
     # thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
+    thermo = Thermo(wet_air, init_reacts=constants.WET_AIR_MIX)
 
     T = np.ones(len(thermo.products))*800
     H0 = thermo.H0(T)

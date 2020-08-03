@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -28,21 +28,17 @@ class TestSetStaticMN(unittest.TestCase):
 
         p = Problem()
 
-        # the remaining indeps will be removed when set_input_defaults is fixed
-        indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
-        indeps.add_output('W', val=1.5, units='lbm/s')
-
         p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0', 'P'])
         p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf), promotes=['b0', ('guess:Pt', 'P')])
         p.model.set_input_defaults('b0', thermo.b0)
         p.model.set_input_defaults('set_static_MN.MN', val=1.5, units=None)
         p.model.set_input_defaults('P', val=14.7, units='psi')
         p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
+        p.model.set_input_defaults('set_static_MN.W', val=1.5, units='lbm/s')
 
         p.model.connect('set_total_TP.flow:S', 'set_static_MN.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_MN.ht')
         p.model.connect('set_total_TP.flow:gamma', 'set_static_MN.guess:gamt')
-        p.model.connect('W', 'set_static_MN.W')
 
         p.set_solver_print(level=-1)
         p.setup(check=False)
@@ -54,7 +50,7 @@ class TestSetStaticMN(unittest.TestCase):
             p['P'] = data[h_map['Pt']]
 
             p['set_static_MN.MN'] = data[h_map['MN']]
-            p['W'] = data[h_map['W']]
+            p['set_static_MN.W'] = data[h_map['W']]
 
             p.run_model()
 

@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
@@ -27,14 +27,6 @@ class CompressorODTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        # Remaining des_vars will be removed when set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 0., units='lbm/s')
-        des_vars.add_output('area_targ', 50., units='inch**2')
-
-        self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("area_targ", "compressor.area")
-
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('compressor', Compressor(
                 map_data=AXI5, design=False, elements=AIR_MIX, map_extrap=False))
@@ -47,6 +39,8 @@ class CompressorODTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('compressor.Nmech', 0., units='rpm')
         self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
         self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
+        self.prob.model.set_input_defaults('flow_start.W', 0., units='lbm/s')
+        self.prob.model.set_input_defaults('compressor.area', 50., units='inch**2')
 
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
 
@@ -130,8 +124,8 @@ class CompressorODTestCase(unittest.TestCase):
                 # input flowstation
                 self.prob['flow_start.P'] = data[h_map['comp.Fl_I.Pt']]
                 self.prob['flow_start.T'] = data[h_map['comp.Fl_I.Tt']]
-                self.prob['W'] = data[h_map['comp.Fl_I.W']]
-                self.prob['area_targ'] = data[h_map['comp.Fl_O.A']]
+                self.prob['flow_start.W'] = data[h_map['comp.Fl_I.W']]
+                self.prob['compressor.area'] = data[h_map['comp.Fl_O.A']]
 
                 self.prob.run_model()
                 tol = 3.0e-3  # seems a little generous,

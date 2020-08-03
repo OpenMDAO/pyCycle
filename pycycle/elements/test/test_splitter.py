@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.constants import AIR_MIX
@@ -65,11 +65,6 @@ class splitterTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 10., units='lbm/s')
-        self.prob.model.connect("W", "flow_start.W")
-
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('splitter', Splitter(elements=AIR_MIX))
 
@@ -77,6 +72,7 @@ class splitterTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
         self.prob.model.set_input_defaults('splitter.MN1', 0.5)
         self.prob.model.set_input_defaults('splitter.MN2', 0.5)
+        self.prob.model.set_input_defaults('flow_start.W', 10., units='lbm/s')
 
         #total and static
         fl_src = "flow_start.Fl_O"
@@ -104,7 +100,7 @@ class splitterTestCase(unittest.TestCase):
             # input flowstation
             self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
             self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
-            self.prob['W'] = data[h_map['Fl_I.W']]
+            self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
             self.prob['splitter.MN1'] = data[h_map['Fl_O1.MN']]
             self.prob['splitter.MN2'] = data[h_map['Fl_O2.MN']]
             self.prob['splitter.Fl_I:stat:V'] = data[h_map['Fl_I.V']]

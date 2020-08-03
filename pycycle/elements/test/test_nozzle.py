@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf, Thermo
@@ -33,10 +33,6 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('W', 100.0, units='lbm/s')
-
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_MIX))
         self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_MIX, lossCoef='Cfg', internal_solver=True))
@@ -45,7 +41,7 @@ class NozzleTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.MN', 0.0)
         self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
         self.prob.model.set_input_defaults('flow_start.P', 17.0, units='psi')
-
+        self.prob.model.set_input_defaults('flow_start.W', 100.0, units='lbm/s')
 
         fl_src = "flow_start.Fl_O"
         fl_target = "nozzle.Fl_I"
@@ -60,8 +56,6 @@ class NozzleTestCase(unittest.TestCase):
                 (fl_src, v_name), '%s:stat:%s' %
                 (fl_target, v_name))
 
-        self.prob.model.connect('W', 'flow_start.W')
-
         self.prob.setup(check=False)
 
         # 4 cases to check against
@@ -73,7 +67,7 @@ class NozzleTestCase(unittest.TestCase):
 
             self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
             self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
-            self.prob['W'] = data[h_map['Fl_I.W']]
+            self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
             self.prob['flow_start.MN'] = data[h_map['Fl_I.MN']]
 
             self.prob.run_model()

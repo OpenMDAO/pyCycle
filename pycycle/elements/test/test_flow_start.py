@@ -2,12 +2,12 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, Group, IndepVarComp
+from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea import species_data
 from pycycle.elements.flow_start import FlowStart, SetWAR
-from pycycle.constants import AIR_MIX, WET_AIR_MIX, wet_air_init_prod_amounts
+from pycycle.constants import AIR_MIX, WET_AIR_MIX
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -42,13 +42,9 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.P', 17., units='psi')
         self.prob.model.set_input_defaults('fl_start.T', 500., units='degR')
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
-
-        # Remaining des_vars will be removed once set_input_defaults is fixed
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp())
-        des_vars.add_output('W', 100., units='lbm/s')
+        self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
         self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_MIX))
-        self.prob.model.connect('des_vars.W', 'fl_start.W')
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -58,7 +54,7 @@ class FlowStartTestCase(unittest.TestCase):
         for i, data in enumerate(ref_data):
             self.prob['fl_start.P'] = data[h_map['Pt']]
             self.prob['fl_start.T'] = data[h_map['Tt']]
-            self.prob['des_vars.W'] = data[h_map['W']]
+            self.prob['fl_start.W'] = data[h_map['W']]
             self.prob['fl_start.MN'] = data[h_map['MN']]
 
             self.prob.run_model()
@@ -177,7 +173,7 @@ class WARTestCase(unittest.TestCase):
 
         prob = Problem()
 
-        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=wet_air_init_prod_amounts), promotes=['*'])
+        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
         
         prob.model.set_input_defaults('WAR', .0001)
 
