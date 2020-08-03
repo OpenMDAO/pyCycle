@@ -69,8 +69,8 @@ class SetTotal(om.Group):
         thermo = Thermo(thermo_data, init_reacts)
 
         # chem_eq calculations
-        in_vars = ('init_prod_amounts', 'P')
-        out_vars = ('n', 'n_moles', 'b0')
+        in_vars = ('b0', 'P')
+        out_vars = ('n', 'n_moles')
         if mode == 'T':
             in_vars += ('T', )
         elif mode == 'h':
@@ -122,7 +122,7 @@ class SetTotal(om.Group):
             self.set_input_defaults('W', units='kg/s')
         else:
             self.add_subsystem('flow', EngUnitProps(thermo=thermo, fl_name=fl_name),
-                               promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R'),
+                               promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R', 'b0'),
                                promotes_outputs=('{}:*'.format(fl_name),))
 
 
@@ -160,26 +160,25 @@ if __name__ == "__main__":
     import scipy
 
     from pycycle.cea import species_data
+    from pycycle import constants
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Thermo(species_data.co2_co_o2, constants.CO2_CO_O2_MIX)
     # thermo = species_data.Thermo(species_data.janaf)
 
     prob = om.Problem()
     prob.model = om.Group()
 
-    indeps = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
-    indeps.add_output('init_prod_amounts', val=thermo.init_prod_amounts)
-    indeps.add_output('T', val=1500., units="degK")
-    indeps.add_output('P', val=1.034210, units="bar")
-
     prob.model.add_subsystem('totals',
                              SetTotal(thermo_data=species_data.janaf,
                                       fl_name="flow",
-                                      init_reacts=species_data.co2_co_o2.init_prod_amounts,
+                                      init_reacts=constants.CO2_CO_O2_MIX,
                                       mode="h"),
-                             promotes_inputs=['h', 'P', 'init_prod_amounts'],
+                             promotes_inputs=['h', 'P', 'b0'],
                              promotes_outputs=['flow:*'])
 
+    prob.model.totals.set_input_defaults('b0', thermo.b0)
+    prob.model.totals.set_input_defaults('P', 1.034210, units="bar")
+    prob.model.totals.set_input_defaults('h', 1., units="Btu/lbm")
     prob.model.suppress_solver_output = True
     prob.setup()
 
@@ -189,13 +188,11 @@ if __name__ == "__main__":
 
     prob.run_model()
     print('gamma', prob['flow:gamma'])
-    print('T', prob['flow:T'])
     print('P', prob['flow:P'])
     print('h', prob['flow:h'])
     print('rho', prob['flow:rho'])
     print('S', prob['flow:S'])
 
-    prob['T'] = 3000.
     prob['P'] = 4.0
 
 
@@ -206,3 +203,28 @@ if __name__ == "__main__":
     print('P', prob['flow:P'])
     print('h', prob['flow:h'])
     print('n', prob['flow:n'])
+
+
+
+    prob = om.Problem()
+    prob.model = om.Group()
+
+    prob.model.add_subsystem('totals',
+                             SetTotal(thermo_data=species_data.janaf,
+                                      fl_name="flow", for_statics='area',
+                                      init_reacts=constants.CO2_CO_O2_MIX,
+                                      mode="h"),
+                             promotes_inputs=['h', 'P', 'b0'])
+
+    prob.model.totals.set_input_defaults('b0', thermo.b0)
+    prob.model.totals.set_input_defaults('P', 1.034210, units="bar")
+    prob.model.totals.set_input_defaults('h', 100., units="Btu/lbm")
+    prob.model.suppress_solver_output = True
+    prob.setup()
+
+    # from openmdao.api import view_model
+    # view_model(prob)
+    # exit(0)
+
+    prob.run_model()
+    prob.model.list_inputs()

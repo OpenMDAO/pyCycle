@@ -66,6 +66,7 @@ class EngUnitProps(UnitCompBase):
         self.add_input('n', val=np.ones(thermo.num_prod))
         self.add_input('n_moles', val=1.)
         self.add_input('R', val=1.0, units="Btu/(lbm*degR)", desc='Total specific gas constant')
+        self.add_input('b0', val=thermo.b0, units=None, desc='moles of atoms present for each element')
 
         super(EngUnitProps, self).setup()
 

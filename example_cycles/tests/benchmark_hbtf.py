@@ -60,10 +60,10 @@ class HBTFTestCase(unittest.TestCase):
         self.prob.set_solver_print(level=-1)
         self.prob.set_solver_print(level=2, depth=1)
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
         print()
 
-        reg_data = 321.253
+        reg_data = 321.25763
         pyc = self.prob['DESIGN.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -73,7 +73,7 @@ class HBTFTestCase(unittest.TestCase):
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02491
+        reg_data = 0.0249086
         pyc = self.prob['DESIGN.balance.FAR'][0]
         print('FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -83,7 +83,7 @@ class HBTFTestCase(unittest.TestCase):
         print('HPT PR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4.3687
+        reg_data = 4.368916
         pyc = self.prob['DESIGN.balance.lpt_PR'][0]
         print('LPT PR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -93,7 +93,7 @@ class HBTFTestCase(unittest.TestCase):
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.63101
+        reg_data = 0.631018707
         pyc = self.prob['DESIGN.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -103,7 +103,7 @@ class HBTFTestCase(unittest.TestCase):
         print('Tt3:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 321.251
+        reg_data = 321.25763
         pyc = self.prob['OD0.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -113,7 +113,7 @@ class HBTFTestCase(unittest.TestCase):
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02491
+        reg_data = 0.0249086
         pyc = self.prob['OD0.balance.FAR'][0]
         print('FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -133,7 +133,7 @@ class HBTFTestCase(unittest.TestCase):
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.63101
+        reg_data = 0.631018706
         pyc = self.prob['OD0.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -148,18 +148,17 @@ class HBTFTestCase(unittest.TestCase):
         print('BPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-
-        reg_data = 327.265
+        reg_data = 327.2713
         pyc = self.prob['OD1.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 32.415
+        reg_data = 32.41462
         pyc = self.prob['OD1.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02616
+        reg_data = 0.02615817
         pyc = self.prob['OD1.balance.FAR'][0]
         print('FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -169,17 +168,17 @@ class HBTFTestCase(unittest.TestCase):
         print('HPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4933.4
+        reg_data = 4933.5037
         pyc = self.prob['OD1.balance.lp_Nmech'][0]
         print('LPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 13889.9
+        reg_data = 13890.0598
         pyc = self.prob['OD1.perf.Fg'][0]
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.64539
+        reg_data = 0.6453853
         pyc = self.prob['OD1.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -189,22 +188,22 @@ class HBTFTestCase(unittest.TestCase):
         print('Tt3:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4.898
+        reg_data = 4.898435
         pyc = self.prob['OD1.balance.BPR'][0]
         print('BPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 825.049
+        reg_data = 825.0649
         pyc = self.prob['OD2.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 28.998
+        reg_data = 28.998212
         pyc = self.prob['OD2.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02975
+        reg_data = 0.0297531
         pyc = self.prob['OD2.balance.FAR'][0]
         print('FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -214,17 +213,17 @@ class HBTFTestCase(unittest.TestCase):
         print('HPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 5050
+        reg_data = 5050.0624
         pyc = self.prob['OD2.balance.lp_Nmech'][0]
         print('LPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 29930.8
+        reg_data = 29930.9196
         pyc = self.prob['OD2.perf.Fg'][0]
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.47488
+        reg_data = 0.4748756
         pyc = self.prob['OD2.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -234,22 +233,22 @@ class HBTFTestCase(unittest.TestCase):
         print('Tt3:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 5.243
+        reg_data = 5.2427278
         pyc = self.prob['OD2.balance.BPR'][0]
         print('BPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 786.741
+        reg_data = 786.75457
         pyc = self.prob['OD3.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 28.418
+        reg_data = 28.41786
         pyc = self.prob['OD3.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02912
+        reg_data = 0.02912133
         pyc = self.prob['OD3.balance.FAR'][0]
         print('FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -259,17 +258,17 @@ class HBTFTestCase(unittest.TestCase):
         print('HPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4949.1
+        reg_data = 4949.15079
         pyc = self.prob['OD3.balance.lp_Nmech'][0]
         print('LPT Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 27113.3
+        reg_data = 27113.2800
         pyc = self.prob['OD3.perf.Fg'][0]
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.36662
+        reg_data = 0.36661346
         pyc = self.prob['OD3.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -279,7 +278,7 @@ class HBTFTestCase(unittest.TestCase):
         print('Tt3:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 5.282
+        reg_data = 5.2825144
         pyc = self.prob['OD3.balance.BPR'][0]
         print('BPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)

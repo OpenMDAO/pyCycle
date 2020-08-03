@@ -3,7 +3,7 @@ import unittest
 import os
 
 import openmdao.api as om
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.cea.species_data import janaf
 from pycycle.elements.flight_conditions import FlightConditions
@@ -26,40 +26,25 @@ class FlightConditionsTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = om.Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
-        des_vars.add_output('MN', 0.0)
-        des_vars.add_output('alt', 0.0, units="ft")
-        des_vars.add_output('dTs', 0.0, units='degR')
+        self.prob.model.set_input_defaults('fc.MN', 0.0)
+        self.prob.model.set_input_defaults('fc.alt', 0.0, units="ft")
+        self.prob.model.set_input_defaults('fc.dTs', 0.0, units='degR')
 
         self.prob.model.add_subsystem('fc', FlightConditions())
 
-        self.prob.model.connect('MN', 'fc.MN')
-        self.prob.model.connect('alt', 'fc.alt')
-        self.prob.model.connect('dTs', 'fc.dTs')
-
         self.prob.setup(check=False)
         self.prob.set_solver_print(level=-1)
-
-        # from openmdao.api import view_model
-        # view_model(self.prob)
-        # exit()
 
     def test_case1(self):
 
         # 6 cases to check against
         for i, data in enumerate(ref_data):
-            self.prob['alt'] = data[h_map['alt']]
-            self.prob['MN'] = data[h_map['MN']]
-            self.prob['dTs'] = data[h_map['dTs']]
+            self.prob['fc.alt'] = data[h_map['alt']]
+            self.prob['fc.MN'] = data[h_map['MN']]
+            self.prob['fc.dTs'] = data[h_map['dTs']]
 
-            if self.prob['MN'] < 1e-10:
-                self.prob['MN'] += 1e-6
-
-            # print(data[h_map['alt']], data[h_map['MN']], data[h_map['dTs']])
-
-            # from openmdao.api import view_model
-            # view_model(self.prob)
-            # exit()
+            if self.prob['fc.MN'] < 1e-10:
+                self.prob['fc.MN'] += 1e-6
 
             self.prob.run_model()
 
@@ -76,18 +61,11 @@ class FlightConditionsTestCase(unittest.TestCase):
             Ts = data[h_map['Ts']]
             Ts_c = self.prob['fc.Fl_O:stat:T']
 
-            # print('alt, MN, dts: ', self.prob['alt'], self.prob['MN'], self.prob['dTs'])
-            # print('Pt:', Pt_c, Pt)
-            # print('Ps:', Ps_c, Ps)
-            # print('Tt:', Tt_c, Tt)
-            # print('Ts:', Ts_c, Ts)
-            # print()
-
             tol = 1e-4
-            assert_rel_error(self, Pt_c, Pt, tol)
-            assert_rel_error(self, Ps_c, Ps, tol)
-            assert_rel_error(self, Tt_c, Tt, tol)
-            assert_rel_error(self, Ps_c, Ps, tol)
+            assert_near_equal(Pt_c, Pt, tol)
+            assert_near_equal(Ps_c, Ps, tol)
+            assert_near_equal(Tt_c, Tt, tol)
+            assert_near_equal(Ps_c, Ps, tol)
 
             check_element_partials(self, self.prob, depth=3)
 

@@ -19,9 +19,7 @@ class ChemEq(om.ImplicitComponent):
 
     def guess_nonlinear(self, inputs, outputs, resids):
         norm = resids.get_norm()
-        # print("testing", self.pathname)
         if norm > 1e-2 or norm==0.0 or np.any(outputs['n'] < 0):
-            # print(self.pathname, ": resetting guess")
             outputs['n'] = self.n_init
             if self.options['mode'] != 'T':
                 outputs['T'] = 1000.
@@ -51,7 +49,6 @@ class ChemEq(om.ImplicitComponent):
         ln_bt.options['maxiter'] = 2
         ln_bt.options['bound_enforcement'] = 'scalar'
         ln_bt.options['iprint'] = -1
-        #ln_bt.options['maxiter'] = 1
 
         # Once the concentration of a species reaches its minimum, we
         # can essentially remove it from the problem. This switch controls
@@ -68,8 +65,7 @@ class ChemEq(om.ImplicitComponent):
         num_element = thermo.num_element
 
         # Input vars
-        self.add_input('init_prod_amounts', val=thermo.init_prod_amounts, shape=(num_prod,),
-                       desc="initial mass fractions of products, before equilibrating")
+        self.add_input('b0', val=thermo.b0, desc='moles of atoms present in mixture')
 
         self.add_input('P', val=1.0, units="bar", desc="Pressure")
 
@@ -111,9 +107,6 @@ class ChemEq(om.ImplicitComponent):
                         desc="modified lagrange multipliers from the Gibbs lagrangian")
 
         # Explicit Outputs
-        self.add_output('b0', shape=num_element,  # when converged, b0=b
-                        desc='assigned kg-atoms of element i per total kg of reactant '
-                             'for the initial prod amounts')
         self.add_output('n_moles', lower=1e-10, val=0.034, shape=1,
                         desc="1/molecular weight of gas")
 
@@ -138,8 +131,7 @@ class ChemEq(om.ImplicitComponent):
         # self.deriv_options['step_size'] = 1e-5
 
         self.declare_partials('n', ['n', 'pi', 'P', 'T'])
-        self.declare_partials('pi', ['n', 'init_prod_amounts'])
-        self.declare_partials('b0', ['b0', 'init_prod_amounts'])
+        self.declare_partials('pi', ['n', 'b0'])
         self.declare_partials('n_moles', 'n')
         self.declare_partials('n_moles', 'n_moles', val=-1)
 
@@ -153,27 +145,18 @@ class ChemEq(om.ImplicitComponent):
         mode = self.options['mode']
 
         P = inputs['P'] / P_REF
+        b0 = inputs['b0']
         n = outputs['n']
         n_moles = np.sum(n)
         pi = outputs['pi']
-        # MW = 1/n_moles
 
         if mode != "T":
             T = outputs['T']
         else:
             T = inputs['T']
 
-        # if "DESIGN.nozz.staticPs" in self.pathname :
-        #         print(n)
-        # if "DESIGN.nozz.staticPs" in self.pathname :
-        #         print( n)
-        #         print()
         # Output equation for n_moles
         resids['n_moles'] = n_moles - outputs['n_moles']
-
-        # Output equation for b0
-        b0 = np.sum(thermo.aij * inputs['init_prod_amounts'], axis=1)
-        resids['b0'] = b0 - outputs['b0']
 
         try:
             self.H0_T = H0_T = thermo.H0(T)
@@ -226,11 +209,6 @@ class ChemEq(om.ImplicitComponent):
             S = inputs['S']
 
             resids['T'] = (S-R_UNIVERSAL_ENG*np.sum(n*(S0_T-np.log(n)+np.log(n_moles)-np.log(P))))/S
-
-        # if 'DESIGN.burner.vitiated_flow.chem_eq' in self.pathname:
-            # print(self.pathname, np.linalg.norm(resids['n']))
-            # print("    ", outputs['T'], resids['T'])
-            # print('foo', inputs['h'], inputs['P'], inputs['init_prod_amounts'])
 
         if np.linalg.norm(resids['n']) < 1e-4:
             self.remove_trace_species = True
@@ -285,10 +263,7 @@ class ChemEq(om.ImplicitComponent):
                 J_n_T = ((dH0_dT - dS0_dT)).reshape((num_prod, 1))
 
         J['pi', 'n'] = dRdy[num_prod:end_element, :num_prod]
-
-        J['pi', 'init_prod_amounts'] = -np.array(thermo.aij, dtype=float)
-        J['b0', 'init_prod_amounts'] = np.array(thermo.aij, dtype=float)
-        J['b0', 'b0'] = -np.eye(num_element)
+        J['pi', 'b0'] = -np.eye(num_element)
 
         if mode == 'h':
             J['T', 'n'] = dRdy[-1, :num_prod].reshape(1, num_prod)
@@ -435,18 +410,17 @@ if __name__ == "__main__":
 
     prob = om.Problem()
     prob.model = om.Group()
-    prob.model.nonlinear_solver = om.NonLinearRunOnce()
+    prob.model.nonlinear_solver = om.NewtonSolver(solve_subsystems=True)
     prob.model.linear_solver = om.LinearRunOnce()
 
     des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
     des_vars.add_output('P', 1.034210, units='psi')
     des_vars.add_output('h', -24.26682261, units='cal/g')
-    des_vars.add_output('init_prod_amounts', thermo.init_prod_amounts)
 
     chemeq = prob.model.add_subsystem('chemeq', ChemEq(thermo=thermo, mode="h"), promotes=["*"])
 
     # prob.model.suppress_solver_output = True
-    prob.setup()
+    prob.setup(force_alloc_complex=True)
 
     st = time.time()
     prob.run_model()
@@ -462,4 +436,4 @@ if __name__ == "__main__":
     # print(prob['pi'], prob.model._residuals['pi'])
 
 
-    # prob.check_partial_derivatives()
+    prob.check_partials(method='cs', compact_print=True)

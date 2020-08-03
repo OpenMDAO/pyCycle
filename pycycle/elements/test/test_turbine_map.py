@@ -2,9 +2,9 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.turbine_map import TurbineMap
 from pycycle.maps.lpt2269 import LPT2269
@@ -71,19 +71,7 @@ class TurbineMapTestCase(unittest.TestCase):
     def setUp(self):
         print('\n')
         self.prob = Problem()
-
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wp', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Np', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('effDes', 1.0)
-        des_vars.add_output('PR', 5.0)
-
-        # ('s_NpDes', 1.721074624),
-        # ('s_PRdes', 0.147473296),
-        # ('s_WpDes',  2.152309293),
-        # ('s_effDes', 0.9950409659),
-
+        
         self.prob.model.add_subsystem(
             'map',
             TurbineMap(
@@ -91,10 +79,12 @@ class TurbineMapTestCase(unittest.TestCase):
                 design=True),
             promotes=['*'])
 
+        self.prob.model.set_input_defaults('PR', 5.0)
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
+        self.prob.model.set_input_defaults('Wp', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Np', 172.11870165984794, units='rpm')
+
         self.prob.setup(check=False)
-        # self.prob.root.list_connections()
-        # print p['Wp'], p['WpScaled']
-        # p.run()
 
     def test_case1(self):
         # 4 cases to check against
@@ -120,42 +110,42 @@ class TurbineMapTestCase(unittest.TestCase):
         npss = data[h_map['turb.s_NpDes']]
         pyc = self.prob['s_Np'][0]
         print('s_NpDes:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.NpMap']]
         pyc = self.prob['NpMap'][0]
         print('NpMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.s_PRdes']]
         pyc = self.prob['s_PR'][0]
         print('s_PRdes:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         # check outputs of readMap
         npss = data[h_map['turb.effMap']]
         pyc = self.prob['effMap'][0]
         print('effMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
         npss = data[h_map['turb.WpMap']]
         pyc = self.prob['WpMap'][0]
         print('WpMap:', pyc, npss)
-        assert_rel_error(self, pyc, npss, tol)
+        assert_near_equal(pyc, npss, tol)
 
-        # # check outputs of scaledOutput
-        # npss = data[h_map['turb.eff']]
-        # pyc = self.prob['eff']
-        # rel_err = abs(npss - pyc)/npss
-        # print('eff:', npss, pyc, rel_err)
-        # self.assertLessEqual(rel_err, tol)
+        # check outputs of scaledOutput
+        npss = data[h_map['turb.eff']]
+        pyc = self.prob['eff']
+        rel_err = abs(npss - pyc)/npss
+        print('eff:', npss, pyc, rel_err)
+        self.assertLessEqual(rel_err, tol)
 
-        # # check top level outputs
-        # npss = data[h_map['turb.PR']]
-        # pyc = self.prob['PR']
-        # rel_err = abs(npss - pyc)/npss
-        # print('PR:', npss, pyc, rel_err)
-        # self.assertLessEqual(rel_err, tol)
+        # check top level outputs
+        npss = data[h_map['turb.PR']]
+        pyc = self.prob['PR']
+        rel_err = abs(npss - pyc)/npss
+        print('PR:', npss, pyc, rel_err)
+        self.assertLessEqual(rel_err, tol)
 
 
 class TurbineMapODTestCase(unittest.TestCase):
@@ -163,20 +153,21 @@ class TurbineMapODTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wp', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Np', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('s_Np', 1.721074624)
-        des_vars.add_output('s_PR', 0.147473296)
-        des_vars.add_output('s_Wp', 2.152309293)
-        des_vars.add_output('s_eff', 0.9950409659)
         self.prob.model.add_subsystem(
             'map',
             TurbineMap(
                 map_data=LPT2269,
                 design=False),
             promotes=['*'])
+
+
+        self.prob.model.set_input_defaults('s_Wp', 2.152309293)
+        self.prob.model.set_input_defaults('s_eff', 0.9950409659)
+        self.prob.model.set_input_defaults('s_Np', 1.721074624)
+        self.prob.model.set_input_defaults('s_PR', 0.147473296)
+        self.prob.model.set_input_defaults('Wp', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Np', 172.11870165984794, units='rpm')
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
 
         self.prob.setup(check=False)
 
@@ -204,41 +195,41 @@ class TurbineMapODTestCase(unittest.TestCase):
             npss = data[h_map['turb.PRmap']]
             pyc = self.prob['PRmap'][0]
             print('PRmap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['turb.NpMap']]
             pyc = self.prob['NpMap'][0]
             print('NpMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of readMap
             npss = data[h_map['turb.effMap']]
             pyc = self.prob['effMap'][0]
             print('effMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['turb.WpMap']]
             pyc = self.prob['WpMap'][0]
             print('WpMap:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of scaledOutput
             npss = data[h_map['turb.eff']]
             pyc = self.prob['eff'][0]
             print('eff:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check top level outputs
             npss = data[h_map['turb.PR']]
             pyc = self.prob['PR'][0]
             print('PR:', pyc, npss)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check to make sure balance is converged
-            assert_rel_error(self, self.prob['Np'], self.prob['scaledOutput.Np'], tol)
+            assert_near_equal(self.prob['Np'], self.prob['scaledOutput.Np'], tol)
             print('Np balance:',self.prob['Np'][0], self.prob['scaledOutput.Np'][0])
 
-            assert_rel_error(self, self.prob['Wp'], self.prob['scaledOutput.Wp'], tol)
+            assert_near_equal(self.prob['Wp'], self.prob['scaledOutput.Wp'], tol)
             print('Wp balance:',self.prob['Wp'][0], self.prob['scaledOutput.Wp'][0])
             print()
 

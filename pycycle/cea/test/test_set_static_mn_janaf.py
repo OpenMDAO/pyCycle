@@ -3,12 +3,13 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.api import Problem
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf
+from pycycle.cea.species_data import janaf, Thermo
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
+from pycycle import constants
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 data_path = os.path.join(fpath, 'NPSS_Static_CEA_Data.csv')
@@ -23,46 +24,34 @@ class TestSetStaticMN(unittest.TestCase):
 
     def test_case_MN(self):
 
+        thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
+
         p = Problem()
 
-        indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
-        indeps.add_output('T', val=518., units='degR')
-        indeps.add_output('P', val=14.7, units='psi')
-        indeps.add_output('W', val=1.5, units='lbm/s')
-        indeps.add_output('MN', val=1.5, units=None)
-
-        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
-        p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf))
-
-        p.model.connect('T', 'set_total_TP.T')
-        p.model.connect('P', ['set_total_TP.P', 'set_static_MN.guess:Pt'])
+        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0', 'P'])
+        p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf), promotes=['b0', ('guess:Pt', 'P')])
+        p.model.set_input_defaults('b0', thermo.b0)
+        p.model.set_input_defaults('set_static_MN.MN', val=1.5, units=None)
+        p.model.set_input_defaults('P', val=14.7, units='psi')
+        p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
+        p.model.set_input_defaults('set_static_MN.W', val=1.5, units='lbm/s')
 
         p.model.connect('set_total_TP.flow:S', 'set_static_MN.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_MN.ht')
         p.model.connect('set_total_TP.flow:gamma', 'set_static_MN.guess:gamt')
-        p.model.connect('W', 'set_static_MN.W')
-        p.model.connect('MN', 'set_static_MN.MN')
 
         p.set_solver_print(level=-1)
         p.setup(check=False)
 
-        # from openmdao.api import view_model
-        # view_model(p)
-        # exit()
         # 4 cases to check against
         for i, data in enumerate(ref_data):
 
-            p['T'] = data[h_map['Tt']]
+            p['set_total_TP.T'] = data[h_map['Tt']]
             p['P'] = data[h_map['Pt']]
 
-            p['MN'] = data[h_map['MN']]
-            p['W'] = data[h_map['W']]
-            # p.print_all_convergence()
-            # p.set_solver_print(level=2)
+            p['set_static_MN.MN'] = data[h_map['MN']]
+            p['set_static_MN.W'] = data[h_map['W']]
 
-            # print("###################################")
-            # print(p['T'], p['P'], p['MN'], p['W'])
-            # print("###################################")
             p.run_model()
 
             # check outputs
@@ -84,34 +73,17 @@ class TestSetStaticMN(unittest.TestCase):
             else:  # The MN 2.0 case doesn't get as close
                 tol = 1e-2
 
-            # print("foo", p['set_total_TP.flow:T'], p['set_total_TP.flow:P'], p['set_total_TP.flow:gamma'])
-            # print("Ps", Ps_computed, Ps)
-            # print("Ts", Ts_computed, Ts)
-            # print("hs", hs_computed, hs)
-            # print("gamma", gams_computed, gams)
-            # print("V", V_computed, V)
-            # print("A", A_computed, A)
-            # print("MN", MN_computed, MN)
-            # print("rhos", rhos_computed, rhos)
-            # print()
-
-            assert_rel_error(self, MN_computed, MN, tol)
-            assert_rel_error(self, gams_computed, gams, tol)
-            assert_rel_error(self, Ps_computed, Ps, tol)
-            assert_rel_error(self, Ts_computed, Ts, tol)
-            assert_rel_error(self, hs_computed, hs, tol)
-            assert_rel_error(self, rhos_computed, rhos, tol)
-            assert_rel_error(self, V_computed, V, tol)
-            assert_rel_error(self, A_computed, A, tol)
-
-            # if MN > 1.95:
-            #     p.model.list_states()
-            # p.check_partials(comps=('set_static_MN.statics.ps_resid',))
-
+            assert_near_equal(MN_computed, MN, tol)
+            assert_near_equal(gams_computed, gams, tol)
+            assert_near_equal(Ps_computed, Ps, tol)
+            assert_near_equal(Ts_computed, Ts, tol)
+            assert_near_equal(hs_computed, hs, tol)
+            assert_near_equal(rhos_computed, rhos, tol)
+            assert_near_equal(V_computed, V, tol)
+            assert_near_equal(A_computed, A, tol)
 
 if __name__ == "__main__":
     import scipy
 
     np.seterr(all='raise')
-    scipy.seterr(all='raise')
     unittest.main()

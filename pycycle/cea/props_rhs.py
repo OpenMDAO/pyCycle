@@ -23,7 +23,7 @@ class PropsRHS(ExplicitComponent):
                        desc="molar concentration of the mixtures, last element is "
                        "the total molar concentration")  # kg-mol/kg
         self.add_input('n_moles', val=1., desc="1/molar_mass for gaseous mixture")
-        self.add_input('b0', val=np.zeros(num_element),
+        self.add_input('b0', val=thermo.b0,
                        desc="assigned kg-atoms of element i per total kg of reactant")  # kg-atom/kg
 
         self.add_output('rhs_T', val=np.zeros(num_element+1),
