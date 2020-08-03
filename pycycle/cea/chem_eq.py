@@ -215,13 +215,6 @@ class ChemEq(om.ImplicitComponent):
         else:
             self.remove_trace_species = False
 
-        # if ('burner' in self.pathname) and ('off_design' in self.pathname):
-        #     # print('pi', resids['pi'])
-        #     # print('n_moles', resids['n_moles'])
-        #     # print('n', resids['n'])
-        #     print('thermo_b0', thermo.b0)
-        #     print('conc_b0', np.sum(thermo.aij*n, axis=1))
-
     def linearize(self, inputs, outputs, J):
 
         self._calc_dRdy(inputs, outputs)
