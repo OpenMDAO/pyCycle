@@ -108,8 +108,7 @@ class Thermo(object):
         return vec*(-2*a_T[0]/Tt**3 - a_T[1]/Tt**2 + a_T[3] + 2.*a_T[4]*Tt + 3.*a_T[5]*Tt**2 + 4.*a_T[6]*Tt**3)
 
     def set_data(self, init_reacts):
-        """computes the relevant quantities, given the recatant data"""
-
+        """computes the relevant quantities, given the reactant data"""
 
         ### setting up object attributes ###
         element_list = sorted(self.elements)
@@ -150,6 +149,8 @@ class Thermo(object):
                 i = k//self.num_element
                 j = np.mod(k,self.num_element)
                 self.aij_prod_deriv[k][l] = self.aij_prod[i][j][l]
+
+        #### Computing b0 values ###
 
         if init_reacts is not None:
 
@@ -205,7 +206,6 @@ class Thermo(object):
                 b_values[i] += aij[i][j]*reactant
 
         return(b_values)
-
 
     def build_coeff_table(self, Tt):
         """Build the temperature specific coeff array and find the highest-low value and
