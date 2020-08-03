@@ -67,7 +67,7 @@ class MultiSpoolTestCase(unittest.TestCase):
         np.seterr(divide='raise')
 
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
         print()
 
         reg_data = 10.774

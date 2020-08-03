@@ -65,7 +65,7 @@ class CFM56TestCase(unittest.TestCase):
         self.prob.set_solver_print(level=-1)
         self.prob.set_solver_print(level=2, depth=1)
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
         print()
 
         reg_data = 321.253
@@ -181,7 +181,7 @@ class CFM56TestCase(unittest.TestCase):
         self.prob.set_solver_print(level=-1)
         self.prob.set_solver_print(level=2, depth=1)
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
 
         print()
 
@@ -258,7 +258,7 @@ class CFM56TestCase(unittest.TestCase):
         self.prob.set_solver_print(level=-1)
         self.prob.set_solver_print(level=2, depth=1)
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
 
         print()
 
@@ -335,7 +335,7 @@ class CFM56TestCase(unittest.TestCase):
         self.prob.set_solver_print(level=-1)
         self.prob.set_solver_print(level=2, depth=1)
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
 
         print()
 

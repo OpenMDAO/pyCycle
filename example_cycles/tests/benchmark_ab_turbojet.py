@@ -77,7 +77,7 @@ class DesignTestCase(unittest.TestCase):
         np.seterr(divide='raise')
 
         self.prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
         print()
 
         reg_data = 168.005
@@ -90,7 +90,7 @@ class DesignTestCase(unittest.TestCase):
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01755
+        reg_data = 0.017550779
         pyc = self.prob['DESIGN.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -125,7 +125,7 @@ class DesignTestCase(unittest.TestCase):
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01755
+        reg_data = 0.017550779
         pyc = self.prob['OD1.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -135,7 +135,7 @@ class DesignTestCase(unittest.TestCase):
         print('HP Nmech:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 17799.7
+        reg_data = 17799.4778
         pyc = self.prob['OD1.perf.Fg'][0]
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -155,12 +155,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 11.971
+        reg_data = 11.97055297
         pyc = self.prob['OD2.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01629
+        reg_data = 0.01628932
         pyc = self.prob['OD2.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -195,7 +195,7 @@ class DesignTestCase(unittest.TestCase):
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01755
+        reg_data = 0.017550779
         pyc = self.prob['OD1dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -225,12 +225,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 11.971
+        reg_data = 11.970553
         pyc = self.prob['OD2dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01629
+        reg_data = 0.01628932
         pyc = self.prob['OD2dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -260,12 +260,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 12.526
+        reg_data = 12.5263207
         pyc = self.prob['OD3dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01680
+        reg_data = 0.01680008
         pyc = self.prob['OD3dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -295,12 +295,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 12.636
+        reg_data = 12.636232
         pyc = self.prob['OD4dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01689
+        reg_data = 0.01689342
         pyc = self.prob['OD4dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -330,12 +330,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 16.956
+        reg_data = 16.956252
         pyc = self.prob['OD5dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01873
+        reg_data = 0.018728274
         pyc = self.prob['OD5dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -350,7 +350,7 @@ class DesignTestCase(unittest.TestCase):
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.92067
+        reg_data = 0.92065667
         pyc = self.prob['OD5dry.perf.TSFC'][0]
         print('TSFC:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -365,12 +365,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 11.765
+        reg_data = 11.765481
         pyc = self.prob['OD6dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01608
+        reg_data = 0.01608294
         pyc = self.prob['OD6dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -400,12 +400,12 @@ class DesignTestCase(unittest.TestCase):
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 11.876
+        reg_data = 11.8758
         pyc = self.prob['OD7dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01620
+        reg_data = 0.01619524
         pyc = self.prob['OD7dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -430,17 +430,17 @@ class DesignTestCase(unittest.TestCase):
         print('Tt3:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 33.347
+        reg_data = 33.347375
         pyc = self.prob['OD8dry.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 10.741
+        reg_data = 10.740919
         pyc = self.prob['OD8dry.perf.OPR'][0]
         print('OPR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.01517
+        reg_data = 0.015169875
         pyc = self.prob['OD8dry.balance.FAR'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)

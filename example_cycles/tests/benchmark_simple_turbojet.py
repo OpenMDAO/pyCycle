@@ -52,7 +52,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         np.seterr(divide='raise')
 
         prob.run_model()
-        tol = 1e-3
+        tol = 1e-5
         print()
 
         reg_data = 147.55303531
