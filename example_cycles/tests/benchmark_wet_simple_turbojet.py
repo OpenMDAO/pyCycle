@@ -43,7 +43,7 @@ class WetSimpleTurbojetTestCase(unittest.TestCase):
         prob.set_solver_print(level=2, depth=1)
         prob.run_model()
 
-        tol = 1e-3
+        tol = 1e-5
         print()
         assert_near_equal(prob['DESIGN.inlet.Fl_O:stat:W'][0], 147.47273345368825, tol)
         assert_near_equal(prob['DESIGN.perf.OPR'][0], 13.5, tol)

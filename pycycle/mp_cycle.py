@@ -41,7 +41,7 @@ class Cycle(om.Group):
 
         # total
         if connect_tot:
-            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R'):
+            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R', 'b0'):
                 self.connect('%s:tot:%s'%(fl_src, v_name), '%s:tot:%s'%(fl_target, v_name))
 
         # static
@@ -49,7 +49,7 @@ class Cycle(om.Group):
             for v_name in ('V', 'Vsonic'):  # ('Wc', 'W', 'FAR'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
-            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho'):
+            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho', 'b0'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
         if connect_w:
