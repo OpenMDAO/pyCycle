@@ -215,14 +215,14 @@ def print_shaft(prob, element_names, file=sys.stdout):
 
 def print_mixer(prob, element_names, file=sys.stdout):
 
-    len_header = len_header = 23+20*5
+    len_header = len_header = 23+20*6
 
     print("-"*len_header, file=file, flush=True)
     print("                            MIXER PROPERTIES", file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
-    line_tmpl = '{:<20}|  '+'{:>20}'*5
-    print(line_tmpl.format('Mixer', 'balance.P_tot', 'designed_stream', 'Fl_calc:stat:P', 'Fl_calc:stat:area', 'Fl_calc:stat:MN'),
+    line_tmpl = '{:<20}|  '+'{:>20}'*6
+    print(line_tmpl.format('Mixer', 'balance.P_tot', 'designed_stream', 'Fl_calc:stat:P', 'Fl_calc:stat:area', 'Fl_calc:stat:MN', 'ER'),
           file=file, flush=True)
 
     line_tmpl = '{:<20}|  {:20.3f}{:^20}'+'{:20.3f}'*3
@@ -234,10 +234,12 @@ def print_mixer(prob, element_names, file=sys.stdout):
                                    prob[e_name+'.Fl_I1_calc:stat:P'][0],
                                    prob[e_name+'.Fl_I1_calc:stat:area'][0],
                                    prob[e_name+'.Fl_I1_calc:stat:MN'][0]),
+                                   prob[e_name+'.ER'][0],
                   file=file, flush=True)
         else:
             print(line_tmpl.format(e_name, prob[e_name+'.balance.P_tot'][0], 2,
                                    prob[e_name+'.Fl_I2_calc:stat:P'][0],
                                    prob[e_name+'.Fl_I2_calc:stat:area'][0],
                                    prob[e_name+'.Fl_I2_calc:stat:MN'][0]),
+                                   prob[e_name+'.ER',][0],
                   file=file, flush=True)
