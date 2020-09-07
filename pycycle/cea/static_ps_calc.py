@@ -33,33 +33,37 @@ class PsCalc(ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        outputs['Vsonic'] = Vsonic = np.sqrt(inputs['gamma'] * R_UNIVERSAL_SI * inputs['n_moles'] * inputs['Ts'])
+        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.split_vals()
+
+        Vsonic = np.sqrt(gamma * R_UNIVERSAL_SI * n_moles * Ts)
 
         # If ht < hs then V will be imaginary, so use an inverse relationship to allow solution process to continue
-        if inputs['ht'] >= inputs['hs']:
-            outputs['V'] = V = np.sqrt(2.0 * (inputs['ht'] - inputs['hs']))
+        if ht >= hs:
+            V = np.sqrt(2.0 * (ht - hs))
         else:
             # print('Warning: in', self.pathname, 'ht < hs, inverting relationship to get a real velocity, ht = ', inputs['ht'], 'hs = ', inputs['hs'])
-            outputs['V'] = V = np.sqrt(2.0 * (inputs['hs'] - inputs['ht']))
+            V = np.sqrt(2.0 * (hs - ht))
 
-        outputs['MN'] = V / Vsonic
-        outputs['area'] = inputs['W'] / (inputs['rho'] * V)
+        MN = V / Vsonic
+        area = W / (rho * V)
 
+        outputs.join_vals(MN, V, Vsonic, area)
 
     def compute_partials(self, inputs, J):
 
-        Vsonic = np.sqrt(inputs['gamma'] * R_UNIVERSAL_SI * inputs['n_moles'] * inputs['Ts'])
+        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.split_vals()
+        Vsonic = np.sqrt(gamma * R_UNIVERSAL_SI * n_moles * Ts)
 
-        J['Vsonic','gamma'] = Vsonic / (2.0 * inputs['gamma'])
-        J['Vsonic','n_moles'] = Vsonic / (2.0 * inputs['n_moles'])
-        J['Vsonic','Ts'] = Vsonic / (2.0 * inputs['Ts'])
+        J['Vsonic','gamma'] = Vsonic / (2.0 * gamma)
+        J['Vsonic','n_moles'] = Vsonic / (2.0 * n_moles)
+        J['Vsonic','Ts'] = Vsonic / (2.0 * Ts)
 
-        if inputs['ht'] >= inputs['hs']:
-            V = np.sqrt(2.0 * (inputs['ht'] - inputs['hs']))
+        if ht >= hs:
+            V = np.sqrt(2.0 * (ht - hs))
             J['V','ht'] = 1.0 / V
             J['V','hs'] = -1.0 / V
         else:
-            V = np.sqrt(2.0 * (inputs['hs'] - inputs['ht']))
+            V = np.sqrt(2.0 * (hs - ht))
             J['V','hs'] = 1.0 / V
             J['V','ht'] = -1.0 / V
 
@@ -69,10 +73,10 @@ class PsCalc(ExplicitComponent):
         J['MN','n_moles'] = -V / Vsonic**2 * J['Vsonic','n_moles']
         J['MN','Ts'] = -V / Vsonic**2 * J['Vsonic','Ts']
 
-        J['area','W'] = 1.0 / (inputs['rho'] * V)
-        J['area','rho'] = -inputs['W'] / (inputs['rho']**2 * V)
-        J['area','ht'] = -inputs['W'] / (inputs['rho'] * V**2) * J['V','ht']
-        J['area','hs'] = -inputs['W'] / (inputs['rho'] * V**2) * J['V','hs']
+        J['area','W'] = 1.0 / (rho * V)
+        J['area','rho'] = -W / (rho**2 * V)
+        J['area','ht'] = -W / (rho * V**2) * J['V','ht']
+        J['area','hs'] = -W / (rho * V**2) * J['V','hs']
 
 
 

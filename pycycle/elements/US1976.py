@@ -91,15 +91,17 @@ class USatm1976Comp(ExplicitComponent):
         self.set_check_partial_options(wrt='*', form='central', method='fd', step=1e-3)
 
     def compute(self, inputs, outputs):
-
-        outputs['Ts'] = T_interp(inputs['alt'])
-        outputs['Ps'] = P_interp(inputs['alt'])
-        outputs['rhos'] = rho_interp(inputs['alt'])
-        outputs['drhos_dalt'] = rho_interp_deriv(inputs['alt'])
+        alt = inputs['alt']
+        # outputs['Ts'] = T_interp(alt)
+        # outputs['Ps'] = P_interp(alt)
+        # outputs['rhos'] = rho_interp(alt)
+        # outputs['drhos_dalt'] = rho_interp_deriv(alt)
+        outputs.join_vals(T_interp(alt), P_interp(alt), rho_interp(alt), rho_interp_deriv(alt))
 
     def compute_partials(self, inputs, partials):
+        alt = inputs['alt']
 
-        partials['Ts', 'alt'] = T_interp_deriv(inputs['alt']).reshape(1,)[0]
-        partials['Ps', 'alt'] = P_interp_deriv(inputs['alt']).reshape(1,)[0]
-        partials['rhos', 'alt'] = rho_interp_deriv(inputs['alt']).reshape(1,)[0]
-        partials['drhos_dalt', 'alt'] = drho_dh_interp_deriv(inputs['alt']).reshape(1,)[0]
+        partials['Ts', 'alt'] = T_interp_deriv(alt).reshape(1,)[0]
+        partials['Ps', 'alt'] = P_interp_deriv(alt).reshape(1,)[0]
+        partials['rhos', 'alt'] = rho_interp_deriv(alt).reshape(1,)[0]
+        partials['drhos_dalt', 'alt'] = drho_dh_interp_deriv(alt).reshape(1,)[0]

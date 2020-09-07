@@ -37,20 +37,26 @@ class MapScalars(om.ExplicitComponent):
         self.declare_partials('s_Wp', ['Wp', 'WpMap'])
 
     def compute(self, inputs, outputs):
-        outputs['s_Np'] = inputs['Np'] / inputs['NpMap']
-        outputs['s_PR'] = (inputs['PR'] - 1) / (inputs['PRmap'] - 1)
-        outputs['s_eff'] = inputs['eff'] / inputs['effMap']
-        outputs['s_Wp'] = inputs['Wp'] / inputs['WpMap']
+        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.split_vals()
+
+        s_Np = Np / NpMap
+        s_PR = (PR - 1) / (PRmap - 1)
+        s_eff = eff / effMap
+        s_Wp = Wp / WpMap
+
+        outputs.join_vals(s_eff, s_Np, s_PR, s_Wp)
 
     def compute_partials(self, inputs, J):
-        J['s_eff', 'eff'] = 1. / inputs['effMap']
-        J['s_eff', 'effMap'] = - inputs['eff'] / inputs['effMap']**2
-        J['s_Np', 'Np'] = 1. / inputs['NpMap']
-        J['s_Np', 'NpMap'] = - inputs['Np'] / inputs['NpMap']**2
-        J['s_PR', 'PR'] = 1. / (inputs['PRmap'] - 1)
-        J['s_PR', 'PRmap'] = (1-inputs['PR']) / (inputs['PRmap'] - 1)**2
-        J['s_Wp', 'Wp'] = 1. / inputs['WpMap']
-        J['s_Wp', 'WpMap'] = -inputs['Wp'] / inputs['WpMap']**2
+        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.split_vals()
+
+        J['s_eff', 'eff'] = 1. / effMap
+        J['s_eff', 'effMap'] = - eff / effMap**2
+        J['s_Np', 'Np'] = 1. / NpMap
+        J['s_Np', 'NpMap'] = - Np / NpMap**2
+        J['s_PR', 'PR'] = 1. / (PRmap - 1)
+        J['s_PR', 'PRmap'] = (1-PR) / (PRmap - 1)**2
+        J['s_Wp', 'Wp'] = 1. / WpMap
+        J['s_Wp', 'WpMap'] = -Wp / WpMap**2
 
 class ScaledMapValues(om.ExplicitComponent):
     """Scale map output"""
@@ -81,20 +87,26 @@ class ScaledMapValues(om.ExplicitComponent):
         self.declare_partials('Wp', ['WpMap', 's_Wp'])
 
     def compute(self, inputs, outputs):
-        outputs['eff'] = inputs['effMap'] * inputs['s_eff']
-        outputs['Np'] = inputs['NpMap'] * inputs['s_Np']
-        outputs['PR'] = ((inputs['PRmap'] - 1.) * inputs['s_PR']) + 1.
-        outputs['Wp'] = inputs['WpMap'] * inputs['s_Wp']
+        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.split_vals()
+
+        eff = effMap * s_eff
+        Np = NpMap * s_Np
+        PR = ((PRmap - 1.) * s_PR) + 1.
+        Wp = WpMap * s_Wp
+
+        outputs.join_vals(eff, Np, PR, Wp)
 
     def compute_partials(self, inputs, J):
-        J['eff', 'effMap'] = inputs['s_eff']
-        J['eff', 's_eff'] = inputs['effMap']
-        J['Np', 'NpMap'] = inputs['s_Np']
-        J['Np', 's_Np'] = inputs['NpMap']
-        J['PR', 'PRmap'] = inputs['s_PR']
-        J['PR', 's_PR'] = inputs['PRmap'] - 1.
-        J['Wp', 'WpMap'] = inputs['s_Wp']
-        J['Wp', 's_Wp'] = inputs['WpMap']
+        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.split_vals()
+
+        J['eff', 'effMap'] = s_eff
+        J['eff', 's_eff'] = effMap
+        J['Np', 'NpMap'] = s_Np
+        J['Np', 's_Np'] = NpMap
+        J['PR', 'PRmap'] = s_PR
+        J['PR', 's_PR'] = PRmap - 1.
+        J['Wp', 'WpMap'] = s_Wp
+        J['Wp', 's_Wp'] = WpMap
 
 
 class TurbineMap(om.Group):

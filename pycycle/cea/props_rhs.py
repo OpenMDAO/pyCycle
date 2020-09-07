@@ -78,31 +78,33 @@ class PropsRHS(ExplicitComponent):
 
         thermo = self.thermo
         num_element = thermo.num_element
-        T = inputs['T']
-        n = inputs['n']
-        b0 = inputs['b0']
+        T, n, n_moles, b0 = inputs.split_vals()
+
+        rhs_T, rhs_P, lhs_TP = outputs.split_vals()
 
         for i in range(num_element):
             # outputs['lhs_TP'][i][:num_element] = np.sum(thermo.aij_prod[i] * n, axis=1)
-            outputs['lhs_TP'][i][:num_element] = np.dot(thermo.aij_prod[i], n)
+            lhs_TP[i][:num_element] = np.dot(thermo.aij_prod[i], n)
 
         # determine the delta coeff for 2.24 and pi coef for 2.26\
         # at the converged state, b = b0 by definition
 
-        outputs['lhs_TP'][num_element, :num_element] = b0
-        outputs['lhs_TP'][:num_element, num_element] = b0
+        lhs_TP[num_element, :num_element] = b0
+        lhs_TP[:num_element, num_element] = b0
 
-        outputs['lhs_TP'][num_element, num_element] = 0
+        lhs_TP[num_element, num_element] = 0
 
         # rhs for P
-        outputs['rhs_P'][:num_element] = b0
-        outputs['rhs_P'][num_element] = inputs['n_moles']
+        rhs_P[:num_element] = b0
+        rhs_P[num_element] = n_moles
 
         # rhs for T
         self.H0_T = H0_T = thermo.H0(T)
         n_H0 = n*H0_T
-        outputs['rhs_T'][:num_element] = np.sum(thermo.aij*n_H0, axis=1)
-        outputs['rhs_T'][num_element] = np.sum(n_H0)
+        rhs_T[:num_element] = np.sum(thermo.aij*n_H0, axis=1)
+        rhs_T[num_element] = np.sum(n_H0)
+
+        outputs.join_vals(rhs_T, rhs_P, lhs_TP)
 
     def compute_partials(self, inputs, J):
 
@@ -117,8 +119,7 @@ class PropsRHS(ExplicitComponent):
             self.drhsT_dT = self.drhsT_dT.real
             self.drhsT_dn = self.drhsT_dn.real
 
-        T = inputs['T']
-        nj = inputs['n']
+        T, nj, _, _ = inputs.split_vals()
 
         H0_T = self.H0_T
         nj_dH0dT = thermo.H0_applyJ(T, nj)

@@ -89,21 +89,19 @@ class MixFlow(om.ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
+        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.split_vals()
 
-        W1 = inputs['Fl_I1:stat:W']
-        W2 = inputs['Fl_I2:stat:W']
         Wmix = outputs['W_mix'] = W1 + W2
-        outputs['ht_mix'] = (W1*inputs['Fl_I1:tot:h'] + W2*inputs['Fl_I2:tot:h'])/Wmix
+        outputs['ht_mix'] = (W1*ht1 + W2*ht2)/Wmix
 
-        outputs['impulse_mix'] = (inputs['Fl_I1:stat:P']*inputs['Fl_I1:stat:area'] + inputs['Fl_I1:stat:W']*inputs['Fl_I1:stat:V']) +\
-                                 (inputs['Fl_I2:stat:P']*inputs['Fl_I2:stat:area'] + inputs['Fl_I2:stat:W']*inputs['Fl_I2:stat:V'])
+        outputs['impulse_mix'] = (P1*area1 + W1*V1) + (P2*area2 + W2*V2)
 
         ######################################################
         # Begin the mass averaged composition calculations:
         ######################################################
         # convert the incoming flow composition vectors into mass units
-        Fl_I1_n_mass = inputs['Fl_I1:tot:n'] * self.flow1_wt_mole
-        Fl_I2_n_mass = inputs['Fl_I2:tot:n'] * self.flow2_wt_mole
+        Fl_I1_n_mass = nt1 * self.flow1_wt_mole
+        Fl_I2_n_mass = nt2 * self.flow2_wt_mole
 
         # normalize the mass arrays to 1 kg each
         Fl_I1_n_mass /= np.sum(Fl_I1_n_mass)
@@ -122,30 +120,28 @@ class MixFlow(om.ExplicitComponent):
 
     def compute_partials(self, inputs, J):
 
-        ht1 = inputs['Fl_I1:tot:h']
-        ht2 = inputs['Fl_I2:tot:h']
-        W1 = inputs['Fl_I1:stat:W']
-        W2 = inputs['Fl_I2:stat:W']
+        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.split_vals()
+
         Wmix = W1+W2
         J['ht_mix', 'Fl_I1:stat:W'] = W2*(ht1-ht2)/Wmix**2
         J['ht_mix', 'Fl_I2:stat:W'] = W1*(ht2-ht1)/Wmix**2
         J['ht_mix', 'Fl_I1:tot:h'] = W1/Wmix
         J['ht_mix', 'Fl_I2:tot:h'] = W2/Wmix
 
-        J['impulse_mix', 'Fl_I1:stat:P'] = inputs['Fl_I1:stat:area']
-        J['impulse_mix', 'Fl_I1:stat:area'] = inputs['Fl_I1:stat:P']
-        J['impulse_mix', 'Fl_I1:stat:W'] = inputs['Fl_I1:stat:V']
-        J['impulse_mix', 'Fl_I1:stat:V'] = inputs['Fl_I1:stat:W']
+        J['impulse_mix', 'Fl_I1:stat:P'] = area1
+        J['impulse_mix', 'Fl_I1:stat:area'] = P1
+        J['impulse_mix', 'Fl_I1:stat:W'] = V1
+        J['impulse_mix', 'Fl_I1:stat:V'] = W1
 
-        J['impulse_mix', 'Fl_I2:stat:P'] = inputs['Fl_I2:stat:area']
-        J['impulse_mix', 'Fl_I2:stat:area'] = inputs['Fl_I2:stat:P']
-        J['impulse_mix', 'Fl_I2:stat:W'] = inputs['Fl_I2:stat:V']
-        J['impulse_mix', 'Fl_I2:stat:V'] = inputs['Fl_I2:stat:W']
+        J['impulse_mix', 'Fl_I2:stat:P'] = area2
+        J['impulse_mix', 'Fl_I2:stat:area'] = P2
+        J['impulse_mix', 'Fl_I2:stat:W'] = V2
+        J['impulse_mix', 'Fl_I2:stat:V'] = W2
 
 
         # composition derivatives
-        n1_mass = inputs['Fl_I1:tot:n'] * self.flow1_wt_mole
-        n2_mass = inputs['Fl_I2:tot:n'] * self.flow2_wt_mole
+        n1_mass = nt1 * self.flow1_wt_mole
+        n2_mass = nt2 * self.flow2_wt_mole
 
         n1_mass_hat = n1_mass/np.sum(n1_mass)
         n2_mass_hat = self.mix_mat.dot(n2_mass/np.sum(n2_mass))
@@ -195,8 +191,8 @@ class AreaSum(om.ExplicitComponent):
         self.set_check_partial_options('*', method='cs')
 
     def compute(self, inputs, outputs):
-
-        outputs['area_sum'] = inputs['Fl_I1:stat:area'] + inputs['Fl_I2:stat:area']
+        area1, area2 = inputs.split_vals()
+        outputs['area_sum'] = area1 + area2
 
 
 class Impulse(om.ExplicitComponent):
@@ -212,15 +208,17 @@ class Impulse(om.ExplicitComponent):
         self.declare_partials('impulse', '*')
 
     def compute(self, inputs, outputs):
-        outputs['impulse'] = inputs['P']*inputs['area'] + inputs['W']*inputs['V']
+        P, area, V, W = inputs.split_vals()
+        outputs['impulse'] = P*area + W*V
         self.set_check_partial_options('*', method='cs')
 
     def compute_partials(self, inputs, J):
+        P, area, V, W = inputs.split_vals()
 
-        J['impulse', 'P'] = inputs['area']
-        J['impulse', 'area'] = inputs['P']
-        J['impulse', 'V'] = inputs['W']
-        J['impulse', 'W'] = inputs['V']
+        J['impulse', 'P'] = area
+        J['impulse', 'area'] = P
+        J['impulse', 'V'] = W
+        J['impulse', 'W'] = V
 
 
 class Mixer(om.Group):

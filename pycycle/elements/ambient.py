@@ -16,7 +16,8 @@ class DeltaTs(om.ExplicitComponent):
         self.declare_partials('Ts', ['Ts_in', 'dTs'], val=1.0)
 
     def compute(self, inputs, outputs):
-        outputs['Ts'] = inputs['Ts_in'] + inputs['dTs']
+        Ts_in, dTs = inputs.split_vals()
+        outputs.set_val(Ts_in + dTs)
 
     def compute_partials(self, inputs, partials):
         pass

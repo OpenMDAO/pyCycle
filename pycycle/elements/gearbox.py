@@ -47,11 +47,14 @@ class Gearbox(om.ImplicitComponent):
         design = self.options['design']
 
         if design:
-            outputs['gear_ratio'] = inputs['N_out'] / inputs['N_in']
-            outputs['trq_in'] = -inputs['trq_base']*inputs['eff']*inputs['N_out'] / inputs['N_in']
-            outputs['trq_out'] = inputs['trq_base']
+            N_in, N_out, eff, trq_base = inputs.split_vars()
+            gear_ratio = N_out / N_in
+            trq_in = -trq_base*eff*N_out / N_in
+            trq_out = trq_base
+            outputs.join_vals(trq_in, trq_out, gear_ratio)
         else:
-            outputs['trq_in'] = -outputs['trq_base']*inputs['eff']*inputs['gear_ratio']
+            _, _, eff, gear_ratio = inputs.split_vars()
+            outputs['trq_in'] = -outputs['trq_base']*eff*gear_ratio
             outputs['trq_out'] = outputs['trq_base']
 
     def apply_nonlinear(self, inputs, outputs, resids):
@@ -59,13 +62,15 @@ class Gearbox(om.ImplicitComponent):
         design = self.options['design']
 
         if design:
-            resids['gear_ratio'] = inputs['N_out'] / inputs['N_in'] - outputs['gear_ratio']
-            resids['trq_in'] = -inputs['trq_base']*inputs['eff']*inputs['N_out'] / inputs['N_in'] - outputs['trq_in']
-            resids['trq_out'] = inputs['trq_base'] - outputs['trq_out']
+            N_in, N_out, eff, trq_base = inputs.split_vars()
+            resids['gear_ratio'] = N_out / N_in - outputs['gear_ratio']
+            resids['trq_in'] = -trq_base*eff*N_out / N_in - outputs['trq_in']
+            resids['trq_out'] = trq_base - outputs['trq_out']
 
         else:
-            resids['trq_base'] = inputs['N_out'] - inputs['N_in'] * inputs['gear_ratio']
-            resids['trq_in'] = -outputs['trq_base']*inputs['eff']*inputs['gear_ratio'] - outputs['trq_in']
+            N_in, N_out, eff, gear_ratio = inputs.split_vars()
+            resids['trq_base'] = N_out - N_in * gear_ratio
+            resids['trq_in'] = -outputs['trq_base']*eff*gear_ratio - outputs['trq_in']
             resids['trq_out'] = outputs['trq_base'] - outputs['trq_out']
 
     def linearize(self, inputs, outputs, J):
@@ -73,21 +78,22 @@ class Gearbox(om.ImplicitComponent):
         design = self.options['design']
 
         if design:
-            J['gear_ratio','N_in'] = -inputs['N_out']/inputs['N_in']**2
-            J['gear_ratio','N_out'] = 1.0/inputs['N_in']
+            N_in, N_out, eff, trq_base = inputs.split_vars()
+            J['gear_ratio','N_in'] = -N_out/N_in**2
+            J['gear_ratio','N_out'] = 1.0/N_in
 
-            J['trq_in','trq_base'] = -inputs['eff'] * inputs['N_out'] / inputs['N_in']
-            J['trq_in','eff'] = -inputs['trq_base'] * inputs['N_out'] / inputs['N_in']
-            J['trq_in','N_in'] = inputs['trq_base'] * inputs['eff'] * inputs['N_out'] / inputs['N_in']**2
-            J['trq_in','N_out'] = -inputs['trq_base'] * inputs['eff'] / inputs['N_in']
-
+            J['trq_in','trq_base'] = -eff * N_out / N_in
+            J['trq_in','eff'] = -trq_base * N_out / N_in
+            J['trq_in','N_in'] = trq_base * eff * N_out / N_in**2
+            J['trq_in','N_out'] = -trq_base * eff / N_in
         else:
-            J['trq_base','N_in'] = -inputs['gear_ratio']
-            J['trq_base','gear_ratio'] = -inputs['N_in']
+            N_in, N_out, eff, gear_ratio = inputs.split_vars()
+            J['trq_base','N_in'] = -gear_ratio
+            J['trq_base','gear_ratio'] = -N_in
 
-            J['trq_in','trq_base'] = -inputs['eff']*inputs['gear_ratio']
-            J['trq_in','eff'] = -outputs['trq_base']*inputs['gear_ratio']
-            J['trq_in','gear_ratio'] = -outputs['trq_base']*inputs['eff']
+            J['trq_in','trq_base'] = -eff*gear_ratio
+            J['trq_in','eff'] = -outputs['trq_base']*gear_ratio
+            J['trq_in','gear_ratio'] = -outputs['trq_base']*eff
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-import openmdao.api as om 
+import openmdao.api as om
 
 from pycycle.cea import species_data
 from pycycle.cea.set_static import SetStatic
@@ -44,20 +44,24 @@ class MachPressureLossMap(om.ExplicitComponent):
         expMN = self.options['expMN']
 
         if design:
-            outputs['s_dPqP'] = inputs['dPqP'] / inputs['MN_in']**expMN
+            MN_in, dPqP = inputs.split_vals
+            outputs['s_dPqP'] = dPqP / MN_in**expMN
         else:
-            outputs['dPqP'] = inputs['s_dPqP'] * inputs['MN_in']**expMN
+            MN_in, s_dPqP = inputs.split_vals
+            outputs['dPqP'] = s_dPqP * MN_in**expMN
 
     def compute_partials(self, inputs, J):
         design = self.options['design']
         expMN = self.options['expMN']
 
         if design:
-            J['s_dPqP', 'dPqP'] = 1.0 / inputs['MN_in']**expMN
-            J['s_dPqP', 'MN_in'] = -expMN * inputs['dPqP'] * inputs['MN_in']**(-expMN-1.0)
+            MN_in, dPqP = inputs.split_vals
+            J['s_dPqP', 'dPqP'] = 1.0 / MN_in**expMN
+            J['s_dPqP', 'MN_in'] = -expMN * dPqP * MN_in**(-expMN-1.0)
         else:
-            J['dPqP', 's_dPqP'] = inputs['MN_in']**expMN
-            J['dPqP', 'MN_in'] = expMN * inputs['s_dPqP'] * inputs['MN_in']**(expMN-1.0)
+            MN_in, s_dPqP = inputs.split_vals
+            J['dPqP', 's_dPqP'] = MN_in**expMN
+            J['dPqP', 'MN_in'] = expMN * s_dPqP * MN_in**(expMN-1.0)
 
 class PressureLoss(om.ExplicitComponent):
     """
@@ -76,11 +80,13 @@ class PressureLoss(om.ExplicitComponent):
         self.declare_partials('Pt_out', '*')
 
     def compute(self, inputs, outputs):
-        outputs['Pt_out'] = inputs['Pt_in']*(1.0 - inputs['dPqP'])
+        dPqP, Pt_in = inputs.split_vals()
+        outputs['Pt_out'] =Pt_in*(1.0 - dPqP)
 
     def compute_partials(self, inputs, J):
-        J['Pt_out', 'dPqP'] = -inputs['Pt_in']
-        J['Pt_out', 'Pt_in'] = 1.0 - inputs['dPqP']
+        dPqP, Pt_in = inputs.split_vals()
+        J['Pt_out', 'dPqP'] = -Pt_in
+        J['Pt_out', 'Pt_in'] = 1.0 - dPqP
 
 
 class qCalc(om.ExplicitComponent):
@@ -101,11 +107,13 @@ class qCalc(om.ExplicitComponent):
         self.declare_partials('ht_out', '*')
 
     def compute(self, inputs, outputs):
-        outputs['ht_out'] = inputs['ht_in'] + inputs['Q_dot']/inputs['W_in']
+        W_in, Q_dot, ht_in = inputs.split_vals()
+        outputs['ht_out'] = ht_in + Q_dot/W_in
 
     def compute_partials(self, inputs, J):
-        J['ht_out','W_in'] = -inputs['Q_dot']/(inputs['W_in']**2)
-        J['ht_out','Q_dot'] = 1.0/inputs['W_in']
+        W_in, Q_dot, ht_in = inputs.split_vals()
+        J['ht_out','W_in'] = -Q_dot/(W_in**2)
+        J['ht_out','Q_dot'] = 1.0/W_in
         J['ht_out','ht_in'] = 1.0
 
 
@@ -183,13 +191,13 @@ class Duct(om.Group):
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         if expMN > 1e-10: # Calcluate pressure losses as function of Mach number
-            if design: 
+            if design:
                 self.add_subsystem('dPqP_MN', MachPressureLossMap(design=design, expMN=expMN),
-                                promotes_inputs=['dPqP', ('MN_in', 'Fl_I:stat:MN')], 
+                                promotes_inputs=['dPqP', ('MN_in', 'Fl_I:stat:MN')],
                                 promotes_outputs=['s_dPqP'])
-            else: 
+            else:
                 self.add_subsystem('dPqP_MN', MachPressureLossMap(design=design, expMN=expMN),
-                                promotes_inputs=['s_dPqP' ,('MN_in', 'Fl_I:stat:MN')], 
+                                promotes_inputs=['s_dPqP' ,('MN_in', 'Fl_I:stat:MN')],
                                 promotes_outputs=['dPqP'])
 
         #Pressure Loss Component
@@ -245,7 +253,7 @@ class Duct(om.Group):
 
         self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
 
-        # if not design: 
+        # if not design:
         #     self.set_input_defaults('area', val=1, units='in**2')
 
         self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
@@ -267,7 +275,7 @@ if __name__ == "__main__":
     p.model.add_subsystem('comp', PressureLoss(), promotes=['*'])
     p.model.add_subsystem('loss', MachPressureLossMap(design=True, expMN=2.0), promotes=['*'])
 
-    
+
     p.setup(check=False, force_alloc_complex=True)
     p.run_model()
 

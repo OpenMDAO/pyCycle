@@ -24,18 +24,14 @@ class StallCalcs(om.ExplicitComponent):
         self.declare_partials('SMW', ['PR_SMW','PR_actual'])
 
     def compute(self, inputs, outputs):
-
-        outputs['SMN'] = ((inputs['Wc_actual']/inputs['Wc_SMN'])/(inputs['PR_actual']/inputs['PR_SMN'])-1)*100.
-        outputs['SMW'] = (inputs['PR_SMW']-inputs['PR_actual'])/inputs['PR_actual'] * 100
+        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.split_vals()
+        SMN = ((Wc_actual/Wc_SMN)/(PR_actual/PR_SMN)-1)*100.
+        SMW = (PR_SMW-PR_actual)/PR_actual * 100
+        outputs.join_vals(SMN, SMW)
 
     def compute_partials(self, inputs, J):
 
-        PR_actual = inputs['PR_actual']
-        PR_SMN = inputs['PR_SMN']
-        PR_SMW = inputs['PR_SMW']
-
-        Wc_actual = inputs['Wc_actual']
-        Wc_SMN = inputs['Wc_SMN']
+        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.split_vals()
 
         wc_ratio = 100*Wc_actual/Wc_SMN
         J['SMN', 'PR_SMN'] = wc_ratio / PR_actual
@@ -87,20 +83,22 @@ class MapScalars(om.ExplicitComponent):
         self.declare_partials('s_Wc', ['Wc', 'WcMap'])
 
     def compute(self, inputs, outputs):
-        outputs['s_Nc'] = inputs['Nc'] / inputs['NcMap']
-        outputs['s_PR'] = (inputs['PR'] - 1) / (inputs['PRmap'] - 1)
-        outputs['s_eff'] = inputs['eff'] / inputs['effMap']
-        outputs['s_Wc'] = inputs['Wc'] / inputs['WcMap']
+        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.split_vals()
+        outputs['s_Nc'] = Nc / NcMap
+        outputs['s_PR'] = (PR - 1) / (PRmap - 1)
+        outputs['s_eff'] = eff / effMap
+        outputs['s_Wc'] = Wc / WcMap
 
     def compute_partials(self, inputs, J):
-        J['s_Nc', 'Nc'] = 1. / inputs['NcMap']
-        J['s_Nc', 'NcMap'] = -inputs['Nc'] / inputs['NcMap']**2
-        J['s_PR', 'PR'] = 1. / (inputs['PRmap'] - 1)
-        J['s_PR', 'PRmap'] = -(inputs['PR'] - 1.) / (inputs['PRmap'] - 1.)**2
-        J['s_eff', 'eff'] = 1. / inputs['effMap']
-        J['s_eff', 'effMap'] = -inputs['eff'] * inputs['effMap']**(-2)
-        J['s_Wc', 'Wc'] = 1. / inputs['WcMap']
-        J['s_Wc', 'WcMap'] = -inputs['Wc'] * inputs['WcMap']**(-2)
+        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.split_vals()
+        J['s_Nc', 'Nc'] = 1. / NcMap
+        J['s_Nc', 'NcMap'] = -Nc / NcMap**2
+        J['s_PR', 'PR'] = 1. / (PRmap - 1)
+        J['s_PR', 'PRmap'] = -(PR - 1.) / (PRmap - 1.)**2
+        J['s_eff', 'eff'] = 1. / effMap
+        J['s_eff', 'effMap'] = -eff * effMap**(-2)
+        J['s_Wc', 'Wc'] = 1. / WcMap
+        J['s_Wc', 'WcMap'] = -Wc * WcMap**(-2)
 
 
 class ScaledMapValues(om.ExplicitComponent):
@@ -138,20 +136,22 @@ class ScaledMapValues(om.ExplicitComponent):
         self.declare_partials('Nc', ['NcMap', 's_Nc'])
 
     def compute(self, inputs, outputs):
-        outputs['PR'] = (inputs['PRmap'] - 1.) * inputs['s_PR'] + 1.
-        outputs['eff'] = inputs['effMap'] * inputs['s_eff']
-        outputs['Wc'] = inputs['WcMap'] * inputs['s_Wc']
-        outputs['Nc'] = inputs['NcMap'] * inputs['s_Nc']
+        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.split_vals()
+        outputs['PR'] = (PRmap - 1.) * s_PR + 1.
+        outputs['eff'] = effMap * s_eff
+        outputs['Wc'] = WcMap * s_Wc
+        outputs['Nc'] = NcMap * s_Nc
 
     def compute_partials(self, inputs, J):
-        J['PR', 'PRmap'] = inputs['s_PR']
-        J['PR', 's_PR'] = inputs['PRmap'] - 1.
-        J['eff', 'effMap'] = inputs['s_eff']
-        J['eff', 's_eff'] = inputs['effMap']
-        J['Wc', 'WcMap'] = inputs['s_Wc']
-        J['Wc', 's_Wc'] = inputs['WcMap']
-        J['Nc', 'NcMap'] = inputs['s_Nc']
-        J['Nc', 's_Nc'] = inputs['NcMap']
+        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.split_vals()
+        J['PR', 'PRmap'] = s_PR
+        J['PR', 's_PR'] = PRmap - 1.
+        J['eff', 'effMap'] = s_eff
+        J['eff', 's_eff'] = effMap
+        J['Wc', 'WcMap'] = s_Wc
+        J['Wc', 's_Wc'] = WcMap
+        J['Nc', 'NcMap'] = s_Nc
+        J['Nc', 's_Nc'] = NcMap
 
 
 class CompressorMap(om.Group):
@@ -210,9 +210,9 @@ class CompressorMap(om.Group):
             # Use balance component to vary NcMap and RlineMap to match incoming corrected flow and speed
             map_bal = om.BalanceComp()
             map_bal.add_balance('NcMap', val=map_data.defaults['NcMap'], units='rpm', eq_units='rpm')
-            map_bal.add_balance('RlineMap', val=map_data.defaults['RlineMap'], units=None, 
+            map_bal.add_balance('RlineMap', val=map_data.defaults['RlineMap'], units=None,
                                 eq_units='lbm/s', lower=map_data.RlineStall)
-            self.add_subsystem(name='map_bal', subsys=map_bal, 
+            self.add_subsystem(name='map_bal', subsys=map_bal,
                                 promotes_inputs=[('lhs:NcMap','Nc'),('lhs:RlineMap','Wc')],
                                 promotes_outputs=['NcMap', 'RlineMap'])
             self.connect('scaledOutput.Nc','map_bal.rhs:NcMap')
@@ -251,7 +251,7 @@ class CompressorMap(om.Group):
         self.connect('SMW_map.WcMap','SMW_bal.rhs:NcMap')
 
         # Compute the stall margins
-        self.add_subsystem('stall_margins', StallCalcs(), 
+        self.add_subsystem('stall_margins', StallCalcs(),
                                 promotes_inputs=[('PR_actual','PRmap'),('Wc_actual','WcMap')],
                                 promotes_outputs=['SMN','SMW'])
         self.connect('SMN_map.PRmap', 'stall_margins.PR_SMN')

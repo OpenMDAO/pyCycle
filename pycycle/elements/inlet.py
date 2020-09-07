@@ -31,14 +31,17 @@ class Calcs(om.ExplicitComponent):
         self.declare_partials('F_ram', ['V_in', 'W_in'])
 
     def compute(self, inputs, outputs):
-        outputs['Pt_out'] = inputs['Pt_in'] * inputs['ram_recovery']
-        outputs['F_ram'] = inputs['W_in'] * inputs['V_in'] / g_c
+        Pt_in, ram_recovery, V_in, W_in = inputs.split_vals()
+        Pt_out = Pt_in * ram_recovery
+        F_ram = W_in * V_in / g_c
+        outputs.join_vals(Pt_out, F_ram)
 
     def compute_partials(self, inputs, J):
-        J['Pt_out', 'Pt_in'] = inputs['ram_recovery']
-        J['Pt_out', 'ram_recovery'] = inputs['Pt_in']
-        J['F_ram', 'V_in'] = inputs['W_in'] / g_c
-        J['F_ram', 'W_in'] = inputs['V_in'] / g_c
+        Pt_in, ram_recovery, V_in, W_in = inputs.split_vals()
+        J['Pt_out', 'Pt_in'] = ram_recovery
+        J['Pt_out', 'ram_recovery'] = Pt_in
+        J['F_ram', 'V_in'] = W_in / g_c
+        J['F_ram', 'W_in'] = V_in / g_c
 
 
 class Inlet(om.Group):
@@ -155,8 +158,8 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
-        # if not design: 
-        #     self.set_input_defaults('area', val=1, units='in**2') 
+        # if not design:
+        #     self.set_input_defaults('area', val=1, units='in**2')
 
         self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
 

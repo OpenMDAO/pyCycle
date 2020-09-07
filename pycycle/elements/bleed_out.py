@@ -3,7 +3,7 @@
 import numpy as np
 from collections.abc import Iterable
 
-import openmdao.api as om 
+import openmdao.api as om
 
 from pycycle.cea import species_data
 from pycycle.cea.set_static import SetStatic
@@ -31,7 +31,6 @@ class BleedCalcs(om.ExplicitComponent):
         self.declare_partials('W_out', ['W_in', '*:frac_W'])
 
     def compute(self, inputs, outputs):
-
         # calculate flow and power without bleed flows
         outputs['W_out'] = inputs['W_in']
 
@@ -93,7 +92,7 @@ class BleedOut(om.Group):
                               desc='Switch between on-design and off-design calculation.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',
                               default=[])
-        
+
         self.default_des_od_conns = [
             # (design src, off-design target)
             ('Fl_O:stat:area', 'area')

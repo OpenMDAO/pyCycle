@@ -48,21 +48,17 @@ class PropsCalcs(ExplicitComponent):
 
         self.declare_partials('R', 'n_moles', val=R_UNIVERSAL_SI)
 
-
     def compute(self, inputs, outputs):
         thermo = self.options['thermo']
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 
-        T = inputs['T']
-        P = inputs['P']
-        result_T = inputs['result_T']
+        T, P, n, n_moles, result_T, result_P = inputs.split_vals()
 
-        nj = inputs['n'][:num_prod]
+        nj = n[:num_prod]
         # nj[nj<0] = 1e-10 # ensure all concentrations stay non-zero
-        n_moles = inputs['n_moles']
 
-        self.dlnVqdlnP = dlnVqdlnP = -1 + inputs['result_P'][num_element]
+        self.dlnVqdlnP = dlnVqdlnP = -1 + result_P[num_element]
         self.dlnVqdlnT = dlnVqdlnT = 1 - result_T[num_element]
 
         self.Cp0_T = Cp0_T = thermo.Cp0(T)
@@ -81,7 +77,7 @@ class PropsCalcs(ExplicitComponent):
         Cpe += np.sum(nj_H0*H0_T)  # nj*H0_T**2
         Cpe -= np.sum(nj_H0)*result_T[num_element]
 
-        outputs['h'] = np.sum(nj_H0)*R_UNIVERSAL_ENG*T
+        h = np.sum(nj_H0)*R_UNIVERSAL_ENG*T
 
         try:
             val = (S0_T+np.log(n_moles/nj/(P/P_REF)))
@@ -89,16 +85,17 @@ class PropsCalcs(ExplicitComponent):
             P = 1e-5
             val = (S0_T+np.log(n_moles/nj/(P/P_REF)))
 
+        S = R_UNIVERSAL_ENG * np.sum(nj*val)
+        Cp = (Cpe+Cpf)*R_UNIVERSAL_ENG
+        Cv = Cp + n_moles*R_UNIVERSAL_ENG*dlnVqdlnT**2/dlnVqdlnP
 
-        outputs['S'] = R_UNIVERSAL_ENG * np.sum(nj*val)
-        outputs['Cp'] = Cp = (Cpe+Cpf)*R_UNIVERSAL_ENG
-        outputs['Cv'] = Cv = Cp + n_moles*R_UNIVERSAL_ENG*dlnVqdlnT**2/dlnVqdlnP
+        gamma = -1*Cp/Cv/dlnVqdlnP
 
-        outputs['gamma'] = -1*Cp/Cv/dlnVqdlnP
+        rho = P/(n_moles*R_UNIVERSAL_SI*T)*100  # 1 Bar is 100 Kpa
 
-        outputs['rho'] = P/(n_moles*R_UNIVERSAL_SI*T)*100  # 1 Bar is 100 Kpa
+        R = R_UNIVERSAL_SI*n_moles  #(m**3 * Pa)/(mol*degK)
 
-        outputs['R'] = R_UNIVERSAL_SI*n_moles  #(m**3 * Pa)/(mol*degK)
+        outputs.join_vals(h, S, gamma, Cp, Cv, rho, R)
 
     def compute_partials(self, inputs, J):
 
@@ -106,15 +103,11 @@ class PropsCalcs(ExplicitComponent):
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 
-        T = inputs['T']
-        P = inputs['P']
-        nj = inputs['n']
-        n_moles = inputs['n_moles']
-        result_T = inputs['result_T']
+        T, P, nj, n_moles, result_T, result_P = inputs.split_vals()
         result_T_last = result_T[num_element]
         result_T_rest = result_T[:num_element]
 
-        dlnVqdlnP = -1 + inputs['result_P'][num_element]
+        dlnVqdlnP = -1 + result_P[num_element]
         dlnVqdlnT = 1 - result_T_last
 
         Cp0_T = thermo.Cp0(T)

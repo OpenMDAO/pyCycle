@@ -71,7 +71,7 @@ class ChemEq(om.ImplicitComponent):
 
         if mode == "T":  # T is an input
             self.add_input('T', val=400., units="degK", desc="Temperature")
-        elif mode == "h" or mode == "S":  # T becomes another state variable
+        else:  # T becomes another state variable
             if mode == "h":  # hP solve
                 self.add_input('h', val=0., units="cal/g",
                                desc="Enthalpy")
@@ -144,19 +144,21 @@ class ChemEq(om.ImplicitComponent):
         thermo = self.options['thermo']
         mode = self.options['mode']
 
-        P = inputs['P'] / P_REF
-        b0 = inputs['b0']
-        n = outputs['n']
-        n_moles = np.sum(n)
-        pi = outputs['pi']
+        if mode == 'T':
+            b0, P, T  = inputs.split_vals()
+            n, pi, n_moles_out = outputs.split_vals()
+        elif mode == 'h':
+            b0, P, h  = inputs.split_vals()
+            T, n, pi, n_moles_out = outputs.split_vals()
+        else:  # S
+            b0, P, S  = inputs.split_vals()
+            T, n, pi, n_moles_out = outputs.split_vals()
 
-        if mode != "T":
-            T = outputs['T']
-        else:
-            T = inputs['T']
+        P = P / P_REF
+        n_moles = np.sum(n)
 
         # Output equation for n_moles
-        resids['n_moles'] = n_moles - outputs['n_moles']
+        resids_n_moles = n_moles - n_moles_out
 
         try:
             self.H0_T = H0_T = thermo.H0(T)
@@ -194,21 +196,19 @@ class ChemEq(om.ImplicitComponent):
             self._trace = np.where(n <= MIN_VALID_CONCENTRATION+1e-20)
             resids_n[self._trace] = 0.
 
-        # this keeps our vector.__setitem__ calls to a minimum
-        resids['n'] = resids_n
-
         # residuals from the conservation of mass
-        resids['pi'] = np.sum(thermo.aij * n, axis=1) - b0
+        resids_pi = np.sum(thermo.aij * n, axis=1) - b0
 
         # residuals from temperature equation when T is a state
-        if mode == "h":
+        if mode == 'T':
+            resids.join_vals(resids_n, resids_pi, resids_n_moles)
+        elif mode == "h":
             self.sum_n_H0_T = np.sum(n * H0_T)
-            h = inputs['h']
-            resids['T'] = (h - self.sum_n_H0_T * R_UNIVERSAL_ENG * T)/h
-        elif mode == "S":
-            S = inputs['S']
-
-            resids['T'] = (S-R_UNIVERSAL_ENG*np.sum(n*(S0_T-np.log(n)+np.log(n_moles)-np.log(P))))/S
+            resids_T = (h - self.sum_n_H0_T * R_UNIVERSAL_ENG * T)/h
+            resids.join_vals(resids_T, resids_n, resids_pi, resids_n_moles)
+        else:  # mode == "S"
+            resids_T = (S-R_UNIVERSAL_ENG*np.sum(n*(S0_T-np.log(n)+np.log(n_moles)-np.log(P))))/S
+            resids.join_vals(resids_T, resids_n, resids_pi, resids_n_moles)
 
         if np.linalg.norm(resids['n']) < 1e-4:
             self.remove_trace_species = True

@@ -36,23 +36,22 @@ class CorrectedInputsCalc(om.ExplicitComponent):
         self.declare_partials('Np', ['Nmech', 'Tt'])
 
     def compute(self, inputs, outputs):
-
+        Tt, Pt, W_in, Nmech = inputs.split_vals()
         try:
-            outputs['Wp'] = inputs['W_in'] * inputs['Tt']**0.5 / inputs['Pt']
-            outputs['Np'] = inputs['Nmech'] * inputs['Tt']**-0.5
+            Wp = W_in * Tt**0.5 / Pt
+            Np = Nmech * Tt**-0.5
         except FloatingPointError:
-            raise AnalysisError('Bad values flow states in {}: T={}  P={}'.format(self.pathname, inputs['Tt'], inputs['Pt']))
+            raise AnalysisError('Bad values flow states in {}: T={}  P={}'.format(self.pathname, Tt, Pt))
+        outputs.join_vals(Wp, Np)
 
     def compute_partials(self, inputs, J):
-        W_in = inputs['W_in']
-        Tt = inputs['Tt']
-        Pt = inputs['Pt']
+        Tt, Pt, W_in, Nmech = inputs.split_vals()
 
         J['Wp', 'Tt'] = 0.5 * W_in / Pt * Tt**-0.5
         J['Wp', 'Pt'] = -W_in * Tt**0.5 * Pt**-2.
         J['Wp', 'W_in'] = Tt**0.5 / Pt
         J['Np', 'Nmech'] = Tt**-0.5
-        J['Np', 'Tt'] = -0.5 * inputs['Nmech'] * Tt**-1.5
+        J['Np', 'Tt'] = -0.5 * Nmech * Tt**-1.5
 
 
 class eff_poly_calc(om.ExplicitComponent):
@@ -77,12 +76,7 @@ class eff_poly_calc(om.ExplicitComponent):
         # self.declare_partials('Rt','Cv',val=-1.0)
 
     def compute(self, inputs, outputs):
-        PR     = inputs['PR']
-        S_in   = inputs['S_in']
-        S_out  = inputs['S_out']
-        # Cp     = inputs['Cp']
-        # Cv     = inputs['Cv']
-        Rt = inputs['Rt']
+        PR, S_in, S_out, Rt = inputs.split_vals()
 
         # outputs['Rt'] = Rt = Cp - Cv
         invPR = 1/PR
@@ -90,14 +84,7 @@ class eff_poly_calc(om.ExplicitComponent):
         outputs['eff_poly'] = 1 + (S_out-S_in)/(Rt*np.log(invPR))
 
     def compute_partials(self, inputs, J):
-        # J['Rt', 'Cp'] = 1.0
-        # J['Rt', 'Cv'] = -1.0
-        PR  = inputs['PR']
-        S_in   = inputs['S_in']
-        S_out  = inputs['S_out']
-        # Cp     = inputs['Cp']
-        # Cv     = inputs['Cv']
-        Rt = inputs['Rt']
+        PR, S_in, S_out, Rt = inputs.split_vals()
 
         invPR = 1/PR
         log_PR = np.log(invPR)
@@ -129,12 +116,14 @@ class PressureDrop(om.ExplicitComponent):
         self.declare_partials('Pt_out', ['Pt_in', 'PR'])
 
     def compute(self, inputs, outputs):
-        outputs['Pt_out'] = inputs['Pt_in'] / inputs['PR']
+        PR, Pt_in = inputs.split_vals()
+        outputs['Pt_out'] = Pt_in / PR
 
     def compute_partials(self, inputs, J):
+        PR, Pt_in = inputs.split_vals()
 
-        J['Pt_out', 'PR'] = -inputs['Pt_in'] * (inputs['PR']**-2)
-        J['Pt_out', 'Pt_in'] = 1 / inputs['PR']
+        J['Pt_out', 'PR'] = -Pt_in * (PR**-2)
+        J['Pt_out', 'Pt_in'] = 1 / PR
 
 
 class EnthalpyDrop(om.ExplicitComponent):
@@ -155,13 +144,14 @@ class EnthalpyDrop(om.ExplicitComponent):
         self.declare_partials('ht_out', ['ht_in', 'ht_out_ideal', 'eff'])
 
     def compute(self, inputs, outputs):
-        outputs['ht_out'] = inputs['ht_in'] - \
-            (inputs['ht_in'] - inputs['ht_out_ideal']) * inputs['eff']
+        ht_in, ht_out_ideal, eff = inputs.split_vals()
+        outputs['ht_out'] = ht_in - (ht_in - ht_out_ideal) * eff
 
     def compute_partials(self, inputs, J):
-        J['ht_out', 'ht_in'] = 1 - inputs['eff']
-        J['ht_out', 'ht_out_ideal'] = inputs['eff']
-        J['ht_out', 'eff'] = -inputs['ht_in'] + inputs['ht_out_ideal']
+        ht_in, ht_out_ideal, eff = inputs.split_vals()
+        J['ht_out', 'ht_in'] = 1 - eff
+        J['ht_out', 'ht_out_ideal'] = eff
+        J['ht_out', 'eff'] = -ht_in + ht_out_ideal
 
 
 class Bleeds(om.ExplicitComponent):
@@ -534,7 +524,7 @@ class Turbine(om.Group):
         s_eff
         s_Nc
         area
-        
+
         outputs
         --------
         Wp
@@ -569,8 +559,8 @@ class Turbine(om.Group):
             # (design src, off-design target)
             ('s_WpDes', 's_WpDes'),
             ('s_PRdes', 's_PRdes'),
-            ('s_effDes', 's_effDes'), 
-            ('s_NpDes', 's_NpDes'), 
+            ('s_effDes', 's_effDes'),
+            ('s_NpDes', 's_NpDes'),
             ('Fl_O:stat:area', 'area')
         ]
 
@@ -640,7 +630,7 @@ class Turbine(om.Group):
             self.set_input_defaults('{}:tot:b0'.format(BN), bld_thermo.b0)
 
         # Calculate bleed parameters
-        blds = Bleeds(bleed_names=bleeds, thermo_data = thermo_data, 
+        blds = Bleeds(bleed_names=bleeds, thermo_data = thermo_data,
                 main_flow_elements=elements, bld_flow_elements = bleed_elements)
         self.add_subsystem('blds', blds,
                            promotes_inputs=[('W_in', 'Fl_I:stat:W'),
@@ -749,7 +739,7 @@ class Turbine(om.Group):
         self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
         self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
-        # if not designFlag: 
+        # if not designFlag:
         #     self.set_input_defaults('area', val=1, units='in**2')
 
 

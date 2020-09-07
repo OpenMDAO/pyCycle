@@ -62,16 +62,18 @@ class CoolingCalcs(om.ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
+        turb_pwr, Pt_in, Pt_out, x_factor, W_primary, Tt_primary, Tt_cool, ht_primary, ht_cool = \
+            inputs.split_vals()
 
         n_stages = self.options['n_stages']
         i_row = self.options['i_row']
 
         if i_row % 2 == 0: # even rows are stators
-            T_gas = inputs['Tt_primary'] + self.options['T_safety']
+            T_gas = Tt_primary + self.options['T_safety']
             dh = 0
         else: # rotor
-            T_gas = .92*inputs['Tt_primary'] + self.options['T_safety']
-            dh = inputs['turb_pwr']/n_stages # only rotors do work
+            T_gas = .92*Tt_primary + self.options['T_safety']
+            dh = turb_pwr/n_stages # only rotors do work
 
 
         if i_row == 0:
@@ -79,42 +81,43 @@ class CoolingCalcs(om.ExplicitComponent):
         else:
             profile_factor = .13
 
-        W_primary = inputs['W_primary']
         if T_gas < self.options['T_metal']:
-            outputs['W_cool'] = W_cool = 0
+            W_cool = 0
             phi_prime = 0
         else:
-            phi = (T_gas - self.options['T_metal'])/(T_gas-inputs['Tt_cool'])
+            phi = (T_gas - self.options['T_metal'])/(T_gas-Tt_cool)
             phi_prime = (phi + profile_factor)/(profile_factor + 1.)
 
             try:
-                outputs['W_cool'] = W_cool = .022*inputs['x_factor']*(4./3.)*W_primary*(phi_prime/(1-phi_prime))**1.25
+                W_cool = .022*x_factor*(4./3.)*W_primary*(phi_prime/(1-phi_prime))**1.25
             except FloatingPointError:
                 raise om.AnalysisError('bad flow values in {}; W: {}'.format(self.pathname, W_primary))
 
-        outputs['ht_out'] = (W_primary*inputs['ht_primary'] + W_cool*inputs['ht_cool'])/(W_primary+W_cool) - dh/W_primary
+        ht_out = (W_primary*ht_primary + W_cool*ht_cool)/(W_primary+W_cool) - dh/W_primary
 
-        Pt_out = inputs['Pt_out']
-        Pt_in = inputs['Pt_in']
-        outputs['Pt_stage'] = Pt_out + (Pt_in-Pt_out)*self.i_stage
+        Pt_stage = Pt_out + (Pt_in-Pt_out)*self.i_stage
+
+        outputs.join_vals(W_cool, Pt_stage, ht_out)
 
         # print('foobar', self.pathname, Pt_in, Pt_out)
 
         # print('foobar', self.pathname, W_primary, phi_prime, T_gas, inputs['Tt_cool'])
 
     def compute_partials(self, inputs, J):
+        turb_pwr, Pt_in, Pt_out, x_factor, W_primary, Tt_primary, T_cool, ht_primary, ht_cool = \
+            inputs.split_vals()
 
         n_stages = self.options['n_stages']
         i_row = self.options['i_row']
 
         if i_row % 2 == 0: # even rows are stators
-            T_gas = inputs['Tt_primary'] + self.options['T_safety']
+            T_gas = Tt_primary + self.options['T_safety']
             dh = 0
             ddh_dturb_pwr = 0
             dTgas_dTprimary = 1.
         else: # rotor
-            T_gas = .92*inputs['Tt_primary'] + self.options['T_safety']
-            dh = inputs['turb_pwr']/n_stages # only rotors do work
+            T_gas = .92*Tt_primary + self.options['T_safety']
+            dh = turb_pwr/n_stages # only rotors do work
             ddh_dturb_pwr = 1./n_stages
             dTgas_dTprimary = .92
 
@@ -123,8 +126,6 @@ class CoolingCalcs(om.ExplicitComponent):
         else:
             profile_factor = .13
 
-        W_primary = inputs['W_primary']
-
         if T_gas < self.options['T_metal']:
             dWc_dx_factor   = 0
             dWc_dWp  = 0
@@ -132,11 +133,9 @@ class CoolingCalcs(om.ExplicitComponent):
             dWc_dTt_cool    = 0
             W_cool = 0
         else:
-            T_cool = inputs['Tt_cool']
             T_metal = self.options['T_metal']
             phi = (T_gas - T_metal)/(T_gas-T_cool)
             phi_prime = (phi + profile_factor)/(profile_factor + 1.)
-            x_factor = inputs['x_factor']
             const = .022*4./3.
             phi_prime_term = (phi_prime/(1.-phi_prime))**1.25
             dphi_prime_dphi = 1./(profile_factor+1.)
@@ -149,9 +148,6 @@ class CoolingCalcs(om.ExplicitComponent):
             dWc_dTt_primary = const*W_primary*x_factor*dphi_prime_term_dphi_prime*dphi_prime_dphi*dphi_dTgas*dTgas_dTprimary
             dWc_dTt_cool    = const*W_primary*x_factor*dphi_prime_term_dphi_prime*dphi_prime_dphi*dphi_dTcool
             W_cool = const*x_factor*W_primary*(phi_prime/(1.-phi_prime))**1.25
-
-        ht_primary = inputs['ht_primary']
-        ht_cool = inputs['ht_cool']
 
         WpWc = W_primary + W_cool
         dht_out_dW_cool = -W_primary*ht_primary/WpWc**2 + ht_cool/WpWc - W_cool*ht_cool/WpWc**2

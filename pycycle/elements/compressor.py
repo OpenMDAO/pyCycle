@@ -34,13 +34,15 @@ class CorrectedInputsCalc(om.ExplicitComponent):
         self.declare_partials('Nc', ['Nmech', 'Tt'])
 
     def compute(self, inputs, outputs):
+        Tt, Pt, W_in, Nmech = inputs.split_vals()
 
-        self.delta = inputs['Pt'] / P_STDeng
-        self.W = inputs['W_in']
-        self.theta = inputs['Tt'] / T_STDeng
+        self.delta = Pt / P_STDeng
+        self.W = W_in
+        self.theta = Tt / T_STDeng
 
-        outputs['Wc'] = self.W * self.theta**0.5 / self.delta
-        outputs['Nc'] = inputs['Nmech'] * self.theta**-0.5
+        Wc = self.W * self.theta**0.5 / self.delta
+        Nc = Nmech * self.theta**-0.5
+        outputs.join_vals(Wc, Nc)
 
     def compute_partials(self, inputs, J):
 
@@ -65,19 +67,13 @@ class eff_poly_calc(om.ExplicitComponent):
         self.add_output('eff_poly', val=1.0, units=None, desc='polytropic efficiency', lower=1e-6)
         # define partials
         self.declare_partials('eff_poly','*')
-    def compute(self, inputs, outputs):
-        PR = inputs['PR']
-        S_in = inputs['S_in']
-        S_out = inputs['S_out']
-        Rt = inputs['Rt']
 
-        outputs['eff_poly'] = Rt * np.log(PR) / ( Rt*np.log(PR) + S_out - S_in )
+    def compute(self, inputs, outputs):
+        PR, S_in, S_out, Rt = inputs.split_vals()
+        outputs.set_val(Rt * np.log(PR) / ( Rt*np.log(PR) + S_out - S_in ))
 
     def compute_partials(self, inputs, J):
-        PR     = inputs['PR']
-        S_in   = inputs['S_in']
-        S_out  = inputs['S_out']
-        Rt = inputs['Rt']
+        PR, S_in, S_out, Rt = inputs.split_vals()
 
         J['eff_poly', 'PR'] = (Rt*(S_out - S_in))/(PR*(np.log(PR)*Rt+S_out-S_in)**2)
 
@@ -107,16 +103,13 @@ class Power(om.ExplicitComponent):
         self.declare_partials('trq', '*')
 
     def compute(self, inputs, outputs):
-
-        outputs['power'] = inputs['W'] * (inputs['ht_in'] - inputs['ht_out']) * BTU_s2HP
-        outputs['trq'] = HP_per_RPM_to_FT_LBF * outputs['power'] / inputs['Nmech']
-
+        W, ht_out, ht_in, Nmech = inputs.split_vals()
+        power = W * (ht_in - ht_out) * BTU_s2HP
+        trq = HP_per_RPM_to_FT_LBF * power / Nmech
+        outputs.join_vals(power, trq)
 
     def compute_partials(self, inputs, J):
-        ht_in = inputs['ht_in']
-        ht_out = inputs['ht_out']
-        W = inputs['W']
-        Nmech = inputs['Nmech']
+        W, ht_out, ht_in, Nmech = inputs.split_vals()
 
         J['power', 'W'] = (ht_in - ht_out) * BTU_s2HP
         J['power', 'ht_out'] = -W * BTU_s2HP
@@ -302,16 +295,15 @@ class EnthalpyRise(om.ExplicitComponent):
         self.declare_partials('ht_out', '*')
 
     def compute(self, inputs, outputs):
-        inlet_ht = inputs['inlet_ht']
-        outputs['ht_out'] = (inputs['ideal_ht'] - inlet_ht) / inputs['eff'] + inlet_ht
+        ideal_ht, inlet_ht, eff = inputs.split_vals()
+        outputs.set_val((ideal_ht - inlet_ht) / eff + inlet_ht)
 
     def compute_partials(self, inputs, J):
-        eff = inputs['eff']
+        ideal_ht, inlet_ht, eff = inputs.split_vals()
 
         J['ht_out', 'ideal_ht'] = 1. / eff
         J['ht_out', 'inlet_ht'] = 1 - 1. / eff
-        J['ht_out', 'eff'] = - (inputs['ideal_ht'] -
-                                inputs['inlet_ht']) * eff**(-2)
+        J['ht_out', 'eff'] = - (ideal_ht - inlet_ht) * eff**(-2)
 
 
 class PressureRise(om.ExplicitComponent):
@@ -328,11 +320,13 @@ class PressureRise(om.ExplicitComponent):
         self.declare_partials('Pt_out', '*')
 
     def compute(self, inputs, outputs):
-        outputs['Pt_out'] = inputs['PR'] * inputs['Pt_in']
+        PR, Pt_in = inputs.split_vals()
+        outputs.set_val(PR * Pt_in)
 
     def compute_partials(self, inputs, J):
-        J['Pt_out', 'Pt_in'] = inputs['PR']
-        J['Pt_out', 'PR'] = inputs['Pt_in']
+        PR, Pt_in = inputs.split_vals()
+        J['Pt_out', 'Pt_in'] = PR
+        J['Pt_out', 'PR'] = Pt_in
 
 
 class Compressor(om.Group):
@@ -406,8 +400,8 @@ class Compressor(om.Group):
             # (design src, off-design target)
             ('s_Wc', 's_Wc'),
             ('s_PR', 's_PR'),
-            ('s_eff', 's_eff'), 
-            ('s_Nc', 's_Nc'), 
+            ('s_eff', 's_eff'),
+            ('s_Nc', 's_Nc'),
             ('Fl_O:stat:area', 'area')
         ]
 
@@ -574,7 +568,7 @@ class Compressor(om.Group):
         self.set_input_defaults('eff', val=0.99, units=None)
         self.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
-        # if not design: 
+        # if not design:
         #     self.set_input_defaults('area', val=1, units='inch**2')
 
 

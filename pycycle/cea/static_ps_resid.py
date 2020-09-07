@@ -59,8 +59,6 @@ class PsResid(om.ImplicitComponent):
         else:
             raise ValueError('mode must be either "MN" or "area", but "%s" was given' % mode)
 
-
-
         # self.deriv_options['check_type'] = 'cs'
         # self.deriv_options['check_step_size'] = 1e-40
         # self.deriv_options['check_type'] = 'fd'
@@ -102,120 +100,119 @@ class PsResid(om.ImplicitComponent):
                     outputs['Ps'] = 3.
                 self._ps_guess_cache = ps_guess
 
-    def _compute_outputs_MN(self, i):
-
-        Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
+    def _compute_outputs_MN(self, Ts, n_moles, gamma, W, rho, MN):
+        Vsonic = (gamma*R_UNIVERSAL_SI*n_moles*Ts)**0.5
         try:
             np.seterr(all='raise')
-            Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
+            Vsonic = (gamma*R_UNIVERSAL_SI*n_moles*Ts)**0.5
             np.seterr(all='warn')
         except:
             np.seterr(all='warn')
-            print(self.pathname, i['gamma'], i['n_moles'], i['Ts'])
+            print(self.pathname, gamma, n_moles, Ts)
 
-        MN = i['MN']
         if MN < 1e-16:
             area = np.inf
         else:
-            area = i['W']/(i['rho']*Vsonic*MN)
+            area = W/(rho*Vsonic*MN)
 
         V = MN*Vsonic
         return Vsonic, V, area
 
-    def _compute_outputs_area(self, i):
-        Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
-        area = i['area']
+    def _compute_outputs_area(self, Ts, n_moles, gamma, W, rho, area):
+        Vsonic = (gamma*R_UNIVERSAL_SI*n_moles*Ts)**0.5
         if area == np.inf:
             MN = 0.
         else:
-            #MN = i['W']/(i['rho']*Vsonic*i['area'])
-            #print("MN_calc", self.pathname, i['W'], i['rho'], Vsonic, i['area'])
+            #MN = W/(rho*Vsonic*area)
+            #print("MN_calc", self.pathname, W, rho, Vsonic, area)
 
             try:
                 np.seterr(all='raise')
-                MN = i['W']/(i['rho']*Vsonic*i['area'])
+                MN = W/(rho*Vsonic*area)
                 np.seterr(all='warn')
             except:
                 np.seterr(all='warn')
-                print("MN_calc", self.pathname, i['W'], i['rho'], Vsonic, i['area'])
+                print("MN_calc", self.pathname, W, rho, Vsonic, area)
                 MN = 5.
 
         V = MN*Vsonic
-        
+
         return MN, Vsonic, V
 
     def solve_nonlinear(self, inputs, outputs):
 
         try:
             if self.options['mode'] == "MN":
-                outputs['Vsonic'], outputs['V'], outputs['area'] = self._compute_outputs_MN(inputs)
+                Ts, _, _, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
+                Vsonic, V, area = self._compute_outputs_MN(Ts, n_moles, gamma, W, rho, MN)
+                outputs.join_vals(outputs['Ps'], V, Vsonic, area)
             else:
-                outputs['MN'], outputs['Vsonic'], outputs['V'] = self._compute_outputs_area(inputs)
+                Ts, _, _, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
+                MN, Vsonic, V = self._compute_outputs_area(Ts, n_moles, gamma, W, rho, area)
+                outputs.join_vals(outputs['Ps'], V, Vsonic, MN)
         except FloatingPointError:
             raise om.AnalysisError('Bad values flow states in {}: Ts={}'.format(self.pathname, inputs['Ts']))
 
     def apply_nonlinear(self, inputs, outputs, resids):
-
-        Ts = inputs['Ts']
-        n_moles = inputs['n_moles']
-        gamma = inputs['gamma']
-
+        MN_mode = self.options['mode'] == "MN"
         # explicit vars
-        if self.options['mode'] == "MN":
-            Vsonic, V, area = self._compute_outputs_MN(inputs)
+        if MN_mode:
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
+            Ps, outs_V, outs_Vsonic, outs_area = outputs.split_vals()
+            Vsonic, V, area = self._compute_outputs_MN(Ts, n_moles, gamma, W, rho, MN)
             if area != np.inf:
-                resids['area'] = area - outputs['area']
+                res_area = area - outs_area
             else:
-                resids['area'] = 0.
-            MN = inputs['MN']
+                res_area = 0.
         else:
-            MN, Vsonic, V = self._compute_outputs_area(inputs)
-            resids['MN'] = MN - outputs['MN']
-            # print "MN resid", self.pathname, MN, outputs['MN']
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
+            Ps, outs_V, outs_Vsonic, outs_MN = outputs.split_vals()
+            MN, Vsonic, V = self._compute_outputs_area(Ts, n_moles, gamma, W, rho, area)
+            res_MN = MN - outs_MN
+            # print "MN resid", self.pathname, MN, outs_MN
 
-        resids['Vsonic'] = Vsonic - outputs['Vsonic']
-        resids['V'] = V - outputs['V']
-        # print(resids['Vsonic'], resids['V'], resids['area'])
+        res_Vsonic = Vsonic - outs_Vsonic
+        res_V = V - outs_V
+        # print(res_Vsonic, res_V, resids['area'])
 
         # actual residual for Ps
         RT_q_MW = R_UNIVERSAL_SI*Ts*n_moles
         MN_squared_q2 = (MN**2)/2.
-        # self.dh_dlnP = RT_q_MW*(1+MN_squared_q2*(inputs['gamma']-1))
-        ht_calc = inputs['hs'] + MN_squared_q2 * gamma * RT_q_MW
+        # self.dh_dlnP = RT_q_MW*(1+MN_squared_q2*(gamma-1))
+        ht_calc = hs + MN_squared_q2 * gamma * RT_q_MW
         # ^ TN_D-132 Equation (85) for h*
 
-        resids['Ps'] = (ht_calc - inputs['ht'])/inputs['ht']
-        # print "foobar", self.pathname, outputs['Ps'], resids['Ps'], ht_calc, inputs['ht']
+        res_Ps = (ht_calc - ht)/ht
+        # print "foobar", self.pathname, Ps, res_Ps, ht_calc, ht
 
         # try:
         #     np.seterr(all="raise")
-        #     resids['Ps'] = (self.ht_calc - inputs['ht'])/inputs['ht']
+        #     res_Ps = (self.ht_calc - ht)/ht
         #     np.seterr(all="ignore")
         # except:
-        #     print self.pathname, resids['Ps'], inputs['ht']
-        #     resids['Ps'] = (self.ht_calc - inputs['ht'])/inputs['ht']
+        #     print self.pathname, res_Ps, ht
+        #     res_Ps = (self.ht_calc - ht)/ht
 
-        # print "ps_resid: ", self.pathname, self.ht_calc, resids['Ps'], inputs['hs']
+        # print "ps_resid: ", self.pathname, self.ht_calc, res_Ps, hs
+        if MN_mode:
+            resids.join_vals(res_Ps, res_V, res_Vsonic, res_area)
+        else:
+            resids.join_vals(res_Ps, res_V, res_Vsonic, res_MN)
 
     def linearize(self, inputs, outputs, J):
 
         mode = self.options['mode']
 
-        gamma = inputs['gamma']
-        Ts = inputs['Ts']
-        n_moles = inputs['n_moles']
-        rho = inputs['rho']
-        W = inputs['W']
-        ht = inputs['ht']
-        gamma = inputs['gamma']
-
         if mode == "MN":
-            MN_squared_q2 = inputs['MN']**2/2.
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
+            MN_squared_q2 = MN**2/2.
         else:
-            MN_squared_q2 = outputs['MN']**2/2.
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
+            Ps, outs_V, outs_Vsonic, outs_MN = outputs.split_vals()
+            MN_squared_q2 = outs_MN**2/2.
 
         RT_q_MW = R_UNIVERSAL_SI*Ts*n_moles
-        ht_calc = inputs['hs'] + MN_squared_q2 * gamma * RT_q_MW
+        ht_calc = hs + MN_squared_q2 * gamma * RT_q_MW
 
         J['Ps', 'ht'] = -ht_calc/ht**2
         J['Ps', 'hs'] = 1/ht
@@ -229,9 +226,7 @@ class PsResid(om.ImplicitComponent):
         # J['V', 'V'] = -1.
 
         if mode=="MN":
-            MN = inputs['MN']
-
-            Vsonic, V, area = self._compute_outputs_MN(inputs)
+            Vsonic, V, area = self._compute_outputs_MN(Ts, n_moles, gamma, W, rho, MN)
 
             J['area', 'area'] = -1.
 
@@ -256,8 +251,7 @@ class PsResid(om.ImplicitComponent):
                 J['V', 'gamma'] = MN * J['Vsonic', 'gamma']
 
         else:
-            MN, Vsonic, V = self._compute_outputs_area(inputs)
-            area = inputs['area']
+            MN, Vsonic, V = self._compute_outputs_area(Ts, n_moles, gamma, W, rho, area)
 
             J['MN', 'MN'] = -1
 
