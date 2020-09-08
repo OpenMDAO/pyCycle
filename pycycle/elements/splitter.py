@@ -32,13 +32,13 @@ class BPRcalc(om.ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
-        W_in, BPR = inputs.split_vals()
+        W_in, BPR = inputs.values()
         W1 = W_in/(BPR+1)
         W2 = W_in - W1
-        outputs.join_vals(W1, W2)
+        outputs.set_values(W1, W2)
 
     def compute_partials(self, inputs, J):
-        W, BPR = inputs.split_vals()
+        W, BPR = inputs.values()
         J['W1','BPR'] = -W/((BPR+1)**2)
         J['W1','W_in'] = 1.0/(BPR+1)
         J['W2','BPR'] = W/((BPR + 1)**2)

@@ -34,7 +34,7 @@ class CorrectedInputsCalc(om.ExplicitComponent):
         self.declare_partials('Nc', ['Nmech', 'Tt'])
 
     def compute(self, inputs, outputs):
-        Tt, Pt, W_in, Nmech = inputs.split_vals()
+        Tt, Pt, W_in, Nmech = inputs.values()
 
         self.delta = Pt / P_STDeng
         self.W = W_in
@@ -42,7 +42,7 @@ class CorrectedInputsCalc(om.ExplicitComponent):
 
         Wc = self.W * self.theta**0.5 / self.delta
         Nc = Nmech * self.theta**-0.5
-        outputs.join_vals(Wc, Nc)
+        outputs.set_values(Wc, Nc)
 
     def compute_partials(self, inputs, J):
 
@@ -69,11 +69,11 @@ class eff_poly_calc(om.ExplicitComponent):
         self.declare_partials('eff_poly','*')
 
     def compute(self, inputs, outputs):
-        PR, S_in, S_out, Rt = inputs.split_vals()
+        PR, S_in, S_out, Rt = inputs.values()
         outputs.set_val(Rt * np.log(PR) / ( Rt*np.log(PR) + S_out - S_in ))
 
     def compute_partials(self, inputs, J):
-        PR, S_in, S_out, Rt = inputs.split_vals()
+        PR, S_in, S_out, Rt = inputs.values()
 
         J['eff_poly', 'PR'] = (Rt*(S_out - S_in))/(PR*(np.log(PR)*Rt+S_out-S_in)**2)
 
@@ -103,13 +103,13 @@ class Power(om.ExplicitComponent):
         self.declare_partials('trq', '*')
 
     def compute(self, inputs, outputs):
-        W, ht_out, ht_in, Nmech = inputs.split_vals()
+        W, ht_out, ht_in, Nmech = inputs.values()
         power = W * (ht_in - ht_out) * BTU_s2HP
         trq = HP_per_RPM_to_FT_LBF * power / Nmech
-        outputs.join_vals(power, trq)
+        outputs.set_values(power, trq)
 
     def compute_partials(self, inputs, J):
-        W, ht_out, ht_in, Nmech = inputs.split_vals()
+        W, ht_out, ht_in, Nmech = inputs.values()
 
         J['power', 'W'] = (ht_in - ht_out) * BTU_s2HP
         J['power', 'ht_out'] = -W * BTU_s2HP
@@ -295,11 +295,11 @@ class EnthalpyRise(om.ExplicitComponent):
         self.declare_partials('ht_out', '*')
 
     def compute(self, inputs, outputs):
-        ideal_ht, inlet_ht, eff = inputs.split_vals()
+        ideal_ht, inlet_ht, eff = inputs.values()
         outputs.set_val((ideal_ht - inlet_ht) / eff + inlet_ht)
 
     def compute_partials(self, inputs, J):
-        ideal_ht, inlet_ht, eff = inputs.split_vals()
+        ideal_ht, inlet_ht, eff = inputs.values()
 
         J['ht_out', 'ideal_ht'] = 1. / eff
         J['ht_out', 'inlet_ht'] = 1 - 1. / eff
@@ -320,11 +320,11 @@ class PressureRise(om.ExplicitComponent):
         self.declare_partials('Pt_out', '*')
 
     def compute(self, inputs, outputs):
-        PR, Pt_in = inputs.split_vals()
+        PR, Pt_in = inputs.values()
         outputs.set_val(PR * Pt_in)
 
     def compute_partials(self, inputs, J):
-        PR, Pt_in = inputs.split_vals()
+        PR, Pt_in = inputs.values()
         J['Pt_out', 'Pt_in'] = PR
         J['Pt_out', 'PR'] = Pt_in
 

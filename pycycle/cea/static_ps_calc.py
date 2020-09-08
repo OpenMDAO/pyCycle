@@ -33,7 +33,7 @@ class PsCalc(ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.split_vals()
+        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.values()
 
         Vsonic = np.sqrt(gamma * R_UNIVERSAL_SI * n_moles * Ts)
 
@@ -47,11 +47,11 @@ class PsCalc(ExplicitComponent):
         MN = V / Vsonic
         area = W / (rho * V)
 
-        outputs.join_vals(MN, V, Vsonic, area)
+        outputs.set_values(MN, V, Vsonic, area)
 
     def compute_partials(self, inputs, J):
 
-        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.split_vals()
+        P, gamma, n_moles, Ts, ht, hs, W, rho = inputs.values()
         Vsonic = np.sqrt(gamma * R_UNIVERSAL_SI * n_moles * Ts)
 
         J['Vsonic','gamma'] = Vsonic / (2.0 * gamma)

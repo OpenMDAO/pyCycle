@@ -91,7 +91,7 @@ class MixFuel(om.ExplicitComponent):
         self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:n'])
 
     def compute(self, inputs, outputs):
-        W, FAR, Fl_I_tot_h, Fl_I_tot_n, fuel_Tt = inputs.split_vals()
+        W, FAR, Fl_I_tot_h, Fl_I_tot_n, fuel_Tt = inputs.values()
 
         if inputs._under_complex_step:
             self.init_air_amounts = self.init_air_amounts.astype(np.complex)
@@ -124,10 +124,10 @@ class MixFuel(om.ExplicitComponent):
 
         b0_out = np.sum(self.aij*init_prod_amounts, axis=1)
 
-        outputs.join_vals(mass_avg_h, init_prod_amounts, Wout, Wfuel, b0_out)
+        outputs.set_values(mass_avg_h, init_prod_amounts, Wout, Wfuel, b0_out)
 
     def compute_partials(self, inputs, J):
-        W, FAR, ht, n, fuel_Tt = inputs.split_vals()
+        W, FAR, ht, n, fuel_Tt = inputs.values()
 
         # AssertionError: 4.2991138611171866e-05 not less than or equal to 1e-05 : DESIGN.burner.mix_fuel: init_prod_amounts  w.r.t Fl_I:tot:n
         J['mass_avg_h', 'Fl_I:FAR'] = -ht/(1+FAR)**2 + self.fuel_ht/(1+FAR)**2  # - self.fuel_ht*FAR/(1+FAR)**2

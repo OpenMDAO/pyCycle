@@ -63,7 +63,7 @@ class CoolingCalcs(om.ExplicitComponent):
 
     def compute(self, inputs, outputs):
         turb_pwr, Pt_in, Pt_out, x_factor, W_primary, Tt_primary, Tt_cool, ht_primary, ht_cool = \
-            inputs.split_vals()
+            inputs.values()
 
         n_stages = self.options['n_stages']
         i_row = self.options['i_row']
@@ -97,7 +97,7 @@ class CoolingCalcs(om.ExplicitComponent):
 
         Pt_stage = Pt_out + (Pt_in-Pt_out)*self.i_stage
 
-        outputs.join_vals(W_cool, Pt_stage, ht_out)
+        outputs.set_values(W_cool, Pt_stage, ht_out)
 
         # print('foobar', self.pathname, Pt_in, Pt_out)
 
@@ -105,7 +105,7 @@ class CoolingCalcs(om.ExplicitComponent):
 
     def compute_partials(self, inputs, J):
         turb_pwr, Pt_in, Pt_out, x_factor, W_primary, Tt_primary, T_cool, ht_primary, ht_cool = \
-            inputs.split_vals()
+            inputs.values()
 
         n_stages = self.options['n_stages']
         i_row = self.options['i_row']

@@ -143,13 +143,13 @@ class PsResid(om.ImplicitComponent):
 
         try:
             if self.options['mode'] == "MN":
-                Ts, _, _, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
+                Ts, _, _, n_moles, gamma, W, rho, _, _, MN = inputs.values()
                 Vsonic, V, area = self._compute_outputs_MN(Ts, n_moles, gamma, W, rho, MN)
-                outputs.join_vals(outputs['Ps'], V, Vsonic, area)
+                outputs.set_values(outputs['Ps'], V, Vsonic, area)
             else:
-                Ts, _, _, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
+                Ts, _, _, n_moles, gamma, W, rho, _, _, _, area = inputs.values()
                 MN, Vsonic, V = self._compute_outputs_area(Ts, n_moles, gamma, W, rho, area)
-                outputs.join_vals(outputs['Ps'], V, Vsonic, MN)
+                outputs.set_values(outputs['Ps'], V, Vsonic, MN)
         except FloatingPointError:
             raise om.AnalysisError('Bad values flow states in {}: Ts={}'.format(self.pathname, inputs['Ts']))
 
@@ -157,16 +157,16 @@ class PsResid(om.ImplicitComponent):
         MN_mode = self.options['mode'] == "MN"
         # explicit vars
         if MN_mode:
-            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
-            Ps, outs_V, outs_Vsonic, outs_area = outputs.split_vals()
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.values()
+            Ps, outs_V, outs_Vsonic, outs_area = outputs.values()
             Vsonic, V, area = self._compute_outputs_MN(Ts, n_moles, gamma, W, rho, MN)
             if area != np.inf:
                 res_area = area - outs_area
             else:
                 res_area = 0.
         else:
-            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
-            Ps, outs_V, outs_Vsonic, outs_MN = outputs.split_vals()
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.values()
+            Ps, outs_V, outs_Vsonic, outs_MN = outputs.values()
             MN, Vsonic, V = self._compute_outputs_area(Ts, n_moles, gamma, W, rho, area)
             res_MN = MN - outs_MN
             # print "MN resid", self.pathname, MN, outs_MN
@@ -195,20 +195,20 @@ class PsResid(om.ImplicitComponent):
 
         # print "ps_resid: ", self.pathname, self.ht_calc, res_Ps, hs
         if MN_mode:
-            resids.join_vals(res_Ps, res_V, res_Vsonic, res_area)
+            resids.set_values(res_Ps, res_V, res_Vsonic, res_area)
         else:
-            resids.join_vals(res_Ps, res_V, res_Vsonic, res_MN)
+            resids.set_values(res_Ps, res_V, res_Vsonic, res_MN)
 
     def linearize(self, inputs, outputs, J):
 
         mode = self.options['mode']
 
         if mode == "MN":
-            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.split_vals()
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, MN = inputs.values()
             MN_squared_q2 = MN**2/2.
         else:
-            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.split_vals()
-            Ps, outs_V, outs_Vsonic, outs_MN = outputs.split_vals()
+            Ts, ht, hs, n_moles, gamma, W, rho, _, _, _, area = inputs.values()
+            Ps, outs_V, outs_Vsonic, outs_MN = outputs.values()
             MN_squared_q2 = outs_MN**2/2.
 
         RT_q_MW = R_UNIVERSAL_SI*Ts*n_moles

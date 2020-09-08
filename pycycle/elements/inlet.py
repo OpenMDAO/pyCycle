@@ -31,13 +31,13 @@ class Calcs(om.ExplicitComponent):
         self.declare_partials('F_ram', ['V_in', 'W_in'])
 
     def compute(self, inputs, outputs):
-        Pt_in, ram_recovery, V_in, W_in = inputs.split_vals()
+        Pt_in, ram_recovery, V_in, W_in = inputs.values()
         Pt_out = Pt_in * ram_recovery
         F_ram = W_in * V_in / g_c
-        outputs.join_vals(Pt_out, F_ram)
+        outputs.set_values(Pt_out, F_ram)
 
     def compute_partials(self, inputs, J):
-        Pt_in, ram_recovery, V_in, W_in = inputs.split_vals()
+        Pt_in, ram_recovery, V_in, W_in = inputs.values()
         J['Pt_out', 'Pt_in'] = ram_recovery
         J['Pt_out', 'ram_recovery'] = Pt_in
         J['F_ram', 'V_in'] = W_in / g_c

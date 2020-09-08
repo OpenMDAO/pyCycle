@@ -89,7 +89,7 @@ class MixFlow(om.ExplicitComponent):
 
 
     def compute(self, inputs, outputs):
-        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.split_vals()
+        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.values()
 
         Wmix = outputs['W_mix'] = W1 + W2
         outputs['ht_mix'] = (W1*ht1 + W2*ht2)/Wmix
@@ -120,7 +120,7 @@ class MixFlow(om.ExplicitComponent):
 
     def compute_partials(self, inputs, J):
 
-        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.split_vals()
+        ht1, nt1, W1, P1, V1, area1, ht2, nt2, W2, P2, V2, area2 = inputs.values()
 
         Wmix = W1+W2
         J['ht_mix', 'Fl_I1:stat:W'] = W2*(ht1-ht2)/Wmix**2
@@ -191,7 +191,7 @@ class AreaSum(om.ExplicitComponent):
         self.set_check_partial_options('*', method='cs')
 
     def compute(self, inputs, outputs):
-        area1, area2 = inputs.split_vals()
+        area1, area2 = inputs.values()
         outputs['area_sum'] = area1 + area2
 
 
@@ -208,12 +208,12 @@ class Impulse(om.ExplicitComponent):
         self.declare_partials('impulse', '*')
 
     def compute(self, inputs, outputs):
-        P, area, V, W = inputs.split_vals()
+        P, area, V, W = inputs.values()
         outputs['impulse'] = P*area + W*V
         self.set_check_partial_options('*', method='cs')
 
     def compute_partials(self, inputs, J):
-        P, area, V, W = inputs.split_vals()
+        P, area, V, W = inputs.values()
 
         J['impulse', 'P'] = area
         J['impulse', 'area'] = P

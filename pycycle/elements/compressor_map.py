@@ -24,14 +24,14 @@ class StallCalcs(om.ExplicitComponent):
         self.declare_partials('SMW', ['PR_SMW','PR_actual'])
 
     def compute(self, inputs, outputs):
-        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.split_vals()
+        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.values()
         SMN = ((Wc_actual/Wc_SMN)/(PR_actual/PR_SMN)-1)*100.
         SMW = (PR_SMW-PR_actual)/PR_actual * 100
-        outputs.join_vals(SMN, SMW)
+        outputs.set_values(SMN, SMW)
 
     def compute_partials(self, inputs, J):
 
-        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.split_vals()
+        PR_SMN, PR_SMW, PR_actual, Wc_SMN, Wc_actual = inputs.values()
 
         wc_ratio = 100*Wc_actual/Wc_SMN
         J['SMN', 'PR_SMN'] = wc_ratio / PR_actual
@@ -83,14 +83,14 @@ class MapScalars(om.ExplicitComponent):
         self.declare_partials('s_Wc', ['Wc', 'WcMap'])
 
     def compute(self, inputs, outputs):
-        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.split_vals()
+        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.values()
         outputs['s_Nc'] = Nc / NcMap
         outputs['s_PR'] = (PR - 1) / (PRmap - 1)
         outputs['s_eff'] = eff / effMap
         outputs['s_Wc'] = Wc / WcMap
 
     def compute_partials(self, inputs, J):
-        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.split_vals()
+        Nc, NcMap, PR, PRmap, eff, effMap, Wc, WcMap = inputs.values()
         J['s_Nc', 'Nc'] = 1. / NcMap
         J['s_Nc', 'NcMap'] = -Nc / NcMap**2
         J['s_PR', 'PR'] = 1. / (PRmap - 1)
@@ -136,14 +136,14 @@ class ScaledMapValues(om.ExplicitComponent):
         self.declare_partials('Nc', ['NcMap', 's_Nc'])
 
     def compute(self, inputs, outputs):
-        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.split_vals()
+        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.values()
         outputs['PR'] = (PRmap - 1.) * s_PR + 1.
         outputs['eff'] = effMap * s_eff
         outputs['Wc'] = WcMap * s_Wc
         outputs['Nc'] = NcMap * s_Nc
 
     def compute_partials(self, inputs, J):
-        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.split_vals()
+        effMap, PRmap, WcMap, NcMap, s_PR, s_eff, s_Wc, s_Nc = inputs.values()
         J['PR', 'PRmap'] = s_PR
         J['PR', 's_PR'] = PRmap - 1.
         J['eff', 'effMap'] = s_eff

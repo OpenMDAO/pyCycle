@@ -36,16 +36,16 @@ class CorrectedInputsCalc(om.ExplicitComponent):
         self.declare_partials('Np', ['Nmech', 'Tt'])
 
     def compute(self, inputs, outputs):
-        Tt, Pt, W_in, Nmech = inputs.split_vals()
+        Tt, Pt, W_in, Nmech = inputs.values()
         try:
             Wp = W_in * Tt**0.5 / Pt
             Np = Nmech * Tt**-0.5
         except FloatingPointError:
             raise AnalysisError('Bad values flow states in {}: T={}  P={}'.format(self.pathname, Tt, Pt))
-        outputs.join_vals(Wp, Np)
+        outputs.set_values(Wp, Np)
 
     def compute_partials(self, inputs, J):
-        Tt, Pt, W_in, Nmech = inputs.split_vals()
+        Tt, Pt, W_in, Nmech = inputs.values()
 
         J['Wp', 'Tt'] = 0.5 * W_in / Pt * Tt**-0.5
         J['Wp', 'Pt'] = -W_in * Tt**0.5 * Pt**-2.
@@ -76,7 +76,7 @@ class eff_poly_calc(om.ExplicitComponent):
         # self.declare_partials('Rt','Cv',val=-1.0)
 
     def compute(self, inputs, outputs):
-        PR, S_in, S_out, Rt = inputs.split_vals()
+        PR, S_in, S_out, Rt = inputs.values()
 
         # outputs['Rt'] = Rt = Cp - Cv
         invPR = 1/PR
@@ -84,7 +84,7 @@ class eff_poly_calc(om.ExplicitComponent):
         outputs['eff_poly'] = 1 + (S_out-S_in)/(Rt*np.log(invPR))
 
     def compute_partials(self, inputs, J):
-        PR, S_in, S_out, Rt = inputs.split_vals()
+        PR, S_in, S_out, Rt = inputs.values()
 
         invPR = 1/PR
         log_PR = np.log(invPR)
@@ -116,11 +116,11 @@ class PressureDrop(om.ExplicitComponent):
         self.declare_partials('Pt_out', ['Pt_in', 'PR'])
 
     def compute(self, inputs, outputs):
-        PR, Pt_in = inputs.split_vals()
+        PR, Pt_in = inputs.values()
         outputs['Pt_out'] = Pt_in / PR
 
     def compute_partials(self, inputs, J):
-        PR, Pt_in = inputs.split_vals()
+        PR, Pt_in = inputs.values()
 
         J['Pt_out', 'PR'] = -Pt_in * (PR**-2)
         J['Pt_out', 'Pt_in'] = 1 / PR
@@ -144,11 +144,11 @@ class EnthalpyDrop(om.ExplicitComponent):
         self.declare_partials('ht_out', ['ht_in', 'ht_out_ideal', 'eff'])
 
     def compute(self, inputs, outputs):
-        ht_in, ht_out_ideal, eff = inputs.split_vals()
+        ht_in, ht_out_ideal, eff = inputs.values()
         outputs['ht_out'] = ht_in - (ht_in - ht_out_ideal) * eff
 
     def compute_partials(self, inputs, J):
-        ht_in, ht_out_ideal, eff = inputs.split_vals()
+        ht_in, ht_out_ideal, eff = inputs.values()
         J['ht_out', 'ht_in'] = 1 - eff
         J['ht_out', 'ht_out_ideal'] = eff
         J['ht_out', 'eff'] = -ht_in + ht_out_ideal

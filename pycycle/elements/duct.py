@@ -44,10 +44,10 @@ class MachPressureLossMap(om.ExplicitComponent):
         expMN = self.options['expMN']
 
         if design:
-            MN_in, dPqP = inputs.split_vals
+            MN_in, dPqP = inputs.values
             outputs['s_dPqP'] = dPqP / MN_in**expMN
         else:
-            MN_in, s_dPqP = inputs.split_vals
+            MN_in, s_dPqP = inputs.values
             outputs['dPqP'] = s_dPqP * MN_in**expMN
 
     def compute_partials(self, inputs, J):
@@ -55,11 +55,11 @@ class MachPressureLossMap(om.ExplicitComponent):
         expMN = self.options['expMN']
 
         if design:
-            MN_in, dPqP = inputs.split_vals
+            MN_in, dPqP = inputs.values
             J['s_dPqP', 'dPqP'] = 1.0 / MN_in**expMN
             J['s_dPqP', 'MN_in'] = -expMN * dPqP * MN_in**(-expMN-1.0)
         else:
-            MN_in, s_dPqP = inputs.split_vals
+            MN_in, s_dPqP = inputs.values
             J['dPqP', 's_dPqP'] = MN_in**expMN
             J['dPqP', 'MN_in'] = expMN * s_dPqP * MN_in**(expMN-1.0)
 
@@ -80,11 +80,11 @@ class PressureLoss(om.ExplicitComponent):
         self.declare_partials('Pt_out', '*')
 
     def compute(self, inputs, outputs):
-        dPqP, Pt_in = inputs.split_vals()
+        dPqP, Pt_in = inputs.values()
         outputs['Pt_out'] =Pt_in*(1.0 - dPqP)
 
     def compute_partials(self, inputs, J):
-        dPqP, Pt_in = inputs.split_vals()
+        dPqP, Pt_in = inputs.values()
         J['Pt_out', 'dPqP'] = -Pt_in
         J['Pt_out', 'Pt_in'] = 1.0 - dPqP
 
@@ -107,11 +107,11 @@ class qCalc(om.ExplicitComponent):
         self.declare_partials('ht_out', '*')
 
     def compute(self, inputs, outputs):
-        W_in, Q_dot, ht_in = inputs.split_vals()
+        W_in, Q_dot, ht_in = inputs.values()
         outputs['ht_out'] = ht_in + Q_dot/W_in
 
     def compute_partials(self, inputs, J):
-        W_in, Q_dot, ht_in = inputs.split_vals()
+        W_in, Q_dot, ht_in = inputs.values()
         J['ht_out','W_in'] = -Q_dot/(W_in**2)
         J['ht_out','Q_dot'] = 1.0/W_in
         J['ht_out','ht_in'] = 1.0

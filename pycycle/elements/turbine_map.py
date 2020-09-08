@@ -37,17 +37,17 @@ class MapScalars(om.ExplicitComponent):
         self.declare_partials('s_Wp', ['Wp', 'WpMap'])
 
     def compute(self, inputs, outputs):
-        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.split_vals()
+        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.values()
 
         s_Np = Np / NpMap
         s_PR = (PR - 1) / (PRmap - 1)
         s_eff = eff / effMap
         s_Wp = Wp / WpMap
 
-        outputs.join_vals(s_eff, s_Np, s_PR, s_Wp)
+        outputs.set_values(s_eff, s_Np, s_PR, s_Wp)
 
     def compute_partials(self, inputs, J):
-        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.split_vals()
+        eff, Np, PR, Wp, effMap, NpMap, PRmap, WpMap = inputs.values()
 
         J['s_eff', 'eff'] = 1. / effMap
         J['s_eff', 'effMap'] = - eff / effMap**2
@@ -87,17 +87,17 @@ class ScaledMapValues(om.ExplicitComponent):
         self.declare_partials('Wp', ['WpMap', 's_Wp'])
 
     def compute(self, inputs, outputs):
-        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.split_vals()
+        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.values()
 
         eff = effMap * s_eff
         Np = NpMap * s_Np
         PR = ((PRmap - 1.) * s_PR) + 1.
         Wp = WpMap * s_Wp
 
-        outputs.join_vals(eff, Np, PR, Wp)
+        outputs.set_values(eff, Np, PR, Wp)
 
     def compute_partials(self, inputs, J):
-        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.split_vals()
+        effMap, NpMap, PRmap, WpMap, s_eff, s_Np, s_PR, s_Wp = inputs.values()
 
         J['eff', 'effMap'] = s_eff
         J['eff', 's_eff'] = effMap

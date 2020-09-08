@@ -145,14 +145,14 @@ class ChemEq(om.ImplicitComponent):
         mode = self.options['mode']
 
         if mode == 'T':
-            b0, P, T  = inputs.split_vals()
-            n, pi, n_moles_out = outputs.split_vals()
+            b0, P, T  = inputs.values()
+            n, pi, n_moles_out = outputs.values()
         elif mode == 'h':
-            b0, P, h  = inputs.split_vals()
-            T, n, pi, n_moles_out = outputs.split_vals()
+            b0, P, h  = inputs.values()
+            T, n, pi, n_moles_out = outputs.values()
         else:  # S
-            b0, P, S  = inputs.split_vals()
-            T, n, pi, n_moles_out = outputs.split_vals()
+            b0, P, S  = inputs.values()
+            T, n, pi, n_moles_out = outputs.values()
 
         P = P / P_REF
         n_moles = np.sum(n)
@@ -201,14 +201,14 @@ class ChemEq(om.ImplicitComponent):
 
         # residuals from temperature equation when T is a state
         if mode == 'T':
-            resids.join_vals(resids_n, resids_pi, resids_n_moles)
+            resids.set_values(resids_n, resids_pi, resids_n_moles)
         elif mode == "h":
             self.sum_n_H0_T = np.sum(n * H0_T)
             resids_T = (h - self.sum_n_H0_T * R_UNIVERSAL_ENG * T)/h
-            resids.join_vals(resids_T, resids_n, resids_pi, resids_n_moles)
+            resids.set_values(resids_T, resids_n, resids_pi, resids_n_moles)
         else:  # mode == "S"
             resids_T = (S-R_UNIVERSAL_ENG*np.sum(n*(S0_T-np.log(n)+np.log(n_moles)-np.log(P))))/S
-            resids.join_vals(resids_T, resids_n, resids_pi, resids_n_moles)
+            resids.set_values(resids_T, resids_n, resids_pi, resids_n_moles)
 
         if np.linalg.norm(resids['n']) < 1e-4:
             self.remove_trace_species = True

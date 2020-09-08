@@ -51,7 +51,7 @@ class Gearbox(om.ImplicitComponent):
             gear_ratio = N_out / N_in
             trq_in = -trq_base*eff*N_out / N_in
             trq_out = trq_base
-            outputs.join_vals(trq_in, trq_out, gear_ratio)
+            outputs.set_values(trq_in, trq_out, gear_ratio)
         else:
             _, _, eff, gear_ratio = inputs.split_vars()
             outputs['trq_in'] = -outputs['trq_base']*eff*gear_ratio

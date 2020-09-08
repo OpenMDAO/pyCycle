@@ -78,9 +78,9 @@ class PropsRHS(ExplicitComponent):
 
         thermo = self.thermo
         num_element = thermo.num_element
-        T, n, n_moles, b0 = inputs.split_vals()
+        T, n, n_moles, b0 = inputs.values()
 
-        rhs_T, rhs_P, lhs_TP = outputs.split_vals()
+        rhs_T, rhs_P, lhs_TP = outputs.values()
 
         for i in range(num_element):
             # outputs['lhs_TP'][i][:num_element] = np.sum(thermo.aij_prod[i] * n, axis=1)
@@ -104,7 +104,7 @@ class PropsRHS(ExplicitComponent):
         rhs_T[:num_element] = np.sum(thermo.aij*n_H0, axis=1)
         rhs_T[num_element] = np.sum(n_H0)
 
-        outputs.join_vals(rhs_T, rhs_P, lhs_TP)
+        outputs.set_values(rhs_T, rhs_P, lhs_TP)
 
     def compute_partials(self, inputs, J):
 
@@ -119,7 +119,7 @@ class PropsRHS(ExplicitComponent):
             self.drhsT_dT = self.drhsT_dT.real
             self.drhsT_dn = self.drhsT_dn.real
 
-        T, nj, _, _ = inputs.split_vals()
+        T, nj, _, _ = inputs.values()
 
         H0_T = self.H0_T
         nj_dH0dT = thermo.H0_applyJ(T, nj)

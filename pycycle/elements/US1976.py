@@ -96,7 +96,7 @@ class USatm1976Comp(ExplicitComponent):
         # outputs['Ps'] = P_interp(alt)
         # outputs['rhos'] = rho_interp(alt)
         # outputs['drhos_dalt'] = rho_interp_deriv(alt)
-        outputs.join_vals(T_interp(alt), P_interp(alt), rho_interp(alt), rho_interp_deriv(alt))
+        outputs.set_values(T_interp(alt), P_interp(alt), rho_interp(alt), rho_interp_deriv(alt))
 
     def compute_partials(self, inputs, partials):
         alt = inputs['alt']
