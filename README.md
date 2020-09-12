@@ -9,17 +9,17 @@ You need to be at least familiar with either OpenMDAO or NPSS in order to be suc
 
 Disclosure: The docs are nearly non-existent. We're hoping to improve this, but for the moment this is what you get. 
 We suggest you look in the examples folder for some indications of how to run this code. 
-Also, you can should [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/pdf) which goes into a lot of detail that is very relevant. 
+Also, you can read [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/pdf) which goes into a lot of detail that is very relevant. 
 
 
 # OpenMDAO Version Compatibility
 ----------------------------------
 pyCycle is built on top of OpenMDAO, and thus depends on it. Here is the OpenMDAO version you need for the specific versions of pyCycle
 
-
-pyCycle 3.0.0 -- 2.80 >= OpenMDAO <=3.1.1
-pyCycle 3.2.0 -- 3.20 >= OpenMDAO
-
+| pyCycle version  | OpenMDAO version |
+| -----------------| -------------    |
+| 3.0.0            | 2.8.0 thru 3.1.1  |
+| 3.2.0            | 3.2.0 or greater  |
 
 ## Citation
 
@@ -43,7 +43,7 @@ If you use pyCycle, please cite this paper:
 
 clone this repo, and checkout the specific version you want to run: 
 
-    git clone git@github.com:OpenMDAO/pyCycle.git
+    git clone https://github.com/OpenMDAO/pyCycle
     cd pyCycle
 
 You can see a list of all versions in the repo via: 
