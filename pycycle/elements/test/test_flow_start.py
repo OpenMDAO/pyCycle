@@ -199,7 +199,7 @@ class WARTestCase(unittest.TestCase):
             prob.setup()
             prob.run_model()
 
-        self.assertEqual(str(cm.exception), "You have turned on the use_WAR option in FlightConditions but you have set WAR to be zero.")
+        self.assertEqual(str(cm.exception), "SetWAR (war): Error calling compute(), You have turned on the use_WAR option in FlightConditions but you have set WAR to be zero.")
 
 
         with self.assertRaises(ValueError) as cm:
@@ -211,7 +211,7 @@ class WARTestCase(unittest.TestCase):
             p.setup()
             p.run_model()
 
-        self.assertEqual(str(cm.exception), "Cannot specify WAR to have a value of 1. This is a physical impossibility and creates a singularity.")
+        self.assertEqual(str(cm.exception), "SetWAR (war): Error calling compute(), Cannot specify WAR to have a value of 1. This is a physical impossibility and creates a singularity.")
 
 if __name__ == "__main__":
     unittest.main()
