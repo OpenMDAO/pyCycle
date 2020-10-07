@@ -567,10 +567,10 @@ class Turbine(om.Group):
 
         self.default_des_od_conns = [
             # (design src, off-design target)
-            ('s_WpDes', 's_WpDes'),
-            ('s_PRdes', 's_PRdes'),
-            ('s_effDes', 's_effDes'), 
-            ('s_NpDes', 's_NpDes'), 
+            ('s_Wp', 's_Wp'),
+            ('s_PR', 's_PR'),
+            ('s_eff', 's_eff'), 
+            ('s_Np', 's_Np'), 
             ('Fl_O:stat:area', 'area')
         ]
 

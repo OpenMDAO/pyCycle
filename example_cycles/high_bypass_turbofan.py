@@ -274,75 +274,25 @@ class MPhbtf(pyc.MPCycle):
 
         self.pyc_add_pnt('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
 
-        # --- INLET -----
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
-
-        # ---------------
-        # ----- FAN -----
         self.set_input_defaults('DESIGN.fan.MN', 0.4578)
-
-        # ---------------
-        # --- SPLITTER ---
         self.set_input_defaults('DESIGN.splitter.BPR', 5.105)
         self.set_input_defaults('DESIGN.splitter.MN1', 0.3104)
         self.set_input_defaults('DESIGN.splitter.MN2', 0.4518)
-
-        # ---------------
-        # --- DUCT 4 -----
         self.set_input_defaults('DESIGN.duct4.MN', 0.3121)
-
-        # ---------------
-        # --- LPC -----
-        # self.set_input_defaults('DESIGN.lpc.eff', 0.9243)
         self.set_input_defaults('DESIGN.lpc.MN', 0.3059)
-
-        # ---------------
-        # --- DUCT 6 -----
-        self.set_input_defaults('DESIGN.duct6.MN', 0.3563),
-
-        # ---------------
-        # ---  HPC -----
-        self.set_input_defaults('DESIGN.hpc.MN', 0.2442),
-
-        # ---------------
-        # --- BLEED -----
+        self.set_input_defaults('DESIGN.duct6.MN', 0.3563)
+        self.set_input_defaults('DESIGN.hpc.MN', 0.2442)
         self.set_input_defaults('DESIGN.bld3.MN', 0.3000)
-
-        # ---------------
-        # --- BURNER -----
-        self.set_input_defaults('DESIGN.burner.MN', 0.1025),
-
-        # ---------------
-        # --- HPT -----
-        self.set_input_defaults('DESIGN.hpt.MN', 0.3650),
-
-        # ---------------
-        # --- DUCT -----
-        self.set_input_defaults('DESIGN.duct11.MN', 0.3063),
-
-        # ---------------
-        # --- LPT -----
-        self.set_input_defaults('DESIGN.lpt.MN', 0.4127),
-
-        # ---------------
-        # --- DUCT 13 -----
-        self.set_input_defaults('DESIGN.duct13.MN', 0.4463),
-
-        # ---------------
-        # --- BLEED -----
-        self.set_input_defaults('DESIGN.byp_bld.MN', 0.4489),
-
-        # ---------------
-        # --- DUCT 15 -----
-        self.set_input_defaults('DESIGN.duct15.MN', 0.4589),
-
-        # ---------------
-        # --- LP SHAFT -----
-        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm'),
-
-        # ---------------
-        # --- HP SHAFT -----
-        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm'),
+        self.set_input_defaults('DESIGN.burner.MN', 0.1025)
+        self.set_input_defaults('DESIGN.hpt.MN', 0.3650)
+        self.set_input_defaults('DESIGN.duct11.MN', 0.3063)
+        self.set_input_defaults('DESIGN.lpt.MN', 0.4127)
+        self.set_input_defaults('DESIGN.duct13.MN', 0.4463)
+        self.set_input_defaults('DESIGN.byp_bld.MN', 0.4489)
+        self.set_input_defaults('DESIGN.duct15.MN', 0.4589)
+        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm')
+        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
 
         # --- Set up bleed values -----
         self.set_input_defaults('DESIGN.hpc.cust:frac_W', 0.0445),
@@ -390,48 +340,13 @@ class MPhbtf(pyc.MPCycle):
             self.set_input_defaults(pt+'.fc.dTs', self.od_dTs[i], units='degR')
             self.set_input_defaults(pt+'.hpc.cust:frac_W', self.od_Ws[i])
 
-        #Connect all DESIGN map scalars to the off design cases
-        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
-        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
-        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
-        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
-        self.pyc_connect_des_od('lpc.s_PR', 'lpc.s_PR')
-        self.pyc_connect_des_od('lpc.s_Wc', 'lpc.s_Wc')
-        self.pyc_connect_des_od('lpc.s_eff', 'lpc.s_eff')
-        self.pyc_connect_des_od('lpc.s_Nc', 'lpc.s_Nc')
-        self.pyc_connect_des_od('hpc.s_PR', 'hpc.s_PR')
-        self.pyc_connect_des_od('hpc.s_Wc', 'hpc.s_Wc')
-        self.pyc_connect_des_od('hpc.s_eff', 'hpc.s_eff')
-        self.pyc_connect_des_od('hpc.s_Nc', 'hpc.s_Nc')
-        self.pyc_connect_des_od('hpt.s_PR', 'hpt.s_PR')
-        self.pyc_connect_des_od('hpt.s_Wp', 'hpt.s_Wp')
-        self.pyc_connect_des_od('hpt.s_eff', 'hpt.s_eff')
-        self.pyc_connect_des_od('hpt.s_Np', 'hpt.s_Np')
-        self.pyc_connect_des_od('lpt.s_PR', 'lpt.s_PR')
-        self.pyc_connect_des_od('lpt.s_Wp', 'lpt.s_Wp')
-        self.pyc_connect_des_od('lpt.s_eff', 'lpt.s_eff')
-        self.pyc_connect_des_od('lpt.s_Np', 'lpt.s_Np')
-        
+        self.pyc_use_default_des_od_conns()
+
         #Set up the RHS of the balances!
         self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
         self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
 
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
-        self.pyc_connect_des_od('splitter.Fl_O1:stat:area', 'splitter.area1')
-        self.pyc_connect_des_od('splitter.Fl_O2:stat:area', 'splitter.area2')
-        self.pyc_connect_des_od('duct4.Fl_O:stat:area', 'duct4.area')
-        self.pyc_connect_des_od('lpc.Fl_O:stat:area', 'lpc.area')
-        self.pyc_connect_des_od('duct6.Fl_O:stat:area', 'duct6.area')
-        self.pyc_connect_des_od('hpc.Fl_O:stat:area', 'hpc.area')
-        self.pyc_connect_des_od('bld3.Fl_O:stat:area', 'bld3.area')
-        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
-        self.pyc_connect_des_od('hpt.Fl_O:stat:area', 'hpt.area')
-        self.pyc_connect_des_od('duct11.Fl_O:stat:area', 'duct11.area')
-        self.pyc_connect_des_od('lpt.Fl_O:stat:area', 'lpt.area')
-        self.pyc_connect_des_od('duct13.Fl_O:stat:area', 'duct13.area')
-        self.pyc_connect_des_od('byp_bld.Fl_O:stat:area', 'byp_bld.area')
-        self.pyc_connect_des_od('duct15.Fl_O:stat:area', 'duct15.area')
+       
 
 
 if __name__ == "__main__":
@@ -447,14 +362,19 @@ if __name__ == "__main__":
     #Define the design point
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
+
     prob.set_val('DESIGN.lpc.PR', 1.935)
     prob.set_val('DESIGN.lpc.eff', 0.9243)
-    prob.set_val('DESIGN.hpc.PR', 9.369),
-    prob.set_val('DESIGN.hpc.eff', 0.8707),
-    prob.set_val('DESIGN.hpt.eff', 0.8888),
-    prob.set_val('DESIGN.lpt.eff', 0.8996),
+
+    prob.set_val('DESIGN.hpc.PR', 9.369)
+    prob.set_val('DESIGN.hpc.eff', 0.8707)
+    
+    prob.set_val('DESIGN.hpt.eff', 0.8888)
+    prob.set_val('DESIGN.lpt.eff', 0.8996)
+    
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
+    
     prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
     prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
         
