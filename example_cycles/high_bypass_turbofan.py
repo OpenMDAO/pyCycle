@@ -23,13 +23,11 @@ class HBTF(pyc.Cycle):
         
         #Add subsystems to build the engine deck:
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        
         self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         
         # Note variable promotion for the fan -- 
         # the LP spool speed and the fan speed are INPUTS that are promoted:
         # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
-        # in fact for a multi-spool engine you HAVE(?) to alias if you want to promote_inputs
         # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
         self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
@@ -103,10 +101,12 @@ class HBTF(pyc.Cycle):
             #Here balance.W is implicit state variable that is the OUTPUT of balance object
             self.connect('balance.W', 'inlet.Fl_I:stat:W') #Connect the output of balance to the relevant input
             self.connect('perf.Fn', 'balance.lhs:W')       #This statement makes perf.Fn the LHS of the balance eqn.
+            self.promotes('balance', inputs=[('rhs:W', 'Fn_DES')])
 
             balance.add_balance('FAR', eq_units='degR', lower=1e-4, val=.017)
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
+            self.promotes('balance', inputs=[('rhs:FAR', 'T4_MAX')])
             
             # Note that for the following two balances the mult val is set to -1 so that the NET torque is zero
             balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8,
@@ -161,8 +161,8 @@ class HBTF(pyc.Cycle):
             
             # Specify the order in which the subsystems are executed:
             
-            self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
-                            'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
+            # self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
+            #                 'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
         
         # Set up all the flow connections:
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
@@ -346,8 +346,6 @@ class MPhbtf(pyc.MPCycle):
         self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
         self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
 
-       
-
 
 if __name__ == "__main__":
 
@@ -375,8 +373,9 @@ if __name__ == "__main__":
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
     
-    prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
-    prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
+    # prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
+    prob.set_val('DESIGN.T4_MAX', 2857, units='degR')
+    prob.set_val('DESIGN.Fn_DES', 5900.0, units='lbf') 
         
 
     # Set initial guesses for balances

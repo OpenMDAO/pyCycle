@@ -29,8 +29,8 @@ class HBTFTestCase(unittest.TestCase):
         self.prob.set_val('DESIGN.lpt.eff', 0.8996),
         self.prob.set_val('DESIGN.fc.alt', 35000., units='ft')
         self.prob.set_val('DESIGN.fc.MN', 0.8)
-        self.prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
-        self.prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
+        self.prob.set_val('DESIGN.T4_MAX', 2857, units='degR')
+        self.prob.set_val('DESIGN.Fn_DES', 5500.0, units='lbf') 
 
         # Set initial guesses for balances
         self.prob['DESIGN.balance.FAR'] = 0.025
