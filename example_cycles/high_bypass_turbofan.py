@@ -99,7 +99,7 @@ class HBTF(pyc.Cycle):
         if design:
             balance.add_balance('W', units='lbm/s', eq_units='lbf')
             #Here balance.W is implicit state variable that is the OUTPUT of balance object
-            self.connect('balance.W', 'inlet.Fl_I:stat:W') #Connect the output of balance to the relevant input
+            self.connect('balance.W', 'fc.W') #Connect the output of balance to the relevant input
             self.connect('perf.Fn', 'balance.lhs:W')       #This statement makes perf.Fn the LHS of the balance eqn.
             self.promotes('balance', inputs=[('rhs:W', 'Fn_DES')])
 
@@ -165,7 +165,7 @@ class HBTF(pyc.Cycle):
             #                 'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
         
         # Set up all the flow connections:
-        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
+        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I')
         self.pyc_connect_flow('inlet.Fl_O', 'fan.Fl_I')
         self.pyc_connect_flow('fan.Fl_O', 'splitter.Fl_I')
         self.pyc_connect_flow('splitter.Fl_O1', 'duct4.Fl_I')

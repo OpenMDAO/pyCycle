@@ -353,6 +353,7 @@ class Compressor(om.Group):
         --------
         map.PRdes
         map.effDes
+        map.RlineMap
         alphaMap
         MN
 
