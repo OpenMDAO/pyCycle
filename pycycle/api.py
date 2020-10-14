@@ -8,7 +8,6 @@ from pycycle.cea import species_data
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.cfd_start import CFDStart
 from pycycle.elements.inlet import Inlet
-from pycycle.elements.complex_inlet import ComplexInlet
 from pycycle.elements.duct import Duct
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.combustor import Combustor
