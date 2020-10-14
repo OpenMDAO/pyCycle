@@ -31,7 +31,8 @@ class SetTotalTestCase(unittest.TestCase):
 
         p.run_model()
 
-        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
+        # expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
+        expected_concentrations = np.array([6.66666666e-01, 6.71646088e-10, 3.33333333e-01])
 
         n = p['n']
         n_moles = p['n_moles']
