@@ -38,6 +38,8 @@ class ChemEq(om.ImplicitComponent):
         newton.options['iprint'] = 2
         newton.options['atol'] = 1e-10
         newton.options['rtol'] = 1e-10
+        newton.options['stall_limit'] = 4
+        newton.options['stall_tol'] = 1e-10
         newton.options['solve_subsystems'] = True
         newton.options['reraise_child_analysiserror'] = False
 
@@ -99,7 +101,7 @@ class ChemEq(om.ImplicitComponent):
         self.add_output('n', shape=num_prod,
                         val=self.n_init,
                         desc="mole fractions of the mixture",
-                        lower=1e-10,
+                        lower=MIN_VALID_CONCENTRATION,
                         res_ref=10000.
                         )
 

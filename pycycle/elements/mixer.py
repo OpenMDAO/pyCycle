@@ -265,10 +265,10 @@ class Mixer(om.Group):
     def initialize(self):
 
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('Fl_I1_elements', default=AIR_MIX,
+                              desc='thmodynamic data set', recordable=False)
+        self.options.declare('Fl_I1_elements', default=AIR_FUEL_MIX,
                               desc='set of elements present in the flow')
-        self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,
+        self.options.declare('Fl_I2_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
@@ -351,6 +351,7 @@ class Mixer(om.Group):
                 self.set_input_defaults('Fl_I2:tot:b0', flow2_thermo.b0)
 
         self.add_subsystem('extraction_ratio', om.ExecComp('ER=Pt1/Pt2', Pt1={'units':'Pa'}, Pt2={'units':'Pa'}),
+
                             promotes_inputs=[('Pt1', 'Fl_I1:tot:P'), ('Pt2', 'Fl_I2:tot:P')],
                             promotes_outputs=['ER'])
 

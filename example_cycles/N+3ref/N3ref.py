@@ -206,7 +206,7 @@ class N3(pyc.Cycle):
 
         if cooling:
             self.add_subsystem('hpt_cooling', pyc.TurbineCooling(n_stages=2, thermo_data=pyc.species_data.janaf, T_metal=2460.))
-            self.add_subsystem('hpt_chargable', pyc.CombineCooling(n_ins=3))
+            self.add_subsystem('hpt_chargable', pyc.CombineCooling(n_ins=3)) #Number of cooling flows which are chargable
 
             self.pyc_connect_flow('bld3.bld_inlet', 'hpt_cooling.Fl_cool', connect_stat=False)
             self.pyc_connect_flow('burner.Fl_O', 'hpt_cooling.Fl_turb_I')

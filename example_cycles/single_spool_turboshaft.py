@@ -241,6 +241,7 @@ if __name__ == "__main__":
     prob['DESIGN.balance.FAR'] = 0.0175506829934
     prob['DESIGN.balance.W'] = 27.265
     prob['DESIGN.balance.turb_PR'] = 3.8768
+
     prob['DESIGN.balance.pt_PR'] = 2.
     prob['DESIGN.fc.balance.Pt'] = 14.69551131598148
     prob['DESIGN.fc.balance.Tt'] = 518.665288153
@@ -250,6 +251,7 @@ if __name__ == "__main__":
         # initial guesses
         prob[pt+'.balance.W'] = 27.265
         prob[pt+'.balance.FAR'] = 0.0175506829934
+
         prob[pt+'.balance.HP_Nmech'] = 8070.0
         prob[pt+'.fc.balance.Pt'] = 15.703
         prob[pt+'.fc.balance.Tt'] = 558.31
