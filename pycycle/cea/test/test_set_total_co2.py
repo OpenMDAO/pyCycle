@@ -22,6 +22,7 @@ class SetTotalTestCase(unittest.TestCase):
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="T")
         p.model.set_input_defaults('b0', thermo.b0)
+        print(thermo.b0)
         p.model.set_input_defaults('T', 4000., units='degK')
         p.model.set_input_defaults('P', 1.034210, units="bar")
         r = p.model
@@ -30,6 +31,8 @@ class SetTotalTestCase(unittest.TestCase):
         p.setup(check=False)
 
         p.run_model()
+
+        p.model.list_inputs(prom_name=True, print_arrays=True)
 
         expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
 
@@ -57,6 +60,7 @@ class SetTotalTestCase(unittest.TestCase):
         expected_n_moles = 0.0227262
         assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16379233, 1e-4)
+
 
     def test_set_total_hp(self):
 
