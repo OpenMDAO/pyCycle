@@ -40,7 +40,7 @@ class ChemEq(om.ImplicitComponent):
         newton.options['rtol'] = 1e-10
         newton.options['stall_limit'] = 4
         newton.options['stall_tol'] = 1e-10
-        newton.options['solve_subsystems'] = True
+        newton.options['solve_subsystems'] = False
         newton.options['reraise_child_analysiserror'] = False
 
         self.options['assembled_jac_type'] = 'dense'

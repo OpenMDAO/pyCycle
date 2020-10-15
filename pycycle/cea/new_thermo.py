@@ -95,9 +95,9 @@ class Thermo(om.Group):
         # TODO: merge this into thermo_TPn from CEA
         out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R',)
         if 'hP' in mode: 
-            out_vars += ('S') # leave h unpromoted to connect to balance lhs
+            out_vars += ('S',) # leave h unpromoted to connect to balance lhs
         if 'SP' in mode: 
-            out_vars += ('h') # leave S unpromoted to connect to balance lhs
+            out_vars += ('h',) # leave S unpromoted to connect to balance lhs
         self.add_subsystem('props', Properties(thermo=cea_data),
                                promotes_inputs=('T', 'P', 'n', 'n_moles', 'b0'),
                                promotes_outputs=out_vars)
@@ -108,9 +108,11 @@ class Thermo(om.Group):
             bal = self.add_subsystem('balance', om.BalanceComp(), promotes_outputs=['T'])
 
             if 'SP' in mode:
-                bal.add_balance('T', val=273., units='degK', eq_units='cal/(g*degK)',)
+                bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=100.)
+                self.promotes('balance', inputs=[('rhs:T','S')])
+                self.connect('props.S', 'balance.lhs:T')
             elif 'hP' in mode: 
-                bal.add_balance('T', val=273., units='degK', eq_units='cal/g',)
+                bal.add_balance('T', val=500., units='degK', eq_units='cal/g', lower=100.)
                 self.promotes('balance', inputs=[('rhs:T','h')])
                 self.connect('props.h', 'balance.lhs:T')
 
@@ -124,6 +126,8 @@ class Thermo(om.Group):
             # elif mode == 'static_Ps':
             #     pass
 
+        # TODO: Move the newton stuff into a convergence sub-group that doesn't include this 
+        # not a big deal right now though
         # Compute English units and promote outputs to the station name
         fl_name = self.options['fl_name']
         self.add_subsystem('flow', EngUnitProps(thermo=cea_data, fl_name=fl_name),
@@ -132,7 +136,31 @@ class Thermo(om.Group):
         # Setup solver to converge thermo point
 
         self.set_input_defaults('P', 1, units='bar')
-        self.set_input_defaults('T', 273, units='degK')
+
+        if 'TP' in mode: 
+            self.set_input_defaults('T', 273, units='degK')
+        else: 
+            if 'hP' in mode: 
+                self.set_input_defaults('h', 1., units='cal/g')
+            if 'SP' in mode: 
+                self.set_input_defaults('S', 1., units='cal/(g*degK)')
+
+            newton = self.nonlinear_solver = om.NewtonSolver()
+            newton.options['maxiter'] = 100
+            newton.options['atol'] = 1e-10
+            newton.options['rtol'] = 1e-10
+            newton.options['stall_limit'] = 4
+            newton.options['stall_tol'] = 1e-10
+            newton.options['solve_subsystems'] = False
+
+            self.options['assembled_jac_type'] = 'dense'
+            self.linear_solver = om.DirectSolver()
+
+            # ln_bt = newton.linesearch = om.BoundsEnforceLS()
+            ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
+            ln_bt.options['maxiter'] = 2
+            ln_bt.options['iprint'] = -1
+
 
 
 if __name__ == "__main__": 
