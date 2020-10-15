@@ -10,7 +10,7 @@ from pycycle.cea.props_calcs import PropsCalcs
 from pycycle.cea.unit_comps import EngUnitProps
 
 
-
+# TODO: move into chem_eq when refactor works
 class Properties(om.Group):
 
     def initialize(self):
@@ -73,8 +73,7 @@ class Thermo(om.Group):
 
             base_thermo = chem_eq.ChemEq(thermo=cea_data, mode='T')
 
-            in_vars = ('b0', 'T', 'P')
-            out_vars = ('n', 'n_moles')
+
    
             
 
@@ -85,28 +84,45 @@ class Thermo(om.Group):
             # base_thermo = TabularThermo(thermo_data=xx)
             pass
 
+
+        in_vars = ('T', 'b0', 'P')
+        out_vars = ('n', 'n_moles')
+
         self.add_subsystem('thermo_TP', base_thermo, 
                            promotes_inputs=in_vars, 
                            promotes_outputs=out_vars)
 
-        # TODO: merge this into thermo_TP
+        # TODO: merge this into thermo_TPn from CEA
+        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R',)
+        if 'hP' in mode: 
+            out_vars += ('S') # leave h unpromoted to connect to balance lhs
+        if 'SP' in mode: 
+            out_vars += ('h') # leave S unpromoted to connect to balance lhs
         self.add_subsystem('props', Properties(thermo=cea_data),
                                promotes_inputs=('T', 'P', 'n', 'n_moles', 'b0'),
-                               promotes_outputs=('gamma', 'Cp', 'Cv', 'rho', 'R','S', 'h'))
+                               promotes_outputs=out_vars)
 
         # Add implicit components/balances to depending on the mode and connect them to
         # the properties calculation components
-        # if mode == 'total_SP':
-        #     bal = om.BalanceComp()
-        #     bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)')
-        # elif mode == 'total_hP':
-        #     pass
-        # elif mode == 'static_MN':
-        #     pass
-        # elif mode == 'static_A':
-        #     pass
-        # elif mode == 'static_Ps':
-        #     pass
+        if mode != "total_TP": 
+            bal = self.add_subsystem('balance', om.BalanceComp(), promotes_outputs=['T'])
+
+            if 'SP' in mode:
+                bal.add_balance('T', val=273., units='degK', eq_units='cal/(g*degK)',)
+            elif 'hP' in mode: 
+                bal.add_balance('T', val=273., units='degK', eq_units='cal/g',)
+                self.promotes('balance', inputs=[('rhs:T','h')])
+                self.connect('props.h', 'balance.lhs:T')
+
+
+            # elif mode == 'total_hP':
+            #     pass
+            # elif mode == 'static_MN':
+            #     pass
+            # elif mode == 'static_A':
+            #     pass
+            # elif mode == 'static_Ps':
+            #     pass
 
         # Compute English units and promote outputs to the station name
         fl_name = self.options['fl_name']
@@ -127,22 +143,21 @@ if __name__ == "__main__":
 
     p.model = Thermo(mode='total_TP', 
                      thermo_dict={'method':'CEA', 
-                                  'elements': {'CO':1, 'CO2':1, 'O2':1}, 
-                                  'thermo_data': species_data.co2_co_o2 }
-                    )
+                                  'elements': CO2_CO_O2_MIX, 
+                                  'thermo_data': species_data.co2_co_o2 })
 
     p.setup()
     # p.final_setup()
 
 
-    p.set_val('b0', [0.02272211, 0.04544422])
+    # p.set_val('b0', [0.02272211, 0.04544422])
     p.set_val('T', 4000, units='degK')
     p.set_val('P', 1.034210, units='bar')
 
     p.run_model()
 
-    p.model.list_inputs(prom_name=True, print_arrays=True)
-    p.model.list_outputs(prom_name=True, print_arrays=True)
+    # p.model.list_inputs(prom_name=True, print_arrays=True)
+    # p.model.list_outputs(prom_name=True, print_arrays=True)
 
     n = p['thermo_TP.n']
     n_moles = p['thermo_TP.n_moles']

@@ -22,10 +22,8 @@ class SetTotalTestCase(unittest.TestCase):
         p = Problem()
         p.model = SetTotal(thermo_data=species_data.co2_co_o2, init_reacts=init_reacts, mode="T")
         p.model.set_input_defaults('b0', thermo.b0)
-        print(thermo.b0)
         p.model.set_input_defaults('T', 4000., units='degK')
         p.model.set_input_defaults('P', 1.034210, units="bar")
-        r = p.model
 
         p.set_solver_print(level=2)
         p.setup(check=False)
