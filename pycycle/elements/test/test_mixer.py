@@ -75,8 +75,8 @@ class MixerTestcase(unittest.TestCase):
         p.setup()
         p.run_model()
         tol = 2e-7
-        assert_near_equal(p['mixer.Fl_O:stat:area'], 653.26077371, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.94217006, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 653.26524074, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.94216616, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
 
     def _build_problem(self, designed_stream=1, complex=False):
@@ -114,8 +114,8 @@ class MixerTestcase(unittest.TestCase):
         p.run_model()
 
         tol = 5e-7
-        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.5210010, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.88243721, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.54161119, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8823286, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
         p = self._build_problem(designed_stream=2)

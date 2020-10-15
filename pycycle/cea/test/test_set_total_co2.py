@@ -31,8 +31,7 @@ class SetTotalTestCase(unittest.TestCase):
 
         p.run_model()
 
-        # expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-        expected_concentrations = np.array([6.66666666e-01, 6.71646088e-10, 3.33333333e-01])
+        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
 
         n = p['n']
         n_moles = p['n_moles']
@@ -40,10 +39,10 @@ class SetTotalTestCase(unittest.TestCase):
 
         assert_near_equal(concentrations, expected_concentrations, 1e-4)
 
-        expected_n_moles = 0.03408316
+        expected_n_moles = 0.03293137
 
         assert_near_equal(n_moles, expected_n_moles, 1e-4)
-        assert_near_equal(p['gamma'], 1.27065711, 1e-4)
+        assert_near_equal(p['gamma'], 1.19054697, 1e-4)
 
         # 1500K
         p['T'] = 1500  # degK
@@ -55,9 +54,9 @@ class SetTotalTestCase(unittest.TestCase):
         n_moles = p['n_moles']
         concentrations = n / n_moles
 
-        expected_n_moles = 0.02272211
+        expected_n_moles = 0.0227262
         assert_near_equal(n_moles, expected_n_moles, 1e-4)
-        assert_near_equal(p['gamma'], 1.166093, 1e-4)
+        assert_near_equal(p['gamma'], 1.16379233, 1e-4)
 
     def test_set_total_hp(self):
 
