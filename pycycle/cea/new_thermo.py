@@ -6,6 +6,8 @@ from pycycle.cea import chem_eq
 from pycycle.cea.props_rhs import PropsRHS
 from pycycle.cea.props_calcs import PropsCalcs
 from pycycle.cea.static_ps_calc import PsCalc
+from pycycle.cea.static_ps_resid import PsResid
+
 
 
 
@@ -108,7 +110,7 @@ class Thermo(om.Group):
             in_vars += ('P', )
             # leave S unpromoted to connect to balance lhs
             out_vars += ('h',)
-        if 'static_Ps' in mode: 
+        if 'static' in mode:  
             in_vars += (('P', 'Ps'), ) # promote the P as the static Ps
             out_vars += ('h', )
 
@@ -131,20 +133,26 @@ class Thermo(om.Group):
                 self.promotes('balance', inputs=[('rhs:T','h')])
                 self.connect('props.h', 'balance.lhs:T')
 
+            ##############################################
             #extra stuff for statics beyond the S balance
+            ##############################################
             if 'Ps' in mode: 
                 self.add_subsystem('ps_calc', PsCalc(),
                                    promotes_inputs=['gamma', 'n_moles', 'ht', 'W', 'rho',
                                                     ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['MN', 'V', 'Vsonic', 'area']
                                    )
+            elif 'A' in mode: 
+                self.add_subsystem('ps_resid', PsResid(mode='area'),
+                                   promotes_inputs=['ht', 'n_moles', 'gamma', 'W',
+                                                    'rho', 'area', 'guess:*', ('Ts', 'T'), ('hs', 'h')],
+                                   promotes_outputs=['V', 'Vsonic', 'MN', 'Ps']) 
 
-            # elif mode == 'total_hP':
-            #     pass
-            # elif mode == 'static_MN':
-            #     pass
-            # elif mode == 'static_A':
-            #     pass
+            elif 'MN' in mode: 
+                self.add_subsystem('ps_resid', PsResid(mode='MN'),
+                                   promotes_inputs=['ht', 'n_moles', 'gamma', 'W',
+                                                    'rho', 'MN', 'guess:*', ('Ts', 'T'), ('hs', 'h')],
+                                   promotes_outputs=['V', 'Vsonic', 'area', 'Ps']) 
 
         # TODO: Move the newton stuff into a convergence sub-group that doesn't include this 
         # not a big deal right now though
@@ -174,6 +182,9 @@ class Thermo(om.Group):
             self.set_input_defaults('W', val=1., units='kg/s')
             self.set_input_defaults('Ps', 1, units='bar')
 
+            if 'A' in mode: 
+                self.set_input_defaults('area', 1., units='m**2')
+
         else: 
             self.set_input_defaults('P', 1, units='bar')
 
@@ -182,25 +193,27 @@ class Thermo(om.Group):
         else: 
             if 'hP' in mode: 
                 self.set_input_defaults('h', 1., units='cal/g')
-            if 'SP' in mode: 
+            if 'SP' in mode or 'static' in mode: 
                 self.set_input_defaults('S', 1., units='cal/(g*degK)')
 
-            newton = self.nonlinear_solver = om.NewtonSolver()
-            newton.options['maxiter'] = 100
-            newton.options['atol'] = 1e-10
-            newton.options['rtol'] = 1e-10
-            newton.options['stall_limit'] = 4
-            newton.options['stall_tol'] = 1e-10
-            newton.options['solve_subsystems'] = False
-            newton.options['iprint'] = 2
 
-            self.options['assembled_jac_type'] = 'dense'
-            self.linear_solver = om.DirectSolver()
+        newton = self.nonlinear_solver = om.NewtonSolver()
+        newton.options['maxiter'] = 100
+        newton.options['atol'] = 1e-10
+        newton.options['rtol'] = 1e-10
+        newton.options['stall_limit'] = 4
+        newton.options['stall_tol'] = 1e-10
+        newton.options['solve_subsystems'] = True
 
-            # ln_bt = newton.linesearch = om.BoundsEnforceLS()
-            ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
-            ln_bt.options['maxiter'] = 2
-            ln_bt.options['iprint'] = -1
+        newton.options['iprint'] = 2
+
+        self.options['assembled_jac_type'] = 'dense'
+        self.linear_solver = om.DirectSolver()
+
+        # ln_bt = newton.linesearch = om.BoundsEnforceLS()
+        ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
+        ln_bt.options['maxiter'] = 2
+        ln_bt.options['iprint'] = -1
 
 
 

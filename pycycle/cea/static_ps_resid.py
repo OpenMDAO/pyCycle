@@ -86,6 +86,7 @@ class PsResid(om.ImplicitComponent):
                     self._ps_guess_cache = ps_guess
 
         else:
+
             def equations(params):
                 ps, MN = params
                 f1 = ps - inputs['guess:Pt'] * (1 + (gamt-1)/2 * M_guess**2)**(-gamt/(gamt-1))
@@ -98,8 +99,6 @@ class PsResid(om.ImplicitComponent):
 
             if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
                 outputs['Ps'] = ps_guess
-                if ('mixer.Fl_I1_calc' in self.pathname):
-                    outputs['Ps'] = 3.
                 self._ps_guess_cache = ps_guess
 
     def _compute_outputs_MN(self, i):

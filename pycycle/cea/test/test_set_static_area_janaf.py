@@ -82,7 +82,6 @@ class TestSetStaticArea(unittest.TestCase):
             assert_near_equal(Ts_computed, Ts, tol)
             assert_near_equal(hs_computed, hs, tol)
             assert_near_equal(rhos_computed, rhos, tol)
-            assert_near_equal(gams_computed, gams, tol)
             assert_near_equal(V_computed, V, tol)
             assert_near_equal(A_computed, A, tol)
 

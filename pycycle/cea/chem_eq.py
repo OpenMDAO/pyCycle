@@ -40,7 +40,7 @@ class ChemEq(om.ImplicitComponent):
         newton.options['rtol'] = 1e-10
         newton.options['stall_limit'] = 4
         newton.options['stall_tol'] = 1e-10
-        newton.options['solve_subsystems'] = False
+        newton.options['solve_subsystems'] = True
         newton.options['reraise_child_analysiserror'] = False
 
         self.options['assembled_jac_type'] = 'dense'
@@ -90,14 +90,6 @@ class ChemEq(om.ImplicitComponent):
         # State vars
         self.n_init = np.ones(num_prod) / num_prod / 10  # initial guess for n
 
-        # for a known solution, these are the orders of magnitude of the variables.
-        # We'll try setting scaling to +/1 1 order around thee values
-
-        mag = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                        1.15755853e-08, 2.95692989e-09, 1.00000000e-10, 2.69578794e-02,
-                        1.00000000e-10, 7.23198523e-03])
-
-        #mag = np.ones(num_prod)
         self.add_output('n', shape=num_prod,
                         val=self.n_init,
                         desc="mole fractions of the mixture",
