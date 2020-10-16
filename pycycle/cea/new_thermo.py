@@ -94,6 +94,8 @@ class Thermo(om.Group):
 
         # TODO: merge this into thermo_TPn from CEA
         out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R',)
+        if 'TP' in mode: 
+            out_vars += ('S', 'h')
         if 'hP' in mode: 
             out_vars += ('S',) # leave h unpromoted to connect to balance lhs
         if 'SP' in mode: 
@@ -131,7 +133,7 @@ class Thermo(om.Group):
         # Compute English units and promote outputs to the station name
         fl_name = self.options['fl_name']
         self.add_subsystem('flow', EngUnitProps(thermo=cea_data, fl_name=fl_name),
-                           promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R', 'b0'),
+                           promotes_inputs=('T', 'P', 'S', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R', 'b0'),
                            promotes_outputs=('{}:*'.format(fl_name),))
         # Setup solver to converge thermo point
 

@@ -55,7 +55,7 @@ class SetTotalTestCase(unittest.TestCase):
         assert_near_equal(p['gamma'], 1.16379233, 1e-4)
 
 
-    def test_set_total_hp(self):
+    def test_set_total_Sp(self):
 
         p = om.Problem()
         p.model = Thermo(mode='total_hP', 
@@ -152,6 +152,65 @@ class SetTotalTestCase(unittest.TestCase):
         expected_n_moles = 0.022726185333
         assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16396871, 1e-4)
+
+
+class TestSetTotalJanaf(unittest.TestCase): 
+
+    def test_set_total_equivalence(self): 
+
+        p_TP = om.Problem()
+        p_TP.model = Thermo(mode='total_TP', 
+                            thermo_dict={'method':'CEA', 
+                                         'elements': constants.AIR_MIX, 
+                                         'thermo_data': species_data.janaf }) 
+        p_TP.setup()
+
+        p_hP = om.Problem()
+        p_hP.model = Thermo(mode='total_hP', 
+                            thermo_dict={'method':'CEA', 
+                                         'elements': constants.AIR_MIX, 
+                                         'thermo_data': species_data.janaf }) 
+        p_hP.setup()
+        p_hP.final_setup()
+
+        p_SP = om.Problem()
+        p_SP.model = Thermo(mode='total_SP', 
+                            thermo_dict={'method':'CEA', 
+                                         'elements': constants.AIR_MIX, 
+                                         'thermo_data': species_data.janaf }) 
+        p_SP.setup()
+
+
+        def check(T, P): 
+
+            p_TP.set_val('T', T, units='degR')
+            p_TP.set_val('P', P, units='psi')
+
+            # print('TP check')
+            p_TP.run_model()
+            h_from_TP = p_TP.get_val('flow:h', units='cal/g')
+            S_from_TP = p_TP.get_val('flow:S', units='cal/(g*degK)')
+
+
+            p_hP.set_val('h', h_from_TP, units='cal/g')
+            p_hP.set_val('P', P, units='psi')
+
+            # print('hp check')
+            p_hP.run_model()
+
+            assert_near_equal(p_hP['flow:T'], p_TP['flow:T'], 1e-4)
+
+            p_SP.set_val('S', S_from_TP, units='cal/(g*degK)')
+            p_SP.set_val('P', P, units='psi')
+
+            # print('SP check')
+            p_SP.run_model()
+
+            assert_near_equal(p_SP['flow:T'], p_TP['flow:T'], 1e-4)
+
+        check(518., 14.7)
+        check(3000., 30.)
+        check(1500., 80.)
 
 
 if __name__ == "__main__": 
