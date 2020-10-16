@@ -5,9 +5,11 @@ from pycycle import cea
 from pycycle.cea import chem_eq
 from pycycle.cea.props_rhs import PropsRHS
 from pycycle.cea.props_calcs import PropsCalcs
+from pycycle.cea.static_ps_calc import PsCalc
 
 
-from pycycle.cea.unit_comps import EngUnitProps
+
+from pycycle.cea.unit_comps import EngUnitStaticProps, EngUnitProps
 
 
 # TODO: move into chem_eq when refactor works
@@ -73,19 +75,19 @@ class Thermo(om.Group):
 
             base_thermo = chem_eq.ChemEq(thermo=cea_data, mode='T')
 
-
-   
-            
-
-        elif method == 'Ideal':
-            # base_thermo = IdealThermo(thermo_data=xx)
-            pass
-        elif method == 'Tabular':
-            # base_thermo = TabularThermo(thermo_data=xx)
-            pass
+        # elif method == 'Ideal':
+        #     # base_thermo = IdealThermo(thermo_data=xx)
+        #     pass
+        # elif method == 'Tabular':
+        #     # base_thermo = TabularThermo(thermo_data=xx)
+        #     pass
 
 
-        in_vars = ('T', 'b0', 'P')
+        in_vars = ('T', 'b0')
+        if 'static' in mode: 
+            in_vars += (('P', 'Ps'),)
+        else: 
+            in_vars += ('P', )
         out_vars = ('n', 'n_moles')
 
         self.add_subsystem('thermo_TP', base_thermo, 
@@ -93,15 +95,25 @@ class Thermo(om.Group):
                            promotes_outputs=out_vars)
 
         # TODO: merge this into thermo_TPn from CEA
+        in_vars = ('T', 'n', 'n_moles', 'b0')
         out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R',)
         if 'TP' in mode: 
+            in_vars += ('P', )
             out_vars += ('S', 'h')
         if 'hP' in mode: 
-            out_vars += ('S',) # leave h unpromoted to connect to balance lhs
+            # leave h unpromoted to connect to balance lhs
+            in_vars += ('P', )
+            out_vars += ('S',) 
         if 'SP' in mode: 
-            out_vars += ('h',) # leave S unpromoted to connect to balance lhs
+            in_vars += ('P', )
+            # leave S unpromoted to connect to balance lhs
+            out_vars += ('h',)
+        if 'static_Ps' in mode: 
+            in_vars += (('P', 'Ps'), ) # promote the P as the static Ps
+            out_vars += ('h', )
+
         self.add_subsystem('props', Properties(thermo=cea_data),
-                               promotes_inputs=('T', 'P', 'n', 'n_moles', 'b0'),
+                               promotes_inputs=in_vars,
                                promotes_outputs=out_vars)
 
         # Add implicit components/balances to depending on the mode and connect them to
@@ -109,7 +121,8 @@ class Thermo(om.Group):
         if mode != "total_TP": 
             bal = self.add_subsystem('balance', om.BalanceComp(), promotes_outputs=['T'])
 
-            if 'SP' in mode:
+            # all static calcs seek to match a given entropy, similar to a total_PS
+            if ('SP' in mode) or ('static' in mode):
                 bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=100.)
                 self.promotes('balance', inputs=[('rhs:T','S')])
                 self.connect('props.S', 'balance.lhs:T')
@@ -118,6 +131,13 @@ class Thermo(om.Group):
                 self.promotes('balance', inputs=[('rhs:T','h')])
                 self.connect('props.h', 'balance.lhs:T')
 
+            #extra stuff for statics beyond the S balance
+            if 'Ps' in mode: 
+                self.add_subsystem('ps_calc', PsCalc(),
+                                   promotes_inputs=['gamma', 'n_moles', 'ht', 'W', 'rho',
+                                                    ('Ts', 'T'), ('hs', 'h')],
+                                   promotes_outputs=['MN', 'V', 'Vsonic', 'area']
+                                   )
 
             # elif mode == 'total_hP':
             #     pass
@@ -125,19 +145,37 @@ class Thermo(om.Group):
             #     pass
             # elif mode == 'static_A':
             #     pass
-            # elif mode == 'static_Ps':
-            #     pass
 
         # TODO: Move the newton stuff into a convergence sub-group that doesn't include this 
         # not a big deal right now though
         # Compute English units and promote outputs to the station name
-        fl_name = self.options['fl_name']
-        self.add_subsystem('flow', EngUnitProps(thermo=cea_data, fl_name=fl_name),
-                           promotes_inputs=('T', 'P', 'S', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R', 'b0'),
-                           promotes_outputs=('{}:*'.format(fl_name),))
-        # Setup solver to converge thermo point
 
-        self.set_input_defaults('P', 1, units='bar')
+
+        in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'b0', 'R')
+        if 'static' in mode: 
+        # need to redefine this so that P gets promoted as P. 
+            in_vars = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R')
+
+        fl_name = self.options['fl_name']
+        # TODO: remove need for thermo specific data in the flow components
+        self.add_subsystem('flow', EngUnitProps(thermo=cea_data, fl_name=fl_name),
+                           promotes_inputs=in_vars,
+                           promotes_outputs=(f'{fl_name}:*',))
+
+
+        if 'static' in mode:
+            in_vars = ('area', 'W', 'V', 'Vsonic', 'MN')
+            # TODO: remove need for thermo specific data in the flow components
+            eng_units_statics = EngUnitStaticProps(thermo=cea_data, fl_name=fl_name)
+            self.add_subsystem('flow_static', eng_units_statics,
+                               promotes_inputs=in_vars,
+                               promotes_outputs=(f'{fl_name}:*',))
+
+            self.set_input_defaults('W', val=1., units='kg/s')
+            self.set_input_defaults('Ps', 1, units='bar')
+
+        else: 
+            self.set_input_defaults('P', 1, units='bar')
 
         if 'TP' in mode: 
             self.set_input_defaults('T', 273, units='degK')
@@ -154,6 +192,7 @@ class Thermo(om.Group):
             newton.options['stall_limit'] = 4
             newton.options['stall_tol'] = 1e-10
             newton.options['solve_subsystems'] = False
+            newton.options['iprint'] = 2
 
             self.options['assembled_jac_type'] = 'dense'
             self.linear_solver = om.DirectSolver()

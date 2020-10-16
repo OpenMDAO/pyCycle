@@ -113,8 +113,8 @@ class SetTotal(om.Group):
 
                 self.connect('Ps', 'P') # create the cyclic data connection for the static solve
             else:
-                self.add_subsystem('ps_calc', PsCalc(thermo=thermo),
-                                   promotes_inputs=['P', 'gamma', 'n_moles', 'ht', 'W', 'rho',
+                self.add_subsystem('ps_calc', PsCalc(),
+                                   promotes_inputs=['gamma', 'n_moles', 'ht', 'W', 'rho',
                                                     ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['MN', 'V', 'Vsonic', 'area']
                                    )

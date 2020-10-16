@@ -29,9 +29,8 @@ class TestSetStaticPs(unittest.TestCase):
 
         p = Problem()
 
-        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf), promotes=['b0'])
-        p.model.add_subsystem('set_static_Ps', SetStatic(mode='Ps', thermo_data=janaf), promotes=['b0'])
-        p.model.set_input_defaults('b0', thermo.b0)
+        p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
+        p.model.add_subsystem('set_static_Ps', SetStatic(mode='Ps', thermo_data=janaf))
         p.model.set_input_defaults('set_total_TP.T', val=518., units='degR')
         p.model.set_input_defaults('set_total_TP.P', val=14.7, units='psi')
         p.model.set_input_defaults('set_static_Ps.Ps', val=13.0, units='psi')
