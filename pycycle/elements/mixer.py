@@ -3,7 +3,7 @@ import openmdao.api as om
 
 from pycycle.cea.set_static import SetStatic
 from pycycle.cea.set_total import SetTotal
-from pycycle.cea.species_data import Thermo, janaf
+from pycycle.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 from pycycle.flow_in import FlowIn
 
@@ -27,7 +27,7 @@ class MixFlow(om.ExplicitComponent):
 
 
         self.flow1_elements = self.options['Fl_I1_elements']
-        flow1_thermo = Thermo(thermo_data, init_reacts=self.flow1_elements)
+        flow1_thermo = Properties(thermo_data, init_reacts=self.flow1_elements)
         n_flow1_prods = len(flow1_thermo.products)
         self.flow1_wt_mole = flow1_thermo.wt_mole
         self.add_input('Fl_I1:tot:h', val=0.0, units='J/kg', desc='total enthalpy for flow 1')
@@ -38,7 +38,7 @@ class MixFlow(om.ExplicitComponent):
         self.add_input('Fl_I1:stat:area', val=0.0, units='m**2', desc='area for flow 1')
 
         self.flow2_elements = self.options['Fl_I2_elements']
-        flow2_thermo = Thermo(thermo_data, init_reacts=self.flow2_elements)
+        flow2_thermo = Properties(thermo_data, init_reacts=self.flow2_elements)
         n_flow2_prods = len(flow2_thermo.products)
         self.flow2_wt_mole = flow2_thermo.wt_mole
         self.aij = flow1_thermo.aij
@@ -284,13 +284,13 @@ class Mixer(om.Group):
         thermo_data = self.options['thermo_data']
 
         flow1_elements = self.options['Fl_I1_elements']
-        flow1_thermo = Thermo(thermo_data, init_reacts=flow1_elements)
+        flow1_thermo = Properties(thermo_data, init_reacts=flow1_elements)
         n_flow1_prods = flow1_thermo.num_prod
         in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods, num_elements=flow1_thermo.num_element)
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
         flow2_elements = self.options['Fl_I2_elements']
-        flow2_thermo = Thermo(thermo_data, init_reacts=flow2_elements)
+        flow2_thermo = Properties(thermo_data, init_reacts=flow2_elements)
         n_flow2_prods = flow2_thermo.num_prod
         in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods, num_elements=flow2_thermo.num_element)
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
@@ -423,7 +423,7 @@ if __name__ == "__main__":
     prob = om.Problem()
     prob.model = Mixer(design=True, Fl_I1_elements=constants.AIR_MIX, Fl_I2_elements=constants.AIR_MIX)
 
-    thermo = Thermo(janaf, constants.AIR_MIX)
+    thermo = Properties(janaf, constants.AIR_MIX)
 
     prob.model.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
     prob.model.set_input_defaults('Fl_I1:tot:h', val=1.0,  units='Btu/lbm')

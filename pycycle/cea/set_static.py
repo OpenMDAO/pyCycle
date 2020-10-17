@@ -25,7 +25,7 @@ class SetStatic(om.Group):
         init_reacts = self.options['init_reacts']
         fl_name = self.options['fl_name']
 
-        thermo = species_data.Thermo(thermo_data, init_reacts)
+        thermo = species_data.Properties(thermo_data, init_reacts)
 
         statics = SetTotal(mode='S',
                            fl_name=fl_name,
@@ -73,7 +73,7 @@ class SetStatic(om.Group):
 if __name__ == "__main__":
     from pycycle import constants
 
-    thermo=species_data.Thermo(species_data.janaf, constants.AIR_MIX)
+    thermo=species_data.Properties(species_data.janaf, constants.AIR_MIX)
 
     # p = om.Problem()
     # p.model = SetStatic(mode='area', thermo_data=species_data.janaf)

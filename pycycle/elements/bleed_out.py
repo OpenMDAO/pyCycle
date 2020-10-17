@@ -106,7 +106,7 @@ class BleedOut(om.Group):
         design = self.options['design']
         bleeds = self.options['bleed_names']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
         num_prod = gas_thermo.num_prod
         num_element = gas_thermo.num_element

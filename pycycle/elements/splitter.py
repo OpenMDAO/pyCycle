@@ -100,7 +100,7 @@ class Splitter(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_reacts=elements)
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 

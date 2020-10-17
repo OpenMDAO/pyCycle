@@ -7,10 +7,10 @@ from pycycle.cea.props_calcs import PropsCalcs
 from pycycle.cea.static_ps_resid import PsResid
 from pycycle.cea.static_ps_calc import PsCalc
 from pycycle.cea.unit_comps import EngUnitProps
-from pycycle.cea.species_data import Thermo
+from pycycle.cea.species_data import Properties
 
 
-class Properties(om.Group):
+class CalcAllProps(om.Group):
 
     def initialize(self):
         self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
@@ -66,7 +66,7 @@ class SetTotal(om.Group):
         mode = self.options['mode']
         for_statics = self.options['for_statics']
 
-        thermo = Thermo(thermo_data, init_reacts)
+        thermo = Properties(thermo_data, init_reacts)
 
         # chem_eq calculations
         in_vars = ('b0', 'P')
@@ -93,7 +93,7 @@ class SetTotal(om.Group):
         else:
             out_vars += ('S', 'h')
 
-        self.add_subsystem('props', Properties(thermo=thermo),
+        self.add_subsystem('props', CalcAllProps(thermo=thermo),
                            promotes_inputs=('T', 'P', 'n', 'n_moles', 'b0'),
                            promotes_outputs=out_vars)
 

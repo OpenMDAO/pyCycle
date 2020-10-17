@@ -430,7 +430,7 @@ class SetTotalTP(om.Group):
 
     def setup(self):
 
-        self.thermo = species_data.Thermo(self.options['spec'], self.options['elements'])
+        self.thermo = species_data.Properties(self.options['spec'], self.options['elements'])
         
         # these have to be part of the API for the unit_comps to use
         self.b0 = self.thermo.b0
@@ -448,8 +448,8 @@ if __name__ == "__main__":
 
     from pycycle.cea import species_data
 
-    # thermo = species_data.Thermo(species_data.co2_co_o2)
-    thermo = species_data.Thermo(species_data.janaf)
+    # thermo = species_data.Properties(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.janaf)
 
     prob = om.Problem()
     prob.model = om.Group()

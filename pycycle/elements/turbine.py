@@ -6,8 +6,7 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_MIX, AIR_FUEL_MIX
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -186,13 +185,13 @@ class Bleeds(om.ExplicitComponent):
         self.mixed_elements = self.main_flow_elements.copy()
         self.mixed_elements.update(self.options['bld_flow_elements'])
 
-        main_flow_thermo = species_data.Thermo(
+        main_flow_thermo = species_data.Properties(
             thermo_data, init_reacts=self.mixed_elements)
         self.main_flow_prods = main_flow_thermo.products
         self.main_flow_wt_mole = main_flow_thermo.wt_mole
         self.n_main_flow_prods = len(self.main_flow_prods)
 
-        bld_flow_thermo = species_data.Thermo(
+        bld_flow_thermo = species_data.Properties(
             thermo_data, init_reacts=self.options['bld_flow_elements'])
         self.bld_flow_prods = bld_flow_thermo.products
         self.bld_flow_wt_mole = bld_flow_thermo.wt_mole
@@ -588,12 +587,12 @@ class Turbine(om.Group):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
         self.num_prod = len(self.gas_prods)
         num_element = gas_thermo.num_element
 
-        bld_thermo = species_data.Thermo(
+        bld_thermo = species_data.Properties(
             thermo_data, init_reacts=bleed_elements)
         self.bld_prods = bld_thermo.products
         self.num_bld_prod = len(self.bld_prods)

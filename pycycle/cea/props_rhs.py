@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     from openmdao.api import Problem, Group, IndepVarComp, LinearSystemComp
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.co2_co_o2)
 
     p = Problem()
     p.model = Group()

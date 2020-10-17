@@ -34,7 +34,7 @@ class SetWAR(ExplicitComponent):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        thermo = species_data.Thermo(thermo_data, elements) #call Thermo function to get the number of dry products in the output
+        thermo = species_data.Properties(thermo_data, elements) #call Thermo function to get the number of dry products in the output
         shape = thermo.num_element
 
         self.add_input('WAR', val=0.0001, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
@@ -75,10 +75,10 @@ class SetWAR(ExplicitComponent):
         n_water = WAR*self.dry_wt/((1 - WAR)*self.water_wt) #volumentric based ratio of water scaled to desired WAR
 
         self.init_react_amounts[location] = n_water #add in the amount of water scaled to the correct WAR
-        init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Thermo())
+        init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Properties())
         init_reacts['H2O'] = n_water #update with correct water amount
 
-        thermo = species_data.Thermo(thermo_data, init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
+        thermo = species_data.Properties(thermo_data, init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
         self.aij = thermo.aij
         self.products = thermo.products #get list of all products
         self.num_prod = thermo.num_prod
@@ -131,7 +131,7 @@ class FlowStart(Group):
 
                 raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.')
 
-        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)
 

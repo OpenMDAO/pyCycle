@@ -6,7 +6,7 @@ import openmdao.api as om
 
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
-from pycycle.cea.species_data import Thermo, janaf
+from pycycle.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 from pycycle.elements.duct import PressureLoss
 from pycycle.flow_in import FlowIn
@@ -44,12 +44,12 @@ class MixFuel(om.ExplicitComponent):
         self.mixed_elements = inflow_elements.copy()
         self.mixed_elements.update(thermo_data.reactants[fuel_type]) #adds the fuel elements to the mix outflow
 
-        inflow_thermo = Thermo(inflow_thermo_data, init_reacts=inflow_elements)
+        inflow_thermo = Properties(inflow_thermo_data, init_reacts=inflow_elements)
         self.inflow_prods = inflow_thermo.products
         self.inflow_num_prods = len(self.inflow_prods)
         self.inflow_wt_mole = inflow_thermo.wt_mole
 
-        air_fuel_thermo = Thermo(thermo_data, init_reacts=self.mixed_elements)
+        air_fuel_thermo = Properties(thermo_data, init_reacts=self.mixed_elements)
         self.air_fuel_prods = air_fuel_thermo.products
         self.air_fuel_wt_mole = air_fuel_thermo.wt_mole
         self.aij = air_fuel_thermo.aij
@@ -237,10 +237,10 @@ class Combustor(om.Group):
         statics = self.options['statics']
         fuel_type = self.options['fuel_type']
 
-        air_fuel_thermo = Thermo(thermo_data, init_reacts=air_fuel_elements)
+        air_fuel_thermo = Properties(thermo_data, init_reacts=air_fuel_elements)
         self.air_fuel_prods = air_fuel_thermo.products
 
-        air_thermo = Thermo(inflow_thermo_data, init_reacts=inflow_elements)
+        air_thermo = Properties(inflow_thermo_data, init_reacts=inflow_elements)
         self.air_prods = air_thermo.products
 
         self.num_air_fuel_prod = len(self.air_fuel_prods)

@@ -12,7 +12,7 @@ class _TestJanafThermo(unittest.TestCase):
 
     def test_std_day(self):
 
-        thermo = species_data.Thermo(species_data.janaf, constants.AIR_MIX)
+        thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
 
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
@@ -27,7 +27,7 @@ class _TestJanafThermo(unittest.TestCase):
 
     def test_mid_temp(self):
 
-        thermo = species_data.Thermo(species_data.janaf, constants.AIR_MIX)
+        thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
 
         top = Problem()
         top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
@@ -47,7 +47,7 @@ class TestSetTotalEquivilence(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = species_data.Thermo(species_data.janaf, constants.AIR_MIX)
+        thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
         
         self.tp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='T'))
         self.hp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='h'))

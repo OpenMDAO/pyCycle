@@ -433,7 +433,7 @@ class Compressor(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
 
-        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_reacts=elements)
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 
@@ -586,7 +586,7 @@ class Compressor(om.Group):
 
 if __name__ == "__main__":
 
-    thermo = species_data.Thermo(species_data.janaf)
+    thermo = species_data.Properties(species_data.janaf)
 
     p = om.Problem()
     p.model = Compressor(design=True)

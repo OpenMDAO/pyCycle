@@ -9,7 +9,7 @@ import numpy as np
 from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf, Thermo
+from pycycle.cea.species_data import janaf, Properties
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
 from pycycle import constants
@@ -27,7 +27,7 @@ class TestSetStaticArea(unittest.TestCase):
 
     def test_case_Area(self):
 
-        thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
+        thermo = Properties(janaf, init_reacts=constants.AIR_MIX)
 
         p = Problem()
 
