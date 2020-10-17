@@ -68,7 +68,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.setup()
         # TODO: Investigate this weirdness.... this case won't work if you thermo_TP fully solve itself
-        p.model.thermo_TP.nonlinear_solver.options['maxiter'] = 1
+        p.model.base_thermo.chem_eq.nonlinear_solver.options['maxiter'] = 1
         p.set_solver_print(level=-1)
 
         p.set_val('h', 340, units='cal/g')
@@ -118,7 +118,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.setup(check=False)
         p.model.nonlinear_solver.options['solve_subsystems'] = True
-        p.model.thermo_TP.nonlinear_solver.options['maxiter'] = 1
+        p.model.base_thermo.chem_eq.nonlinear_solver.options['maxiter'] = 1
         p.set_solver_print(level=-1)
         p.final_setup()
 

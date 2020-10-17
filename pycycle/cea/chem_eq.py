@@ -4,9 +4,36 @@ import openmdao.api as om
 
 from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION
 
-# P_REF = 1.01325 # 1 atm
-# R_UNIVERSAL_ENG = 1.9872035 # (Btu lbm)/(mol*degR)
-# MIN_VALID_CONCENTRATION = 1e-10
+from pycycle.cea.props_rhs import PropsRHS
+from pycycle.cea.props_calcs import PropsCalcs
+
+
+
+class Properties(om.Group):
+
+    def initialize(self):
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
+
+    def setup(self):
+        thermo = self.options['thermo']
+
+        num_element = thermo.num_element
+
+        self.add_subsystem('TP2ls', PropsRHS(thermo), promotes_inputs=('T', 'n', 'n_moles', 'b0'))
+
+        ne1 = num_element+1
+        self.add_subsystem('ls2t', om.LinearSystemComp(size=ne1))
+        self.add_subsystem('ls2p', om.LinearSystemComp(size=ne1))
+
+        self.add_subsystem('tp2props', PropsCalcs(thermo=thermo),
+                           promotes_inputs=['n', 'n_moles', 'T', 'P'],
+                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R']
+                           )
+        self.connect('TP2ls.lhs_TP', ['ls2t.A', 'ls2p.A'])
+        self.connect('TP2ls.rhs_T', 'ls2t.b')
+        self.connect('TP2ls.rhs_P', 'ls2p.b')
+        self.connect('ls2t.x', 'tp2props.result_T')
+        self.connect('ls2p.x', 'tp2props.result_P')
 
 
 def _resid_weighting(n):
@@ -391,6 +418,21 @@ class ChemEq(om.ImplicitComponent):
                 if n[j] <= 1.0e-10:
                     dRdy[j, :] = 0.0
                     dRdy[j, j] = -1.0
+
+
+class SetTotalTP(om.Group): 
+
+    def initialize(self): 
+
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
+
+    def setup(self):
+
+        thermo_data = self.options['thermo']
+        self.add_subsystem('chem_eq', ChemEq(thermo=thermo_data, mode='T'), promotes=['*'])
+
+        self.add_subsystem('props', Properties(thermo=thermo_data), promotes=['*'])
+
 
 
 if __name__ == "__main__":

@@ -3,43 +3,11 @@ import openmdao.api as om
 from pycycle.constants import AIR_MIX
 from pycycle import cea
 from pycycle.cea import chem_eq
-from pycycle.cea.props_rhs import PropsRHS
-from pycycle.cea.props_calcs import PropsCalcs
 from pycycle.cea.static_ps_calc import PsCalc
 from pycycle.cea.static_ps_resid import PsResid
 
-
-
-
 from pycycle.cea.unit_comps import EngUnitStaticProps, EngUnitProps
 
-
-# TODO: move into chem_eq when refactor works
-class Properties(om.Group):
-
-    def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
-
-    def setup(self):
-        thermo = self.options['thermo']
-
-        num_element = thermo.num_element
-
-        self.add_subsystem('TP2ls', PropsRHS(thermo), promotes_inputs=('T', 'n', 'n_moles', 'b0'))
-
-        ne1 = num_element+1
-        self.add_subsystem('ls2t', om.LinearSystemComp(size=ne1))
-        self.add_subsystem('ls2p', om.LinearSystemComp(size=ne1))
-
-        self.add_subsystem('tp2props', PropsCalcs(thermo=thermo),
-                           promotes_inputs=['n', 'n_moles', 'T', 'P'],
-                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R']
-                           )
-        self.connect('TP2ls.lhs_TP', ['ls2t.A', 'ls2p.A'])
-        self.connect('TP2ls.rhs_T', 'ls2t.b')
-        self.connect('TP2ls.rhs_P', 'ls2p.b')
-        self.connect('ls2t.x', 'tp2props.result_T')
-        self.connect('ls2p.x', 'tp2props.result_P')
 
 
 class Thermo(om.Group):
@@ -75,7 +43,7 @@ class Thermo(om.Group):
             cea_data = cea.species_data.Thermo(therm_dict['thermo_data'], 
                                                 therm_dict['elements'])
 
-            base_thermo = chem_eq.ChemEq(thermo=cea_data, mode='T')
+            base_thermo = chem_eq.SetTotalTP(thermo=cea_data)
 
         # elif method == 'Ideal':
         #     # base_thermo = IdealThermo(thermo_data=xx)
@@ -84,21 +52,10 @@ class Thermo(om.Group):
         #     # base_thermo = TabularThermo(thermo_data=xx)
         #     pass
 
-
         in_vars = ('T', 'b0')
-        if 'static' in mode: 
-            in_vars += (('P', 'Ps'),)
-        else: 
-            in_vars += ('P', )
-        out_vars = ('n', 'n_moles')
+        # TODO: remove 'n', 'n_moles' variable from flow station
+        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n', 'n_moles')
 
-        self.add_subsystem('thermo_TP', base_thermo, 
-                           promotes_inputs=in_vars, 
-                           promotes_outputs=out_vars)
-
-        # TODO: merge this into thermo_TPn from CEA
-        in_vars = ('T', 'n', 'n_moles', 'b0')
-        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R',)
         if 'TP' in mode: 
             in_vars += ('P', )
             out_vars += ('S', 'h')
@@ -110,13 +67,24 @@ class Thermo(om.Group):
             in_vars += ('P', )
             # leave S unpromoted to connect to balance lhs
             out_vars += ('h',)
+
+        if 'static' in mode: 
+            in_vars += (('P', 'Ps'),)
+            out_vars += ('h', )
+        
+        self.add_subsystem('base_thermo', base_thermo, 
+                           promotes_inputs=in_vars, 
+                           promotes_outputs=out_vars)
+
+        # TODO: merge this into base_thermon from CEA
+        
+       
+        
         if 'static' in mode:  
             in_vars += (('P', 'Ps'), ) # promote the P as the static Ps
-            out_vars += ('h', )
+           
 
-        self.add_subsystem('props', Properties(thermo=cea_data),
-                               promotes_inputs=in_vars,
-                               promotes_outputs=out_vars)
+       
 
         # Add implicit components/balances to depending on the mode and connect them to
         # the properties calculation components
@@ -127,11 +95,11 @@ class Thermo(om.Group):
             if ('SP' in mode) or ('static' in mode):
                 bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=100.)
                 self.promotes('balance', inputs=[('rhs:T','S')])
-                self.connect('props.S', 'balance.lhs:T')
+                self.connect('base_thermo.S', 'balance.lhs:T')
             elif 'hP' in mode: 
                 bal.add_balance('T', val=500., units='degK', eq_units='cal/g', lower=100.)
                 self.promotes('balance', inputs=[('rhs:T','h')])
-                self.connect('props.h', 'balance.lhs:T')
+                self.connect('base_thermo.h', 'balance.lhs:T')
 
             ##############################################
             #extra stuff for statics beyond the S balance
@@ -241,8 +209,8 @@ if __name__ == "__main__":
     # p.model.list_inputs(prom_name=True, print_arrays=True)
     # p.model.list_outputs(prom_name=True, print_arrays=True)
 
-    n = p['thermo_TP.n']
-    n_moles = p['thermo_TP.n_moles']
+    n = p['base_thermo.n']
+    n_moles = p['base_thermo.n_moles']
 
     print(n/n_moles) # [0.62003271, 0.06995092, 0.31001638]
     print(n_moles) # 0.03293137
