@@ -107,6 +107,7 @@ class SetWAR(ExplicitComponent):
 
         J['b0', 'WAR'] = np.matmul(self.aij, jac)
 
+
 class FlowStart(Group):
 
     def initialize(self):
@@ -144,24 +145,19 @@ class FlowStart(Group):
         
 
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
-                        thermo_dict={'method':'CEA', 
-                                     'elements':elements, 
-                                     'thermo_spec':thermo_data} )
+                        method='CEA', 
+                        thermo_kwargs={'elements':elements, 
+                                       'spec':thermo_data} )
 
         params = ('T','P', 'b0')
 
         self.add_subsystem('totals', set_TP, promotes_inputs=params,
                            promotes_outputs=('Fl_O:tot:*',))
 
-
-        set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
-                                init_reacts=elements, fl_name="Fl_O:stat")
-
         set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                             thermo_dict={'method':'CEA', 
-                                          'elements':elements, 
-                                          'thermo_spec':thermo_data} )
-
+                             method='CEA', 
+                             thermo_kwargs={'elements':elements, 
+                                            'spec':thermo_data} )
 
         self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'b0'),
                            promotes_outputs=('Fl_O:stat:*', ))
