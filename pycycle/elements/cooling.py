@@ -1,7 +1,7 @@
 import openmdao.api as om
 
 from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
 from pycycle.elements.turbine import Bleeds
 from pycycle.flow_in import FlowIn
@@ -208,9 +208,11 @@ class Row(om.Group):
                           promotes_inputs=['Pt_in', 'Pt_out', ('W_in','W_primary'), ('n_in', 'n_primary'), ('cool:n', 'n_cool')],
                           promotes_outputs=['W_out'])
 
-        self.add_subsystem('mixed_flow', SetTotal(thermo_data=self.options['thermo_data'],
-                                                  mode='h', init_reacts=AIR_FUEL_MIX, for_statics=False,
-                                                  fl_name="Fl_O:tot"),
+        mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':AIR_FUEL_MIX, 
+                                           'spec':self.options['thermo_data']})
+        self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])
 
         # promoted
