@@ -3,8 +3,7 @@
 import openmdao.api as om
 
 from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX, g_c
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -114,11 +113,15 @@ class Inlet(om.Group):
                            promotes_outputs=['F_ram'])
 
         # Calculate real flow station properties
-        real_flow = SetTotal(thermo_data=thermo_data, mode="T", init_reacts=elements, fl_name="Fl_O:tot")
-
+        real_flow = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[('T', 'Fl_I:tot:T'), ('b0', 'Fl_I:tot:b0')],
                            promotes_outputs=['Fl_O:*'])
+
+
         self.connect("calcs_inlet.Pt_out", "real_flow.P")
 
         self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
@@ -126,7 +129,12 @@ class Inlet(om.Group):
         if statics:
             if design:
                 #   Calculate static properties
-                self.add_subsystem('out_stat', SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat"),
+
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[('b0', 'Fl_I:tot:b0'), ('W', 'Fl_I:stat:W'), 'MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
 
@@ -137,8 +145,10 @@ class Inlet(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements,
-                                         fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']

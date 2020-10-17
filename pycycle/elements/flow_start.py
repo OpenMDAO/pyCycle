@@ -1,10 +1,7 @@
 from openmdao.api import Group, ExplicitComponent
 
 from pycycle.cea import species_data
-
 from pycycle.cea.new_thermo import Thermo
-from pycycle.cea.set_static import SetStatic
-
 from pycycle.constants import AIR_MIX, WET_AIR_MIX
 import numpy as np
 
@@ -147,7 +144,7 @@ class FlowStart(Group):
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
                         method='CEA', 
                         thermo_kwargs={'elements':elements, 
-                                       'spec':thermo_data} )
+                                       'spec':thermo_data})
 
         params = ('T','P', 'b0')
 
