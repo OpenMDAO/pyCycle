@@ -5,8 +5,7 @@ import itertools
 import openmdao.api as om
 
 from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 from pycycle.constants import AIR_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
@@ -459,9 +458,11 @@ class Compressor(om.Group):
                            'PR', ('Pt_in', 'Fl_I:tot:P')])
 
         # Calculate ideal flow station properties
-        self.add_subsystem('ideal_flow', SetTotal(thermo_data=thermo_data,
-                                                  mode='S',
-                                                  init_reacts=elements),
+        ideal_flow = Thermo(mode='total_SP', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                           'spec':thermo_data})
+        self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=[('S', 'Fl_I:tot:S'),
                                             ('b0', 'Fl_I:tot:b0')])
         self.connect("press_rise.Pt_out", "ideal_flow.P")
@@ -472,8 +473,10 @@ class Compressor(om.Group):
         self.connect("ideal_flow.h", "enth_rise.ideal_ht")
 
         # Calculate real flow station properties
-        real_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                             init_reacts=elements, fl_name="Fl_O:tot")
+        real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[
                                ('b0', 'Fl_I:tot:b0')],
@@ -524,9 +527,10 @@ class Compressor(om.Group):
         if statics:
             if design:
                 #   Calculate static properties
-                out_stat = SetStatic(
-                    mode='MN', thermo_data=thermo_data, init_reacts=elements,
-                    fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
                                        'MN', ('b0', 'Fl_I:tot:b0')],
@@ -538,9 +542,10 @@ class Compressor(om.Group):
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
             else:  # Calculate static properties
-                out_stat = SetStatic(
-                    mode='area', thermo_data=thermo_data, init_reacts=elements,
-                    fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_area', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
                                        'area', ('b0', 'Fl_I:tot:b0')],
