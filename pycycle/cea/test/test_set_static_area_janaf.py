@@ -56,7 +56,7 @@ class TestSetStaticArea(unittest.TestCase):
             p['set_static_A.area'] = data[h_map['A']]
             p['set_static_A.W'] = data[h_map['W']]
 
-            if i is 5:  # supersonic case
+            if i == 5:  # supersonic case
                 p['set_static_A.guess:MN'] = 3.
 
             p.run_model()

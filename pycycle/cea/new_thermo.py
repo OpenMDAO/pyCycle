@@ -40,7 +40,7 @@ class Thermo(om.Group):
         # Instantiate components based on method for calculating the thermo properties.
         # All these components should compute the properties in a TP mode.
         if method == 'CEA':
-            cea_data = cea.species_data.Thermo(therm_dict['thermo_data'], 
+            cea_data = cea.species_data.Thermo(therm_dict['thermo_spec'], 
                                                 therm_dict['elements'])
 
             base_thermo = chem_eq.SetTotalTP(thermo=cea_data)
@@ -77,15 +77,9 @@ class Thermo(om.Group):
                            promotes_outputs=out_vars)
 
         # TODO: merge this into base_thermon from CEA
-        
-       
-        
         if 'static' in mode:  
             in_vars += (('P', 'Ps'), ) # promote the P as the static Ps
            
-
-       
-
         # Add implicit components/balances to depending on the mode and connect them to
         # the properties calculation components
         if mode != "total_TP": 
@@ -182,38 +176,3 @@ class Thermo(om.Group):
         ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
         ln_bt.options['maxiter'] = 2
         ln_bt.options['iprint'] = -1
-
-
-
-if __name__ == "__main__": 
-    from pycycle.cea import species_data
-    from pycycle.constants import CO2_CO_O2_MIX
-
-    p = om.Problem()
-
-    p.model = Thermo(mode='total_TP', 
-                     thermo_dict={'method':'CEA', 
-                                  'elements': CO2_CO_O2_MIX, 
-                                  'thermo_data': species_data.co2_co_o2 })
-
-    p.setup()
-    # p.final_setup()
-
-
-    # p.set_val('b0', [0.02272211, 0.04544422])
-    p.set_val('T', 4000, units='degK')
-    p.set_val('P', 1.034210, units='bar')
-
-    p.run_model()
-
-    # p.model.list_inputs(prom_name=True, print_arrays=True)
-    # p.model.list_outputs(prom_name=True, print_arrays=True)
-
-    n = p['base_thermo.n']
-    n_moles = p['base_thermo.n_moles']
-
-    print(n/n_moles) # [0.62003271, 0.06995092, 0.31001638]
-    print(n_moles) # 0.03293137
-
-    gamma = p['flow:gamma']
-    print(gamma) # 1.19054697

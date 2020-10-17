@@ -19,8 +19,8 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.model.add_subsystem('thermo', Thermo(mode='total_TP', 
                                thermo_dict={'method':'CEA', 
                                             'elements': constants.CO2_CO_O2_MIX, 
-                                            'thermo_data': species_data.co2_co_o2 }), 
-                             promotes=['*'])
+                                            'thermo_spec': species_data.co2_co_o2 }), 
+                              promotes=['*'])
 
         p.setup(check=False)
         p.set_solver_print(level=-1)
@@ -64,7 +64,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.model = Thermo(mode='total_hP', 
                          thermo_dict={'method':'CEA', 
                                       'elements': constants.CO2_CO_O2_MIX, 
-                                      'thermo_data': species_data.co2_co_o2 }) 
+                                      'thermo_spec': species_data.co2_co_o2 }) 
 
         p.setup()
         # TODO: Investigate this weirdness.... this case won't work if you thermo_TP fully solve itself
@@ -111,7 +111,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.model = Thermo(mode='total_SP', 
                          thermo_dict={'method':'CEA', 
                                       'elements': constants.CO2_CO_O2_MIX, 
-                                      'thermo_data': species_data.co2_co_o2 }) 
+                                      'thermo_spec': species_data.co2_co_o2 }) 
        
         r = p.model
 
@@ -167,7 +167,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_TP.model = Thermo(mode='total_TP', 
                             thermo_dict={'method':'CEA', 
                                          'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p_TP.setup()
         p_TP.set_solver_print(level=-1)
 
@@ -175,7 +175,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_hP.model = Thermo(mode='total_hP', 
                             thermo_dict={'method':'CEA', 
                                          'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p_hP.setup()
         p_hP.set_solver_print(level=-1)
 
@@ -183,7 +183,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_SP.model = Thermo(mode='total_SP', 
                             thermo_dict={'method':'CEA', 
                                          'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p_SP.setup()
         p_SP.set_solver_print(level=-1)
 
@@ -272,13 +272,13 @@ class TestStaticJanaf(unittest.TestCase):
         total_TP =  Thermo(mode='total_TP', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_Ps =  Thermo(mode='static_Ps', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_Ps', static_Ps)
         p.model.connect('set_total_TP.flow:S', 'set_static_Ps.S')
         p.model.connect('set_total_TP.flow:h', 'set_static_Ps.ht')
@@ -313,13 +313,13 @@ class TestStaticJanaf(unittest.TestCase):
         total_TP =  Thermo(mode='total_TP', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_A =  Thermo(mode='static_A', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_A', static_A)
         
         p.model.connect('set_total_TP.flow:S', 'set_static_A.S')
@@ -364,13 +364,13 @@ class TestStaticJanaf(unittest.TestCase):
         total_TP =  Thermo(mode='total_TP', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_MN =  Thermo(mode='static_MN', 
                            thermo_dict={'method':'CEA', 
                                         'elements': constants.AIR_MIX, 
-                                         'thermo_data': species_data.janaf }) 
+                                         'thermo_spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_MN', static_MN)
 
         p.model.connect('set_total_TP.flow:S', 'set_static_MN.S')

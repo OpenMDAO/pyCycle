@@ -1,8 +1,10 @@
 from openmdao.api import Group, ExplicitComponent
 
 from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
+
+from pycycle.cea.new_thermo import Thermo
 from pycycle.cea.set_static import SetStatic
+
 from pycycle.constants import AIR_MIX, WET_AIR_MIX
 import numpy as np
 
@@ -63,7 +65,7 @@ class SetWAR(ExplicitComponent):
         self.init_react_amounts = [] #amounts of initial compounds scaled to desired WAR, not including zero value initial trace species
 
         for i, p in enumerate(original_init_reacts): #calculate total weight of dry air and include non-water values in init_react_amounts
-            if p is not 'H2O':
+            if p != 'H2O':
                 self.dry_wt += original_init_reacts[p] * prod_data[p]['wt']
                 self.init_react_amounts.append(original_init_reacts[p])
 
@@ -97,7 +99,7 @@ class SetWAR(ExplicitComponent):
 
         for i, p in enumerate(original_init_reacts):
             location = self.products.index(p)
-            if p is 'H2O':
+            if p == 'H2O':
                 jac[location] = 1/water_wt
 
             else:
@@ -114,8 +116,6 @@ class FlowStart(Group):
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
 
-        self.options.declare('statics', default=True,
-                              desc='If True, calculate static properties.')
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
@@ -142,9 +142,11 @@ class FlowStart(Group):
             set_WAR = SetWAR(thermo_data=thermo_data, elements=elements)
             self.add_subsystem('WAR', set_WAR, promotes_inputs=('WAR',), promotes_outputs=('b0',))
         
-        set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
-                          thermo_data=thermo_data,
-                          init_reacts=elements)
+
+        set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
+                        thermo_dict={'method':'CEA', 
+                                     'elements':elements, 
+                                     'thermo_spec':thermo_data} )
 
         params = ('T','P', 'b0')
 
@@ -152,10 +154,14 @@ class FlowStart(Group):
                            promotes_outputs=('Fl_O:tot:*',))
 
 
-        # if self.options['statics']:
         set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
                                 init_reacts=elements, fl_name="Fl_O:stat")
-        set_stat_MN.set_input_defaults('W', val=1.0, units='kg/s')
+
+        set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                             thermo_dict={'method':'CEA', 
+                                          'elements':elements, 
+                                          'thermo_spec':thermo_data} )
+
 
         self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'b0'),
                            promotes_outputs=('Fl_O:stat:*', ))
