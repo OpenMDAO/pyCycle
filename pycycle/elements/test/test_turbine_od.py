@@ -5,7 +5,7 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf, Thermo
+from pycycle.cea.species_data import janaf, Properties
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.combustor import Combustor
 from pycycle.connect_flow import connect_flow
@@ -76,7 +76,7 @@ class TurbineODTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        thermo = Thermo(janaf, AIR_FUEL_MIX)
+        thermo = Properties(janaf, AIR_FUEL_MIX)
 
         self.prob = Problem()
 

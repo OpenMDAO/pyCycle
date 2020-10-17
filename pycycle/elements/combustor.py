@@ -4,8 +4,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 from pycycle.elements.duct import PressureLoss
@@ -262,8 +261,10 @@ class Combustor(om.Group):
         self.add_subsystem('p_loss', PressureLoss(), promotes_inputs=prom_in)
 
         # Calculate vitiated flow station properties
-        vit_flow = SetTotal(thermo_data=thermo_data, mode='h', init_reacts=air_fuel_elements,
-                            fl_name="Fl_O:tot")
+        vit_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                          method='CEA', 
+                          thermo_kwargs={'elements':air_fuel_elements, 
+                                         'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
         self.connect("mix_fuel.mass_avg_h", "vitiated_flow.h")
         self.connect("mix_fuel.b0_out", "vitiated_flow.b0")
@@ -272,8 +273,11 @@ class Combustor(om.Group):
         if statics:
             if design:
                 # Calculate static properties.
-                out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=air_fuel_elements,
-                                     fl_name="Fl_O:stat")
+
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':air_fuel_elements, 
+                                                 'spec':thermo_data})
                 prom_in = ['MN']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -288,8 +292,10 @@ class Combustor(om.Group):
 
             else:
                 # Calculate static properties.
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=air_fuel_elements,
-                                     fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':air_fuel_elements, 
+                                                 'spec':thermo_data})
                 prom_in = ['area']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
