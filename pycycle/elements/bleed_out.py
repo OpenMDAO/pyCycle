@@ -6,8 +6,7 @@ from collections.abc import Iterable
 import openmdao.api as om 
 
 from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -126,15 +125,19 @@ class BleedOut(om.Group):
         for BN in bleeds:
 
             bleed_names.append(BN+'_flow')
-            bleed_flow = SetTotal(thermo_data=thermo_data, mode='T',
-                                  init_reacts=elements, fl_name=BN+":tot")
+            bleed_flow = Thermo(mode='total_TP', fl_name=BN+":tot", 
+                                method='CEA', 
+                                thermo_kwargs={'elements':elements, 
+                                               'spec':thermo_data})
             self.add_subsystem(BN+'_flow', bleed_flow,
                                promotes_inputs=[('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
 
         # Total Calc
-        real_flow = SetTotal(thermo_data=thermo_data, mode='T',
-                             init_reacts=elements, fl_name="Fl_O:tot")
+        real_flow = Thermo(mode='total_TP', fl_name="Fl_O:tot", 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         prom_in = [('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
@@ -142,7 +145,10 @@ class BleedOut(om.Group):
         if statics:
             if design:
             #   Calculate static properties
-                out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
@@ -157,7 +163,10 @@ class BleedOut(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            'area']
                 prom_out = ['Fl_O:stat:*']

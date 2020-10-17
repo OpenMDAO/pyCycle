@@ -141,7 +141,7 @@ class HBTF(pyc.Cycle):
             self.connect('perf.Fn', 'balance.lhs:FAR')
 
             balance.add_balance('W', units='lbm/s', lower=10., upper=1000., eq_units='inch**2')
-            self.connect('balance.W', 'inlet.Fl_I:stat:W')
+            self.connect('balance.W', 'fc.W')
             self.connect('core_nozz.Throat:stat:area', 'balance.lhs:W')
 
             balance.add_balance('BPR', lower=2., upper=10., eq_units='inch**2')
