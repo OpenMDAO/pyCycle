@@ -63,8 +63,8 @@ class ChemEq(om.ImplicitComponent):
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['maxiter'] = 100
         newton.options['iprint'] = 2
-        newton.options['atol'] = 1e-10
-        newton.options['rtol'] = 1e-10
+        newton.options['atol'] = 1e-7
+        newton.options['rtol'] = 1e-7
         newton.options['stall_limit'] = 4
         newton.options['stall_tol'] = 1e-10
         newton.options['solve_subsystems'] = True
@@ -439,6 +439,7 @@ class SetTotalTP(om.Group):
         self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
 
         self.add_subsystem('props', Properties(thermo=self.thermo), promotes=['*'])
+
 
 
 
