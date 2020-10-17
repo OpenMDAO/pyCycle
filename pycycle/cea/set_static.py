@@ -62,7 +62,7 @@ class SetStatic(om.Group):
 
         p_inputs = ('area', 'W', 'V', 'Vsonic', 'MN')
         p_outputs = tuple(['{0}:{1}'.format(fl_name, in_name) for in_name in p_inputs])
-        eng_units_statics = EngUnitStaticProps(thermo, fl_name)
+        eng_units_statics = EngUnitStaticProps()
         self.add_subsystem('flow_static', eng_units_statics,
                            promotes_inputs=p_inputs,
                            promotes_outputs=p_outputs)

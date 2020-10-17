@@ -125,8 +125,9 @@ class MPCycle(om.Group):
                 self.connect(f'{self._des_pnt.name}.{src}', f'{od_pnt.name}.{target}')
         
         if self._use_default_des_od_conns: 
+            skip = self._default_des_od_cons_skip
             for elem in self._des_pnt._elements: 
-                if elem.name in self._default_des_od_cons_skip: 
+                if  skip is not None and elem.name in skip: 
                     continue
                 try: 
                     for src, target in elem.default_des_od_conns: 

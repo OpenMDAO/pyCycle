@@ -542,7 +542,7 @@ class Compressor(om.Group):
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
             else:  # Calculate static properties
-                out_stat = Thermo(mode='static_area', fl_name='Fl_O:stat', 
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
