@@ -5,8 +5,7 @@ import numpy as np
 import openmdao.api as om 
 
 from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -201,8 +200,10 @@ class Duct(om.Group):
         self.add_subsystem('q_calc', qCalc(), promotes_inputs=prom_in)
 
         # Total Calc
-        real_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                             init_reacts=elements, fl_name="Fl_O:tot")
+        real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         prom_in = [('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
@@ -212,7 +213,10 @@ class Duct(om.Group):
         if statics:
             if design:
             #   Calculate static properties
-                out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'MN']
@@ -227,7 +231,10 @@ class Duct(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
