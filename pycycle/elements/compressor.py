@@ -512,8 +512,10 @@ class Compressor(om.Group):
         for BN in bleeds:
 
             bleed_names.append(BN + '_flow')
-            bleed_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                                  init_reacts=elements, fl_name=BN + ":tot")
+            bleed_flow = Thermo(mode='total_hP', fl_name=BN + ":tot", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
                                    ('b0', 'Fl_I:tot:b0')],
