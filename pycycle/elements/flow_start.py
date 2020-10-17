@@ -25,7 +25,7 @@ class SetWAR(ExplicitComponent):
     """
 
     def initialize(self):
-        self.options.declare('thermo_data', default=species_data.wet_air, 
+        self.options.declare('thermo_data', default=species_data.janaf, 
                             desc='thermodynamic data set')
         self.options.declare('elements', default=WET_AIR_MIX,
                               desc='set of elements present in the flow')
@@ -43,7 +43,7 @@ class SetWAR(ExplicitComponent):
         self.add_output('b0', shape=(shape,), val=thermo.b0,
                        desc="stoichiometric ratios by mass of the initial compounds present in the flow, scaled to desired WAR")
 
-        self.declare_partials('b0', 'WAR') ########fix this!!!!!!!##############
+        self.declare_partials('b0', 'WAR')
 
     def compute(self, inputs, outputs):
 
