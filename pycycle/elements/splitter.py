@@ -5,8 +5,7 @@ import openmdao.api as om
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.passthrough import PassThrough
 
 
@@ -112,8 +111,10 @@ class Splitter(om.Group):
         self.add_subsystem('split_calc', BPRcalc(), promotes_inputs=('BPR', ('W_in', 'Fl_I:stat:W')))
 
         # Set Fl_out1 totals based on T, P
-        real_flow1 = SetTotal(thermo_data=thermo_data, mode='T',
-                             init_reacts=elements, fl_name="Fl_O1:tot")
+        real_flow1 = Thermo(mode='total_TP', fl_name='Fl_O1:tot', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         self.add_subsystem('real_flow1', real_flow1,
                            promotes_inputs=(('b0', 'Fl_I:tot:b0'),
                                             ('P', 'Fl_I:tot:P'),
@@ -121,8 +122,10 @@ class Splitter(om.Group):
                            promotes_outputs=('Fl_O1:tot:*', ))
 
         # Set Fl_out2 totals based on T, P
-        real_flow2 = SetTotal(thermo_data=thermo_data, mode='T',
-                             init_reacts=elements, fl_name="Fl_O2:tot")
+        real_flow2 = Thermo(mode='total_TP', fl_name='Fl_O2:tot', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('b0', 'Fl_I:tot:b0'),
                                             ('P', 'Fl_I:tot:P'),
                                             ('T', 'Fl_I:tot:T')),
@@ -131,7 +134,10 @@ class Splitter(om.Group):
         if statics:
             if design:
             #   Calculate static properties
-                out1_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O1:stat")
+                out1_stat = Thermo(mode='static_MN', fl_name='Fl_O1:stat', 
+                                   method='CEA', 
+                                   thermo_kwargs={'elements':elements, 
+                                                  'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('MN','MN1')]
                 prom_out = ['Fl_O1:stat:*']
@@ -143,7 +149,10 @@ class Splitter(om.Group):
                 self.connect('Fl_O1:tot:gamma', 'out1_stat.guess:gamt')
                 self.connect('split_calc.W1', 'out1_stat.W')
 
-                out2_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O2:stat")
+                out2_stat = Thermo(mode='static_MN', fl_name='Fl_O2:stat', 
+                                   method='CEA', 
+                                   thermo_kwargs={'elements':elements, 
+                                                  'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('MN','MN2')]
                 prom_out = ['Fl_O2:stat:*']
@@ -157,7 +166,10 @@ class Splitter(om.Group):
 
             else:
                 # Calculate static properties
-                out1_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O1:stat")
+                out1_stat = Thermo(mode='static_A', fl_name='Fl_O1:stat', 
+                                   method='CEA', 
+                                   thermo_kwargs={'elements':elements, 
+                                                  'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('area','area1')]
                 prom_out = ['Fl_O1:stat:*']
@@ -169,7 +181,10 @@ class Splitter(om.Group):
                 self.connect('Fl_O1:tot:gamma', 'out1_stat.guess:gamt')
                 self.connect('split_calc.W1', 'out1_stat.W')
 
-                out2_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O2:stat")
+                out2_stat = Thermo(mode='static_A', fl_name='Fl_O2:stat', 
+                                   method='CEA', 
+                                   thermo_kwargs={'elements':elements, 
+                                                  'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('area','area2')]
                 prom_out = ['Fl_O2:stat:*']
