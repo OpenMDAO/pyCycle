@@ -3,7 +3,7 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION
-
+from pycycle.cea import species_data
 from pycycle.cea.props_rhs import PropsRHS
 from pycycle.cea.props_calcs import PropsCalcs
 
@@ -424,14 +424,21 @@ class SetTotalTP(om.Group):
 
     def initialize(self): 
 
-        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
+        self.options.declare('spec')
+        self.options.declare('elements')
+
 
     def setup(self):
 
-        thermo_data = self.options['thermo']
-        self.add_subsystem('chem_eq', ChemEq(thermo=thermo_data, mode='T'), promotes=['*'])
+        self.thermo = species_data.Thermo(self.options['spec'], self.options['elements'])
+        
+        # these have to be part of the API for the unit_comps to use
+        self.b0 = self.thermo.b0
+        self.num_n = self.thermo.num_prod
+        
+        self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
 
-        self.add_subsystem('props', Properties(thermo=thermo_data), promotes=['*'])
+        self.add_subsystem('props', Properties(thermo=self.thermo), promotes=['*'])
 
 
 

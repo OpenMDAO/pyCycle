@@ -9,9 +9,9 @@ from pycycle.cea.static_ps_resid import PsResid
 from pycycle.cea.unit_comps import EngUnitStaticProps, EngUnitProps
 
 
-
 class Thermo(om.Group):
 
+    
     def initialize(self):
         self.options.declare('fl_name',
                               default="flow",
@@ -21,29 +21,31 @@ class Thermo(om.Group):
                               default='total_TP',
                               values=('total_TP', 'total_SP', 'total_hP', 
                                     'static_MN', 'static_A', 'static_Ps'))
-        # thermo_dict should be a dictionary containing all the information needed to setup
+        self.options.declare('method', values=('CEA', ))
+        # thermo_kwargs should be a dictionary containing all the information needed to setup
         # the thermo calculations:
         #       - For CEA this would be the elements and thermo_data
         #       - For Ideal this would be gamma, MW, h_base, T_base, Cp, S_data
         #       - For Tabular this would be the thermo data table
         # The user should define one or more of these dictionaries at the top of their model
         # then pass them into the individual componenents
-        self.options.declare('thermo_dict',
+        self.options.declare('thermo_kwargs', default={},
                               desc='Defines the thermodynamic data to be used in computations')
 
+    def set_thermo(self, thermo): 
+        self._thermo = thermo # factor to create thermo from
+
     def setup(self):
-        method = self.options['thermo_dict']['method']
+        method = self.options['method']
         mode = self.options['mode']
 
-        therm_dict = self.options['thermo_dict']
+        thermo_kwargs = self.options['thermo_kwargs']
+
 
         # Instantiate components based on method for calculating the thermo properties.
         # All these components should compute the properties in a TP mode.
         if method == 'CEA':
-            cea_data = cea.species_data.Thermo(therm_dict['thermo_spec'], 
-                                                therm_dict['elements'])
-
-            base_thermo = chem_eq.SetTotalTP(thermo=cea_data)
+            base_thermo = chem_eq.SetTotalTP(**thermo_kwargs)
 
         # elif method == 'Ideal':
         #     # base_thermo = IdealThermo(thermo_data=xx)
@@ -128,7 +130,7 @@ class Thermo(om.Group):
 
         fl_name = self.options['fl_name']
         # TODO: remove need for thermo specific data in the flow components
-        self.add_subsystem('flow', EngUnitProps(thermo=cea_data, fl_name=fl_name),
+        self.add_subsystem('flow', EngUnitProps(thermo=None, fl_name=fl_name),
                            promotes_inputs=in_vars,
                            promotes_outputs=(f'{fl_name}:*',))
 
@@ -136,7 +138,7 @@ class Thermo(om.Group):
         if 'static' in mode:
             in_vars = ('area', 'W', 'V', 'Vsonic', 'MN')
             # TODO: remove need for thermo specific data in the flow components
-            eng_units_statics = EngUnitStaticProps(thermo=cea_data, fl_name=fl_name)
+            eng_units_statics = EngUnitStaticProps(thermo=None, fl_name=fl_name)
             self.add_subsystem('flow_static', eng_units_statics,
                                promotes_inputs=in_vars,
                                promotes_outputs=(f'{fl_name}:*',))
@@ -176,3 +178,16 @@ class Thermo(om.Group):
         ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
         ln_bt.options['maxiter'] = 2
         ln_bt.options['iprint'] = -1
+
+
+    def configure(self): 
+        b0 = self.base_thermo.b0
+        num_n = self.base_thermo.num_n
+        mode = self.options['mode']
+
+        self.flow.setup_io(b0, num_n)
+        
+        if 'static' in mode: 
+            self.flow_static.setup_io()
+
+
