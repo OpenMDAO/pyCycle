@@ -14,12 +14,14 @@ Also, you can read [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/
 
 # OpenMDAO Version Compatibility
 ----------------------------------
-pyCycle is built on top of OpenMDAO, and thus depends on it. Here is the OpenMDAO version you need for the specific versions of pyCycle
+pyCycle is built on top of OpenMDAO, and thus depends on it. 
+Here is the OpenMDAO version you need for the specific versions of pyCycle
 
 | pyCycle version  | OpenMDAO version |
 | -----------------| -------------    |
 | 3.0.0            | 2.8.0 thru 3.1.1  |
 | 3.2.0            | 3.2.0 or greater  |
+| 3.4.0            | 3.2.0 or greater  |
 
 ## Citation
 
@@ -57,6 +59,10 @@ Select one of those tags (e.g. 3.0.0)
 or for pyCycle V3.2.0: 
 
     git checkout 3.2.0
+
+or for pyCycle V3.2.0: 
+
+    git checkout 3.4.0
 
 Use pip to install: 
 
