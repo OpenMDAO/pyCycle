@@ -6,8 +6,7 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_MIX, AIR_FUEL_MIX
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -186,13 +185,13 @@ class Bleeds(om.ExplicitComponent):
         self.mixed_elements = self.main_flow_elements.copy()
         self.mixed_elements.update(self.options['bld_flow_elements'])
 
-        main_flow_thermo = species_data.Thermo(
+        main_flow_thermo = species_data.Properties(
             thermo_data, init_reacts=self.mixed_elements)
         self.main_flow_prods = main_flow_thermo.products
         self.main_flow_wt_mole = main_flow_thermo.wt_mole
         self.n_main_flow_prods = len(self.main_flow_prods)
 
-        bld_flow_thermo = species_data.Thermo(
+        bld_flow_thermo = species_data.Properties(
             thermo_data, init_reacts=self.options['bld_flow_elements'])
         self.bld_flow_prods = bld_flow_thermo.products
         self.bld_flow_wt_mole = bld_flow_thermo.wt_mole
@@ -567,10 +566,10 @@ class Turbine(om.Group):
 
         self.default_des_od_conns = [
             # (design src, off-design target)
-            ('s_WpDes', 's_WpDes'),
-            ('s_PRdes', 's_PRdes'),
-            ('s_effDes', 's_effDes'), 
-            ('s_NpDes', 's_NpDes'), 
+            ('s_Wp', 's_Wp'),
+            ('s_PR', 's_PR'),
+            ('s_eff', 's_eff'), 
+            ('s_Np', 's_Np'), 
             ('Fl_O:stat:area', 'area')
         ]
 
@@ -588,12 +587,12 @@ class Turbine(om.Group):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
         self.num_prod = len(self.gas_prods)
         num_element = gas_thermo.num_element
 
-        bld_thermo = species_data.Thermo(
+        bld_thermo = species_data.Properties(
             thermo_data, init_reacts=bleed_elements)
         self.bld_prods = bld_thermo.products
         self.num_bld_prod = len(self.bld_prods)
@@ -624,7 +623,11 @@ class Turbine(om.Group):
                            'PR', ('Pt_in', 'Fl_I:tot:P')])
 
         # Calculate ideal flow station properties
-        self.add_subsystem('ideal_flow', SetTotal(thermo_data=thermo_data, mode='S', init_reacts=elements),
+        ideal_flow = Thermo(mode='total_SP', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                           'spec':thermo_data})
+        self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=[('S', 'Fl_I:tot:S'), ('b0', 'Fl_I:tot:b0')])
         self.connect("press_drop.Pt_out", "ideal_flow.P")
 
@@ -660,13 +663,21 @@ class Turbine(om.Group):
 
             # Determine bleed inflow properties
             bleed_names2.append(BN + '_inflow')
-            self.add_subsystem(BN + '_inflow', SetTotal(thermo_data=thermo_data, mode='h', init_reacts=bleed_elements),
+            inflow = Thermo(mode='total_hP', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':bleed_elements, 
+                                           'spec':thermo_data})
+            self.add_subsystem(BN + '_inflow', inflow,
                                promotes_inputs=[('b0', BN + ":tot:b0"), ('h', BN + ':tot:h')])
             self.connect('blds.' + BN + ':Pt', BN + "_inflow.P")
 
             # Ideally expand bleeds to exit pressure
             bleed_names2.append(BN + '_ideal')
-            self.add_subsystem(BN + '_ideal', SetTotal(thermo_data=thermo_data, mode='S', init_reacts=bleed_elements),
+            ideal = Thermo(mode='total_SP', 
+                           method='CEA', 
+                           thermo_kwargs={'elements':bleed_elements, 
+                                          'spec':thermo_data})
+            self.add_subsystem(BN + '_ideal', ideal,
                                promotes_inputs=[('b0', BN + ":tot:b0")])
             self.connect(BN + "_inflow.flow:S", BN + "_ideal.S")
             self.connect("press_drop.Pt_out", BN + "_ideal.P")
@@ -682,8 +693,10 @@ class Turbine(om.Group):
         self.connect('ideal_flow.h', 'pwr_turb.ht_out_ideal')
 
         # Calculate real flow station properties before bleed air is added
-        real_flow_b4bld = SetTotal(thermo_data=thermo_data, mode='h',
-                     init_reacts=elements, fl_name="Fl_O_b4bld:tot")
+        real_flow_b4bld = Thermo(mode='total_hP', fl_name="Fl_O_b4bld:tot",
+                                 method='CEA', 
+                                 thermo_kwargs={'elements':elements, 
+                                                'spec':thermo_data})
         self.add_subsystem('real_flow_b4bld', real_flow_b4bld,
                            promotes_inputs=[('b0', 'Fl_I:tot:b0')])
         self.connect('ht_out_b4bld', 'real_flow_b4bld.h')
@@ -696,8 +709,10 @@ class Turbine(om.Group):
         self.connect('real_flow_b4bld.Fl_O_b4bld:tot:S','eff_poly_calc.S_out')
 
         # Calculate real flow station properties
-        real_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                             init_reacts=elements, fl_name="Fl_O:tot")
+        real_flow = Thermo(mode='total_hP', fl_name="Fl_O:tot",
+                                 method='CEA', 
+                                 thermo_kwargs={'elements':elements, 
+                                                'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("pwr_turb.ht_out", "real_flow.h")
@@ -711,8 +726,10 @@ class Turbine(om.Group):
         if statics:
             if designFlag:
                 #   SetStaticMN
-                out_stat = SetStatic(
-                    mode='MN', thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat",
+                                 method='CEA', 
+                                 thermo_kwargs={'elements':elements, 
+                                                'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
@@ -725,8 +742,10 @@ class Turbine(om.Group):
 
             else:
                 #   SetStaticArea
-                out_stat = SetStatic(
-                    mode='area', thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat",
+                                 method='CEA', 
+                                 thermo_kwargs={'elements':elements, 
+                                                'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['area'],
                                    promotes_outputs=['Fl_O:stat:*'])

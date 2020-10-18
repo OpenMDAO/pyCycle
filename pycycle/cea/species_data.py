@@ -10,8 +10,9 @@ from pycycle import constants
 
 #from ad.admath import log
 from numpy import log
-class Thermo(object):
+class Properties(object):
     """Compute H, S, Cp given a species and temperature"""
+    
     def __init__(self, thermo_data_module, init_reacts=None, init_elements=None):
 
         self.a = None

@@ -3,8 +3,7 @@
 import openmdao.api as om
 
 from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_FUEL_MIX, g_c
 from pycycle.flow_in import FlowIn
 
@@ -319,7 +318,7 @@ class Nozzle(om.Group):
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
 
         num_prod = gas_thermo.num_prod
@@ -346,8 +345,10 @@ class Nozzle(om.Group):
                            promotes_outputs=['Ps_calc'])
 
         # Calculate throat total flow properties
-        throat_total = SetTotal(thermo_data=thermo_data, mode="h", init_reacts=elements,
-                                fl_name="Fl_O:tot")
+        throat_total = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                              method='CEA', 
+                              thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
                    ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('throat_total', throat_total, promotes_inputs=prom_in,
@@ -355,10 +356,14 @@ class Nozzle(om.Group):
         self.connect('press_calcs.Pt_th', 'throat_total.P')
 
         # Calculate static properties for sonic flow
+        throat_static_MN = Thermo(mode='static_MN', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
                    ('b0', 'Fl_I:tot:b0')]
-        self.add_subsystem('staticMN', SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements),
+        self.add_subsystem('staticMN', throat_static_MN,
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticMN.S')
         self.connect('mach_choked.MN', 'staticMN.MN')
@@ -367,23 +372,31 @@ class Nozzle(om.Group):
         # self.connect('Fl_I.flow:flow_products','staticMN.init_prod_amounts')
 
         # Calculate static properties based on exit static pressure
+        throat_static_Ps = Thermo(mode='static_Ps', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
                    ('b0', 'Fl_I:tot:b0')]
-        self.add_subsystem('staticPs', SetStatic(mode="Ps", thermo_data=thermo_data, init_reacts=elements),
+        self.add_subsystem('staticPs', throat_static_Ps,
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticPs.S')
         # self.connect('press_calcs.Ps_calc', 'staticPs.Ps')
         # self.connect('Fl_I.flow:flow_products','staticPs.init_prod_amounts')
 
         # Calculate ideal exit flow properties
+        ideal_flow = Thermo(mode='static_Ps', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('S', 'Fl_I:tot:S'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
                    ('b0', 'Fl_I:tot:b0')]
-        self.add_subsystem('ideal_flow', SetStatic(mode="Ps", thermo_data=thermo_data, init_reacts=elements),
+        self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=prom_in)
         # self.connect('press_calcs.Ps_calc', 'ideal_flow.Ps')
         # self.connect('Fl_I.flow:flow_products','ideal_flow.init_prod_amounts')
@@ -451,14 +464,6 @@ class Nozzle(om.Group):
             self.linear_solver = om.DirectSolver(assemble_jac=True)
 
         self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
-
-    def configure(self):
-        newton = self.staticMN.statics.chem_eq.nonlinear_solver
-        # newton.options['atol'] = 1e-6
-        # newton.options['rtol'] = 1e-6
-
-        # newton.options['maxiter'] = 25
-
 
 
 if __name__ == "__main__":

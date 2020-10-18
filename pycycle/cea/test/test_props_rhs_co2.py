@@ -16,7 +16,7 @@ class PropsRHSTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
+        self.thermo = species_data.Properties(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
 
         p = self.prob = Problem()
         p.model = Group()
@@ -56,7 +56,7 @@ class PropsCalcsTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        self.thermo = species_data.Thermo(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
+        self.thermo = species_data.Properties(species_data.co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
 
         p = self.prob = Problem()
         p.model = Group()

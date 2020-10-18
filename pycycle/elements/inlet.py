@@ -3,8 +3,7 @@
 import openmdao.api as om
 
 from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX, g_c
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -98,7 +97,7 @@ class Inlet(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
         num_prod = gas_thermo.num_prod
         num_element = gas_thermo.num_element
@@ -114,11 +113,15 @@ class Inlet(om.Group):
                            promotes_outputs=['F_ram'])
 
         # Calculate real flow station properties
-        real_flow = SetTotal(thermo_data=thermo_data, mode="T", init_reacts=elements, fl_name="Fl_O:tot")
-
+        real_flow = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[('T', 'Fl_I:tot:T'), ('b0', 'Fl_I:tot:b0')],
                            promotes_outputs=['Fl_O:*'])
+
+
         self.connect("calcs_inlet.Pt_out", "real_flow.P")
 
         self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
@@ -126,7 +129,12 @@ class Inlet(om.Group):
         if statics:
             if design:
                 #   Calculate static properties
-                self.add_subsystem('out_stat', SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat"),
+
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[('b0', 'Fl_I:tot:b0'), ('W', 'Fl_I:stat:W'), 'MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
 
@@ -137,8 +145,10 @@ class Inlet(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements,
-                                         fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
@@ -167,11 +177,9 @@ if __name__ == "__main__":
     p = om.Problem()
     p.model = Inlet()
 
-    thermo = species_data.Thermo(species_data.janaf, constants.AIR_MIX)
+    thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
     p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
     p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
-    # p.model.set_input_defaults('Fl_I:tot:n', thermo.init_prod_amounts)
-    # p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
     p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
     p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
 

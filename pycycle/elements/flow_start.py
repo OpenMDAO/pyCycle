@@ -1,8 +1,7 @@
 from openmdao.api import Group, ExplicitComponent
 
 from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_MIX, WET_AIR_MIX
 import numpy as np
 
@@ -25,7 +24,7 @@ class SetWAR(ExplicitComponent):
     """
 
     def initialize(self):
-        self.options.declare('thermo_data', default=species_data.wet_air, 
+        self.options.declare('thermo_data', default=species_data.janaf, 
                             desc='thermodynamic data set')
         self.options.declare('elements', default=WET_AIR_MIX,
                               desc='set of elements present in the flow')
@@ -35,7 +34,7 @@ class SetWAR(ExplicitComponent):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        thermo = species_data.Thermo(thermo_data, elements) #call Thermo function to get the number of dry products in the output
+        thermo = species_data.Properties(thermo_data, elements) #call Thermo function to get the number of dry products in the output
         shape = thermo.num_element
 
         self.add_input('WAR', val=0.0001, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
@@ -43,7 +42,7 @@ class SetWAR(ExplicitComponent):
         self.add_output('b0', shape=(shape,), val=thermo.b0,
                        desc="stoichiometric ratios by mass of the initial compounds present in the flow, scaled to desired WAR")
 
-        self.declare_partials('b0', 'WAR') ########fix this!!!!!!!##############
+        self.declare_partials('b0', 'WAR')
 
     def compute(self, inputs, outputs):
 
@@ -63,7 +62,7 @@ class SetWAR(ExplicitComponent):
         self.init_react_amounts = [] #amounts of initial compounds scaled to desired WAR, not including zero value initial trace species
 
         for i, p in enumerate(original_init_reacts): #calculate total weight of dry air and include non-water values in init_react_amounts
-            if p is not 'H2O':
+            if p != 'H2O':
                 self.dry_wt += original_init_reacts[p] * prod_data[p]['wt']
                 self.init_react_amounts.append(original_init_reacts[p])
 
@@ -76,10 +75,10 @@ class SetWAR(ExplicitComponent):
         n_water = WAR*self.dry_wt/((1 - WAR)*self.water_wt) #volumentric based ratio of water scaled to desired WAR
 
         self.init_react_amounts[location] = n_water #add in the amount of water scaled to the correct WAR
-        init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Thermo())
+        init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Properties())
         init_reacts['H2O'] = n_water #update with correct water amount
 
-        thermo = species_data.Thermo(thermo_data, init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
+        thermo = species_data.Properties(thermo_data, init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
         self.aij = thermo.aij
         self.products = thermo.products #get list of all products
         self.num_prod = thermo.num_prod
@@ -97,13 +96,14 @@ class SetWAR(ExplicitComponent):
 
         for i, p in enumerate(original_init_reacts):
             location = self.products.index(p)
-            if p is 'H2O':
+            if p == 'H2O':
                 jac[location] = 1/water_wt
 
             else:
                 jac[location] = -self.init_react_amounts[i]/dry_wt
 
         J['b0', 'WAR'] = np.matmul(self.aij, jac)
+
 
 class FlowStart(Group):
 
@@ -114,8 +114,6 @@ class FlowStart(Group):
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
 
-        self.options.declare('statics', default=True,
-                              desc='If True, calculate static properties.')
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
@@ -133,7 +131,7 @@ class FlowStart(Group):
 
                 raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.')
 
-        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)
 
@@ -142,20 +140,21 @@ class FlowStart(Group):
             set_WAR = SetWAR(thermo_data=thermo_data, elements=elements)
             self.add_subsystem('WAR', set_WAR, promotes_inputs=('WAR',), promotes_outputs=('b0',))
         
-        set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
-                          thermo_data=thermo_data,
-                          init_reacts=elements)
+
+        set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
+                        method='CEA', 
+                        thermo_kwargs={'elements':elements, 
+                                       'spec':thermo_data})
 
         params = ('T','P', 'b0')
 
         self.add_subsystem('totals', set_TP, promotes_inputs=params,
                            promotes_outputs=('Fl_O:tot:*',))
 
-
-        # if self.options['statics']:
-        set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
-                                init_reacts=elements, fl_name="Fl_O:stat")
-        set_stat_MN.set_input_defaults('W', val=1.0, units='kg/s')
+        set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                             method='CEA', 
+                             thermo_kwargs={'elements':elements, 
+                                            'spec':thermo_data} )
 
         self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'b0'),
                            promotes_outputs=('Fl_O:stat:*', ))

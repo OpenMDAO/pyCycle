@@ -9,27 +9,30 @@ _allowed_out_args = set(_full_out_args.args[3:] + _full_out_args.kwonlyargs)
 
 class UnitCompBase(ExplicitComponent):
 
-    def __init__(self, thermo, fl_name):
+    # def __init__(self, thermo, fl_name):
 
-        super(UnitCompBase, self).__init__()
+    #     super(UnitCompBase, self).__init__()
 
-        self.thermo = thermo
-        self.fl_name = fl_name
+    #     self.fl_name = fl_name
 
-    def setup(self):
+    def initialize(self): 
+        self.options.declare('thermo')
+        self.options.declare('fl_name')
+
+    def setup_io(self):
         rel2meta = self._var_rel2meta
 
-        fl_name = self.fl_name
+        fl_name = self.options['fl_name']
 
         for in_name in self._var_rel_names['input']:
 
-            meta = rel2meta[in_name]
-            val = meta['value'].copy()
-            new_meta = {k:v for k, v in meta.items() if k in _allowed_out_args}
-
             out_name = '{0}:{1}'.format(fl_name, in_name)
-            self.add_output(out_name, val=val, **new_meta)
 
+            meta = rel2meta[in_name]
+            new_meta = {k:v for k, v in meta.items() if k in _allowed_out_args}
+            val = meta['value'].copy()
+            self.add_output(out_name, val=val, **new_meta)
+            
         rel2meta = self._var_rel2meta
 
         for in_name, out_name in zip(self._var_rel_names['input'], self._var_rel_names['output']):
@@ -41,9 +44,6 @@ class UnitCompBase(ExplicitComponent):
             self.declare_partials(of=out_name, wrt=in_name,
                                   val=np.ones(size), rows=row_col, cols=row_col)
 
-            # TODO-JSG: FD related bug?
-            # self.approx_partials(of='*', wrt='*', step=1e-5)
-
     def compute(self, inputs, outputs):
         outputs._data[:] = inputs._data
 
@@ -51,9 +51,7 @@ class UnitCompBase(ExplicitComponent):
 class EngUnitProps(UnitCompBase):
     """only job is to provide unknowns in english units"""
 
-    def setup(self):
-
-        thermo = self.thermo
+    def setup_io(self, b0, num_n):
 
         self.add_input('T', val=284., units="degR", desc="Temperature")
         self.add_input('P', val=1., units='lbf/inch**2', desc="Pressure")
@@ -63,17 +61,17 @@ class EngUnitProps(UnitCompBase):
         self.add_input('Cp', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant pressure")
         self.add_input('Cv', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant volume")
         self.add_input('rho', val=1., units="lbm/ft**3", desc="density")
-        self.add_input('n', val=np.ones(thermo.num_prod))
+        self.add_input('n', val=np.ones(num_n))
         self.add_input('n_moles', val=1.)
         self.add_input('R', val=1.0, units="Btu/(lbm*degR)", desc='Total specific gas constant')
-        self.add_input('b0', val=thermo.b0, units=None, desc='moles of atoms present for each element')
+        self.add_input('b0', val=b0, desc='moles of atoms present for each element')
 
-        super(EngUnitProps, self).setup()
+        super().setup_io()
 
 
 class EngUnitStaticProps(UnitCompBase):
 
-    def setup(self):
+    def setup_io(self):
 
         self.add_input('area', val=1.0, units="inch**2")
         self.add_input('W', val=1.0, units="lbm/s")
@@ -81,7 +79,7 @@ class EngUnitStaticProps(UnitCompBase):
         self.add_input('Vsonic', val=1.0, units="ft/s")
         self.add_input('MN', val=0.5)
 
-        super(EngUnitStaticProps, self).setup()
+        super().setup_io()
 
 
 if __name__ == "__main__":
@@ -89,7 +87,7 @@ if __name__ == "__main__":
     from openmdao.api import Problem, Group, IndepVarComp
     from pycycle.cea import species_data
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.co2_co_o2)
 
     p = Problem()
     model = p.model = Group()

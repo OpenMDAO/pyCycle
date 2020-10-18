@@ -1,9 +1,8 @@
 import numpy as np
 import openmdao.api as om
 
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.species_data import Thermo, janaf
+from pycycle.cea.new_thermo import Thermo
+from pycycle.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 from pycycle.flow_in import FlowIn
 
@@ -27,7 +26,7 @@ class MixFlow(om.ExplicitComponent):
 
 
         self.flow1_elements = self.options['Fl_I1_elements']
-        flow1_thermo = Thermo(thermo_data, init_reacts=self.flow1_elements)
+        flow1_thermo = Properties(thermo_data, init_reacts=self.flow1_elements)
         n_flow1_prods = len(flow1_thermo.products)
         self.flow1_wt_mole = flow1_thermo.wt_mole
         self.add_input('Fl_I1:tot:h', val=0.0, units='J/kg', desc='total enthalpy for flow 1')
@@ -38,7 +37,7 @@ class MixFlow(om.ExplicitComponent):
         self.add_input('Fl_I1:stat:area', val=0.0, units='m**2', desc='area for flow 1')
 
         self.flow2_elements = self.options['Fl_I2_elements']
-        flow2_thermo = Thermo(thermo_data, init_reacts=self.flow2_elements)
+        flow2_thermo = Properties(thermo_data, init_reacts=self.flow2_elements)
         n_flow2_prods = len(flow2_thermo.products)
         self.flow2_wt_mole = flow2_thermo.wt_mole
         self.aij = flow1_thermo.aij
@@ -265,10 +264,10 @@ class Mixer(om.Group):
     def initialize(self):
 
         self.options.declare('thermo_data', default=janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('Fl_I1_elements', default=AIR_MIX,
+                              desc='thmodynamic data set', recordable=False)
+        self.options.declare('Fl_I1_elements', default=AIR_FUEL_MIX,
                               desc='set of elements present in the flow')
-        self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,
+        self.options.declare('Fl_I2_elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
@@ -284,13 +283,13 @@ class Mixer(om.Group):
         thermo_data = self.options['thermo_data']
 
         flow1_elements = self.options['Fl_I1_elements']
-        flow1_thermo = Thermo(thermo_data, init_reacts=flow1_elements)
+        flow1_thermo = Properties(thermo_data, init_reacts=flow1_elements)
         n_flow1_prods = flow1_thermo.num_prod
         in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods, num_elements=flow1_thermo.num_element)
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
         flow2_elements = self.options['Fl_I2_elements']
-        flow2_thermo = Thermo(thermo_data, init_reacts=flow2_elements)
+        flow2_thermo = Properties(thermo_data, init_reacts=flow2_elements)
         n_flow2_prods = flow2_thermo.num_prod
         in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods, num_elements=flow2_thermo.num_element)
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
@@ -299,9 +298,10 @@ class Mixer(om.Group):
         if design:
             # internal flow station to compute the area that is needed to match the static pressures
             if self.options['designed_stream'] == 1:
-                Fl1_stat = SetStatic(mode="Ps", thermo_data=thermo_data,
-                                    init_reacts=flow1_elements,
-                                    fl_name="Fl_I1_calc:stat")
+                Fl1_stat = Thermo(mode='static_Ps', fl_name="Fl_I1_calc:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':flow1_elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
                                    promotes_inputs=[('b0', 'Fl_I1:tot:b0'), ('S', 'Fl_I1:tot:S'),
                                                     ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'), ('Ps', 'Fl_I2:stat:P')],
@@ -313,9 +313,10 @@ class Mixer(om.Group):
 
                 self.set_input_defaults('Fl_I1:tot:b0', flow1_thermo.b0)
             else:
-                Fl2_stat = SetStatic(mode="Ps", thermo_data=thermo_data,
-                                    init_reacts=flow2_elements,
-                                    fl_name="Fl_I2_calc:stat")
+                Fl2_stat = Thermo(mode='static_Ps', fl_name="Fl_I2_calc:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':flow2_elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
                                    promotes_inputs=[('b0', 'Fl_I2:tot:b0'), ('S', 'Fl_I2:tot:S'),
                                                     ('ht', 'Fl_I2:tot:h'), ('W', 'Fl_I2:stat:W'), ('Ps', 'Fl_I1:stat:P')],
@@ -328,9 +329,10 @@ class Mixer(om.Group):
                 self.set_input_defaults('Fl_I2:tot:b0', flow2_thermo.b0)
         else:
             if self.options['designed_stream'] == 1:
-                Fl1_stat = SetStatic(mode="area", thermo_data=thermo_data,
-                                        init_reacts=flow1_elements,
-                                        fl_name="Fl_I1_calc:stat")
+                Fl1_stat = Thermo(mode='static_A', fl_name="Fl_I1_calc:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':flow1_elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
                                     promotes_inputs=[('b0', 'Fl_I1:tot:b0'), ('S', 'Fl_I1:tot:S'),
                                                      ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'),
@@ -339,9 +341,10 @@ class Mixer(om.Group):
 
                 self.set_input_defaults('Fl_I1:tot:b0', flow1_thermo.b0)
             else:
-                Fl2_stat = SetStatic(mode="area", thermo_data=thermo_data,
-                                        init_reacts=flow2_elements,
-                                        fl_name="Fl_I2_calc:stat")
+                Fl2_stat = Thermo(mode='static_A', fl_name="Fl_I2_calc:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':flow2_elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
                                     promotes_inputs=[('b0', 'Fl_I2:tot:b0'), ('S', 'Fl_I2:tot:S'),
                                                      ('ht', 'Fl_I2:tot:h'), ('W', 'Fl_I2:stat:W'),
@@ -351,6 +354,7 @@ class Mixer(om.Group):
                 self.set_input_defaults('Fl_I2:tot:b0', flow2_thermo.b0)
 
         self.add_subsystem('extraction_ratio', om.ExecComp('ER=Pt1/Pt2', Pt1={'units':'Pa'}, Pt2={'units':'Pa'}),
+
                             promotes_inputs=[('Pt1', 'Fl_I1:tot:P'), ('Pt2', 'Fl_I2:tot:P')],
                             promotes_outputs=['ER'])
 
@@ -384,16 +388,19 @@ class Mixer(om.Group):
             newton.linesearch.options['iprint'] = -1
             conv.linear_solver = om.DirectSolver(assemble_jac=True)
 
-        out_tot = SetTotal(thermo_data=thermo_data, mode='h', init_reacts=self.options['Fl_I1_elements'],
-                        fl_name="Fl_O:tot")
+        out_tot = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                         method='CEA', 
+                         thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
+                                        'spec':thermo_data})
         conv.add_subsystem('out_tot', out_tot, promotes_outputs=['Fl_O:tot:*'])
         self.connect('mix_flow.b0_mix', 'out_tot.b0')
         self.connect('mix_flow.ht_mix', 'out_tot.h')
         # note: gets Pt from the balance comp
 
-        out_stat = SetStatic(mode="area", thermo_data=thermo_data,
-                             init_reacts=self.options['Fl_I1_elements'],
-                             fl_name="Fl_O:stat")
+        out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                          method='CEA', 
+                          thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
+                                         'spec':thermo_data})
         conv.add_subsystem('out_stat', out_stat, promotes_outputs=['Fl_O:stat:*'], promotes_inputs=['area', ])
         self.connect('mix_flow.b0_mix', 'out_stat.b0')
         self.connect('mix_flow.W_mix','out_stat.W')
@@ -414,31 +421,3 @@ class Mixer(om.Group):
         conv.connect('imp_out.impulse', 'balance.lhs:P_tot')
         self.connect('mix_flow.impulse_mix', 'balance.rhs:P_tot') #note that this connection comes from outside the convergence group
 
-if __name__ == "__main__":
-
-    from pycycle.cea.species_data import Thermo, janaf
-    from pycycle import constants
-
-    prob = om.Problem()
-    prob.model = Mixer(design=True, Fl_I1_elements=constants.AIR_MIX, Fl_I2_elements=constants.AIR_MIX)
-
-    thermo = Thermo(janaf, constants.AIR_MIX)
-
-    prob.model.set_input_defaults('Fl_I1:tot:b0', thermo.b0)
-    prob.model.set_input_defaults('Fl_I1:tot:h', val=1.0,  units='Btu/lbm')
-    prob.model.set_input_defaults('Fl_I2:tot:h', val=1.0,  units='Btu/lbm')
-    prob.model.set_input_defaults('Fl_I1:tot:S', val=1.0, units='Btu/(lbm*degR)')
-    # p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
-    prob.model.set_input_defaults('Fl_I1:tot:P', 5.0, units='lbf/inch**2')
-    prob.model.set_input_defaults('Fl_I2:tot:P', 5.0, units='lbf/inch**2')
-    prob.model.set_input_defaults('Fl_I2:stat:P', 5.0, units='lbf/inch**2')
-    # # p.model.set_input_defaults('Fl_I:tot:n', thermo.init_prod_amounts)
-    # p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-    prob.model.set_input_defaults('Fl_I2:stat:V', 0.0, units='ft/s')#keep
-    prob.model.set_input_defaults('Fl_I2:stat:area', 1.0, units='inch**2')#keep
-    prob.model.set_input_defaults('Fl_I1:stat:W', 1, units='kg/s')
-    prob.model.set_input_defaults('Fl_I2:stat:W', 1, units='kg/s')
-
-    prob.setup(force_alloc_complex=True)
-    prob.run_model()
-    prob.check_partials(method='cs', compact_print=True)

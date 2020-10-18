@@ -3,10 +3,37 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION
+from pycycle.cea import species_data
+from pycycle.cea.props_rhs import PropsRHS
+from pycycle.cea.props_calcs import PropsCalcs
 
-# P_REF = 1.01325 # 1 atm
-# R_UNIVERSAL_ENG = 1.9872035 # (Btu lbm)/(mol*degR)
-# MIN_VALID_CONCENTRATION = 1e-10
+
+
+class Properties(om.Group):
+
+    def initialize(self):
+        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
+
+    def setup(self):
+        thermo = self.options['thermo']
+
+        num_element = thermo.num_element
+
+        self.add_subsystem('TP2ls', PropsRHS(thermo), promotes_inputs=('T', 'n', 'n_moles', 'b0'))
+
+        ne1 = num_element+1
+        self.add_subsystem('ls2t', om.LinearSystemComp(size=ne1))
+        self.add_subsystem('ls2p', om.LinearSystemComp(size=ne1))
+
+        self.add_subsystem('tp2props', PropsCalcs(thermo=thermo),
+                           promotes_inputs=['n', 'n_moles', 'T', 'P'],
+                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R']
+                           )
+        self.connect('TP2ls.lhs_TP', ['ls2t.A', 'ls2p.A'])
+        self.connect('TP2ls.rhs_T', 'ls2t.b')
+        self.connect('TP2ls.rhs_P', 'ls2p.b')
+        self.connect('ls2t.x', 'tp2props.result_T')
+        self.connect('ls2p.x', 'tp2props.result_P')
 
 
 def _resid_weighting(n):
@@ -36,8 +63,10 @@ class ChemEq(om.ImplicitComponent):
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['maxiter'] = 100
         newton.options['iprint'] = 2
-        newton.options['atol'] = 1e-10
-        newton.options['rtol'] = 1e-10
+        newton.options['atol'] = 1e-7
+        newton.options['rtol'] = 1e-7
+        newton.options['stall_limit'] = 4
+        newton.options['stall_tol'] = 1e-10
         newton.options['solve_subsystems'] = True
         newton.options['reraise_child_analysiserror'] = False
 
@@ -88,18 +117,10 @@ class ChemEq(om.ImplicitComponent):
         # State vars
         self.n_init = np.ones(num_prod) / num_prod / 10  # initial guess for n
 
-        # for a known solution, these are the orders of magnitude of the variables.
-        # We'll try setting scaling to +/1 1 order around thee values
-
-        mag = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                        1.15755853e-08, 2.95692989e-09, 1.00000000e-10, 2.69578794e-02,
-                        1.00000000e-10, 7.23198523e-03])
-
-        #mag = np.ones(num_prod)
         self.add_output('n', shape=num_prod,
                         val=self.n_init,
                         desc="mole fractions of the mixture",
-                        lower=1e-10,
+                        lower=MIN_VALID_CONCENTRATION,
                         res_ref=10000.
                         )
 
@@ -399,14 +420,37 @@ class ChemEq(om.ImplicitComponent):
                     dRdy[j, j] = -1.0
 
 
+class SetTotalTP(om.Group): 
+
+    def initialize(self): 
+
+        self.options.declare('spec')
+        self.options.declare('elements')
+
+
+    def setup(self):
+
+        self.thermo = species_data.Properties(self.options['spec'], self.options['elements'])
+        
+        # these have to be part of the API for the unit_comps to use
+        self.b0 = self.thermo.b0
+        self.num_n = self.thermo.num_prod
+        
+        self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
+
+        self.add_subsystem('props', Properties(thermo=self.thermo), promotes=['*'])
+
+
+
+
 if __name__ == "__main__":
     import time
 
 
     from pycycle.cea import species_data
 
-    # thermo = species_data.Thermo(species_data.co2_co_o2)
-    thermo = species_data.Thermo(species_data.janaf)
+    # thermo = species_data.Properties(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.janaf)
 
     prob = om.Problem()
     prob.model = om.Group()

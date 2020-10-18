@@ -23,13 +23,11 @@ class HBTF(pyc.Cycle):
         
         #Add subsystems to build the engine deck:
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        
         self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         
         # Note variable promotion for the fan -- 
         # the LP spool speed and the fan speed are INPUTS that are promoted:
         # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
-        # in fact for a multi-spool engine you HAVE(?) to alias if you want to promote_inputs
         # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
         self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
@@ -101,12 +99,14 @@ class HBTF(pyc.Cycle):
         if design:
             balance.add_balance('W', units='lbm/s', eq_units='lbf')
             #Here balance.W is implicit state variable that is the OUTPUT of balance object
-            self.connect('balance.W', 'inlet.Fl_I:stat:W') #Connect the output of balance to the relevant input
+            self.connect('balance.W', 'fc.W') #Connect the output of balance to the relevant input
             self.connect('perf.Fn', 'balance.lhs:W')       #This statement makes perf.Fn the LHS of the balance eqn.
+            self.promotes('balance', inputs=[('rhs:W', 'Fn_DES')])
 
             balance.add_balance('FAR', eq_units='degR', lower=1e-4, val=.017)
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
+            self.promotes('balance', inputs=[('rhs:FAR', 'T4_MAX')])
             
             # Note that for the following two balances the mult val is set to -1 so that the NET torque is zero
             balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8,
@@ -141,7 +141,7 @@ class HBTF(pyc.Cycle):
             self.connect('perf.Fn', 'balance.lhs:FAR')
 
             balance.add_balance('W', units='lbm/s', lower=10., upper=1000., eq_units='inch**2')
-            self.connect('balance.W', 'inlet.Fl_I:stat:W')
+            self.connect('balance.W', 'fc.W')
             self.connect('core_nozz.Throat:stat:area', 'balance.lhs:W')
 
             balance.add_balance('BPR', lower=2., upper=10., eq_units='inch**2')
@@ -161,11 +161,11 @@ class HBTF(pyc.Cycle):
             
             # Specify the order in which the subsystems are executed:
             
-            self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
-                            'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
+            # self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
+            #                 'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
         
         # Set up all the flow connections:
-        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
+        self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I')
         self.pyc_connect_flow('inlet.Fl_O', 'fan.Fl_I')
         self.pyc_connect_flow('fan.Fl_O', 'splitter.Fl_I')
         self.pyc_connect_flow('splitter.Fl_O1', 'duct4.Fl_I')
@@ -274,75 +274,25 @@ class MPhbtf(pyc.MPCycle):
 
         self.pyc_add_pnt('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
 
-        # --- INLET -----
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
-
-        # ---------------
-        # ----- FAN -----
         self.set_input_defaults('DESIGN.fan.MN', 0.4578)
-
-        # ---------------
-        # --- SPLITTER ---
         self.set_input_defaults('DESIGN.splitter.BPR', 5.105)
         self.set_input_defaults('DESIGN.splitter.MN1', 0.3104)
         self.set_input_defaults('DESIGN.splitter.MN2', 0.4518)
-
-        # ---------------
-        # --- DUCT 4 -----
         self.set_input_defaults('DESIGN.duct4.MN', 0.3121)
-
-        # ---------------
-        # --- LPC -----
-        # self.set_input_defaults('DESIGN.lpc.eff', 0.9243)
         self.set_input_defaults('DESIGN.lpc.MN', 0.3059)
-
-        # ---------------
-        # --- DUCT 6 -----
-        self.set_input_defaults('DESIGN.duct6.MN', 0.3563),
-
-        # ---------------
-        # ---  HPC -----
-        self.set_input_defaults('DESIGN.hpc.MN', 0.2442),
-
-        # ---------------
-        # --- BLEED -----
+        self.set_input_defaults('DESIGN.duct6.MN', 0.3563)
+        self.set_input_defaults('DESIGN.hpc.MN', 0.2442)
         self.set_input_defaults('DESIGN.bld3.MN', 0.3000)
-
-        # ---------------
-        # --- BURNER -----
-        self.set_input_defaults('DESIGN.burner.MN', 0.1025),
-
-        # ---------------
-        # --- HPT -----
-        self.set_input_defaults('DESIGN.hpt.MN', 0.3650),
-
-        # ---------------
-        # --- DUCT -----
-        self.set_input_defaults('DESIGN.duct11.MN', 0.3063),
-
-        # ---------------
-        # --- LPT -----
-        self.set_input_defaults('DESIGN.lpt.MN', 0.4127),
-
-        # ---------------
-        # --- DUCT 13 -----
-        self.set_input_defaults('DESIGN.duct13.MN', 0.4463),
-
-        # ---------------
-        # --- BLEED -----
-        self.set_input_defaults('DESIGN.byp_bld.MN', 0.4489),
-
-        # ---------------
-        # --- DUCT 15 -----
-        self.set_input_defaults('DESIGN.duct15.MN', 0.4589),
-
-        # ---------------
-        # --- LP SHAFT -----
-        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm'),
-
-        # ---------------
-        # --- HP SHAFT -----
-        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm'),
+        self.set_input_defaults('DESIGN.burner.MN', 0.1025)
+        self.set_input_defaults('DESIGN.hpt.MN', 0.3650)
+        self.set_input_defaults('DESIGN.duct11.MN', 0.3063)
+        self.set_input_defaults('DESIGN.lpt.MN', 0.4127)
+        self.set_input_defaults('DESIGN.duct13.MN', 0.4463)
+        self.set_input_defaults('DESIGN.byp_bld.MN', 0.4489)
+        self.set_input_defaults('DESIGN.duct15.MN', 0.4589)
+        self.set_input_defaults('DESIGN.LP_Nmech', 4666.1, units='rpm')
+        self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
 
         # --- Set up bleed values -----
         self.set_input_defaults('DESIGN.hpc.cust:frac_W', 0.0445),
@@ -390,48 +340,11 @@ class MPhbtf(pyc.MPCycle):
             self.set_input_defaults(pt+'.fc.dTs', self.od_dTs[i], units='degR')
             self.set_input_defaults(pt+'.hpc.cust:frac_W', self.od_Ws[i])
 
-        #Connect all DESIGN map scalars to the off design cases
-        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
-        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
-        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
-        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
-        self.pyc_connect_des_od('lpc.s_PR', 'lpc.s_PR')
-        self.pyc_connect_des_od('lpc.s_Wc', 'lpc.s_Wc')
-        self.pyc_connect_des_od('lpc.s_eff', 'lpc.s_eff')
-        self.pyc_connect_des_od('lpc.s_Nc', 'lpc.s_Nc')
-        self.pyc_connect_des_od('hpc.s_PR', 'hpc.s_PR')
-        self.pyc_connect_des_od('hpc.s_Wc', 'hpc.s_Wc')
-        self.pyc_connect_des_od('hpc.s_eff', 'hpc.s_eff')
-        self.pyc_connect_des_od('hpc.s_Nc', 'hpc.s_Nc')
-        self.pyc_connect_des_od('hpt.s_PR', 'hpt.s_PR')
-        self.pyc_connect_des_od('hpt.s_Wp', 'hpt.s_Wp')
-        self.pyc_connect_des_od('hpt.s_eff', 'hpt.s_eff')
-        self.pyc_connect_des_od('hpt.s_Np', 'hpt.s_Np')
-        self.pyc_connect_des_od('lpt.s_PR', 'lpt.s_PR')
-        self.pyc_connect_des_od('lpt.s_Wp', 'lpt.s_Wp')
-        self.pyc_connect_des_od('lpt.s_eff', 'lpt.s_eff')
-        self.pyc_connect_des_od('lpt.s_Np', 'lpt.s_Np')
-        
+        self.pyc_use_default_des_od_conns()
+
         #Set up the RHS of the balances!
         self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
         self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
-
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
-        self.pyc_connect_des_od('splitter.Fl_O1:stat:area', 'splitter.area1')
-        self.pyc_connect_des_od('splitter.Fl_O2:stat:area', 'splitter.area2')
-        self.pyc_connect_des_od('duct4.Fl_O:stat:area', 'duct4.area')
-        self.pyc_connect_des_od('lpc.Fl_O:stat:area', 'lpc.area')
-        self.pyc_connect_des_od('duct6.Fl_O:stat:area', 'duct6.area')
-        self.pyc_connect_des_od('hpc.Fl_O:stat:area', 'hpc.area')
-        self.pyc_connect_des_od('bld3.Fl_O:stat:area', 'bld3.area')
-        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
-        self.pyc_connect_des_od('hpt.Fl_O:stat:area', 'hpt.area')
-        self.pyc_connect_des_od('duct11.Fl_O:stat:area', 'duct11.area')
-        self.pyc_connect_des_od('lpt.Fl_O:stat:area', 'lpt.area')
-        self.pyc_connect_des_od('duct13.Fl_O:stat:area', 'duct13.area')
-        self.pyc_connect_des_od('byp_bld.Fl_O:stat:area', 'byp_bld.area')
-        self.pyc_connect_des_od('duct15.Fl_O:stat:area', 'duct15.area')
 
 
 if __name__ == "__main__":
@@ -447,16 +360,22 @@ if __name__ == "__main__":
     #Define the design point
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
+
     prob.set_val('DESIGN.lpc.PR', 1.935)
     prob.set_val('DESIGN.lpc.eff', 0.9243)
-    prob.set_val('DESIGN.hpc.PR', 9.369),
-    prob.set_val('DESIGN.hpc.eff', 0.8707),
-    prob.set_val('DESIGN.hpt.eff', 0.8888),
-    prob.set_val('DESIGN.lpt.eff', 0.8996),
+
+    prob.set_val('DESIGN.hpc.PR', 9.369)
+    prob.set_val('DESIGN.hpc.eff', 0.8707)
+    
+    prob.set_val('DESIGN.hpt.eff', 0.8888)
+    prob.set_val('DESIGN.lpt.eff', 0.8996)
+    
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
-    prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
-    prob.set_val('DESIGN.balance.rhs:W', 5500.0, units='lbf') 
+    
+    # prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
+    prob.set_val('DESIGN.T4_MAX', 2857, units='degR')
+    prob.set_val('DESIGN.Fn_DES', 5900.0, units='lbf') 
         
 
     # Set initial guesses for balances

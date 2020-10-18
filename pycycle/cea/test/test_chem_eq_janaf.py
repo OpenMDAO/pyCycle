@@ -13,7 +13,7 @@ from pycycle import constants
 class ChemEqTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.thermo = species_data.Thermo(species_data.janaf, init_reacts=constants.AIR_MIX)
+        self.thermo = species_data.Properties(species_data.janaf, init_reacts=constants.AIR_MIX)
         p = self.p = Problem(model=Group())
         p.model.suppress_solver_output = True
         p.model.set_input_defaults('P', 1.034210, units="bar")
@@ -25,12 +25,14 @@ class ChemEqTestCase(unittest.TestCase):
         p.setup(check=False)
         p.run_model()
 
-        check_val = np.array([3.23319258e-04, 1.16619251e-10, 1.10131075e-05, 1.00000000e-10,
-                            4.19205954e-05, 2.27520440e-07, 1.00000000e-10, 2.69368126e-02,
-                            6.33239011e-08, 7.21077455e-03])
+        check_val = np.array([3.23319236e-04, 1.00000000e-10, 1.10138429e-05, 1.00000000e-10,
+                              1.72853915e-08, 6.76015824e-09, 1.00000000e-10, 2.69578737e-02,
+                              4.80653071e-09, 7.23197634e-03])
 
         tol = 6e-4
 
+        print(p['n'])
+        print(check_val)
         assert_near_equal(p['n'], check_val, tol)
 
     def test_set_total_hp(self):

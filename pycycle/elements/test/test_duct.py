@@ -8,7 +8,7 @@ import numpy as np
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf, Thermo
+from pycycle.cea.species_data import janaf, Properties
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
@@ -54,7 +54,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case1(self):
 
-        thermo = Thermo(janaf, constants.AIR_MIX)
+        thermo = Properties(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -110,7 +110,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case_with_dPqP_MN(self):
 
-        thermo = Thermo(janaf, constants.AIR_MIX)
+        thermo = Properties(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()
