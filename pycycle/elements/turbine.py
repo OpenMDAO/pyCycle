@@ -211,8 +211,6 @@ class Bleeds(om.ExplicitComponent):
 
         self.add_output('W_out', shape=1, units='lbm/s',
                         desc='turbine exit mass flow rate')
-        self.add_output('n_out', shape=self.n_main_flow_prods,
-                        desc='turbine exit flow composition')
         self.add_output('b0_out', val=main_flow_thermo.b0)
 
         # bleed inputs and outputs
@@ -229,7 +227,6 @@ class Bleeds(om.ExplicitComponent):
 
             self.declare_partials(BN+':Pt', ['Pt_in', 'Pt_out', BN+':frac_P'])
             self.declare_partials('W_out', BN+':W', val=1.0)
-            self.declare_partials('n_out', [BN+':W', BN+':n'])
             self.declare_partials('b0_out', [BN+':W', BN+':n'])
 
         # create mapping for main and bleed flow
@@ -245,7 +242,6 @@ class Bleeds(om.ExplicitComponent):
             self.mix_mat[i,j] = 1
 
         self.declare_partials('W_out', 'W_in', val=1.0)
-        self.declare_partials('n_out', ['W_in', 'n_in'])
         self.declare_partials('b0_out', ['W_in', 'n_in'])
 
     def compute(self, inputs, outputs):
@@ -281,9 +277,9 @@ class Bleeds(om.ExplicitComponent):
 
         # determine the exit composition
         flow_mass_norm = flow_mass / W_out
-        outputs['n_out'] = flow_mass_norm / self.main_flow_wt_mole
+        n_out = flow_mass_norm / self.main_flow_wt_mole
         outputs['W_out'] = W_out
-        outputs['b0_out'] = np.sum(self.aij*outputs['n_out'], axis=1)
+        outputs['b0_out'] = np.sum(self.aij*n_out, axis=1)
 
     def compute_partials(self, inputs, J):
 
@@ -321,13 +317,13 @@ class Bleeds(om.ExplicitComponent):
         exit_total_mass += W_bld
 
         # Jacobian elements without bleed flows
-        J['n_out', 'W_in'] = (n_mass/n_mass_sum - flow_mass/exit_total_mass)/(exit_total_mass*mfwm)
+        d_n_out__d_w_in = (n_mass/n_mass_sum - flow_mass/exit_total_mass)/(exit_total_mass*mfwm)
 
         A = (np.diag(mfwm) - np.outer(n_mass, mfwm)/n_mass_sum)
-        J['n_out', 'n_in'] = (A.T * W_in/(exit_total_mass*n_mass_sum*mfwm)).T
+        d_n_out__d_n_in = (A.T * W_in/(exit_total_mass*n_mass_sum*mfwm)).T
 
-        J['b0_out', 'W_in'] = np.matmul(self.aij,J['n_out','W_in'])
-        J['b0_out', 'n_in'] = np.matmul(self.aij,J['n_out', 'n_in'])
+        J['b0_out', 'W_in'] = np.matmul(self.aij,d_n_out__d_w_in)
+        J['b0_out', 'n_in'] = np.matmul(self.aij,d_n_out__d_n_in)
 
         # Jacobian elements and modifications due to bleed flows
         for BN in bleeds:
@@ -349,13 +345,13 @@ class Bleeds(om.ExplicitComponent):
             bld_mass_i = n_bld_mass / np.sum(n_bld_mass)
 
             bld_mass_new = self.mix_mat.dot(bld_mass_i)
-            J['n_out', BN_W] = (-flow_mass/exit_total_mass + bld_mass_new)/(exit_total_mass*mfwm)
+            d_n_out_dBN_W = (-flow_mass/exit_total_mass + bld_mass_new)/(exit_total_mass*mfwm)
 
             A = self.mix_mat*bfwm*W_bld - np.outer(bld_mass_flw, bfwm)
-            J['n_out', BN_n] = (A.T / (exit_total_mass*bld_mass_sum*mfwm)).T
+            d_n_out_dBN_n = (A.T / (exit_total_mass*bld_mass_sum*mfwm)).T
 
-            J['b0_out', BN_W] = np.matmul(self.aij,J['n_out',BN_W])
-            J['b0_out', BN_n] = np.matmul(self.aij,J['n_out', BN_n])
+            J['b0_out', BN_W] = np.matmul(self.aij,d_n_out_dBN_W)
+            J['b0_out', BN_n] = np.matmul(self.aij,d_n_out_dBN_n)
 
 class EnthalpyAndPower(om.ExplicitComponent):
     """Calculates exit enthalpy and shaft power for the turbine"""
