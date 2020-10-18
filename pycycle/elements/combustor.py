@@ -4,9 +4,11 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.cea.new_thermo import Thermo
-from pycycle.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+
+from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.species_data import Properties, janaf
+
 from pycycle.elements.duct import PressureLoss
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough

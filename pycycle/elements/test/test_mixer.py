@@ -14,16 +14,13 @@ from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
 from pycycle.elements.test.util import check_element_partials
-from pycycle.cea.species_data import Properties, janaf
-# from pycycle.cea.thermo_data import janaf2
+from pycycle.thermo.cea.species_data import janaf
 
 
 class MixerTestcase(unittest.TestCase):
 
     def test_mix_same(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
-
-        thermo = Properties(janaf, AIR_MIX)
 
         p = Problem()
 
@@ -51,8 +48,6 @@ class MixerTestcase(unittest.TestCase):
 
     def test_mix_diff(self):
         # mix two identical streams and make sure you get twice the area and the same total pressure
-
-        thermo = Properties(janaf, AIR_MIX)
 
         p = Problem()
 

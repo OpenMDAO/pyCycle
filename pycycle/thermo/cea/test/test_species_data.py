@@ -6,7 +6,7 @@ import openmdao.api as om
 
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 from pycycle.constants import CO2_CO_O2_ELEMENTS, CO2_CO_O2_MIX, AIR_ELEMENTS, AIR_MIX
 
 

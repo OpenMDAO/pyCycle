@@ -4,8 +4,8 @@ import numpy as np
 
 import openmdao.api as om 
 
-from pycycle.cea import species_data
-from pycycle.cea.new_thermo import Thermo
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough

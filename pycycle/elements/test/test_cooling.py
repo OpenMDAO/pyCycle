@@ -108,7 +108,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, combustor, flow_start
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
 
 

@@ -3,9 +3,10 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION
-from pycycle.cea import species_data
-from pycycle.cea.props_rhs import PropsRHS
-from pycycle.cea.props_calcs import PropsCalcs
+
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.cea.props_rhs import PropsRHS
+from pycycle.thermo.cea.props_calcs import PropsCalcs
 
 
 

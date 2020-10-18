@@ -7,7 +7,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.constants import AIR_MIX
 from pycycle.connect_flow import connect_flow
-from pycycle.cea.species_data import janaf, Properties
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
 from pycycle import constants
@@ -48,8 +48,6 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class CompressorTestCase(unittest.TestCase):
 
     def setUp(self):
-
-        thermo = Properties(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
 

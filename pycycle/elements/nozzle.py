@@ -2,9 +2,9 @@
 
 import openmdao.api as om
 
-from pycycle.cea import species_data
-from pycycle.cea.new_thermo import Thermo
 from pycycle.constants import AIR_FUEL_MIX, g_c
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.flow_in import FlowIn
 
 

@@ -1,12 +1,12 @@
 import openmdao.api as om
 
 from pycycle.constants import AIR_MIX
-from pycycle import cea
-from pycycle.cea import chem_eq
-from pycycle.cea.static_ps_calc import PsCalc
-from pycycle.cea.static_ps_resid import PsResid
 
-from pycycle.cea.unit_comps import EngUnitStaticProps, EngUnitProps
+from pycycle.thermo.static_ps_calc import PsCalc
+from pycycle.thermo.static_ps_resid import PsResid
+from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
+
+from pycycle.thermo.cea import chem_eq
 
 
 class Thermo(om.Group):

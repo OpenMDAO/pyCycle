@@ -1,7 +1,7 @@
 from openmdao.api import Group, ExplicitComponent
 
-from pycycle.cea import species_data
-from pycycle.cea.new_thermo import Thermo
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_MIX, WET_AIR_MIX
 import numpy as np
 

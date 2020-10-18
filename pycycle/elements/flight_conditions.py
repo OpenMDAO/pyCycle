@@ -1,6 +1,6 @@
 import openmdao.api as om
 
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_MIX
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart

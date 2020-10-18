@@ -2,7 +2,7 @@ import numpy as np
 
 from collections import OrderedDict
 
-from pycycle.cea.thermo_data import janaf
+from pycycle.thermo.cea.thermo_data import janaf
 
 big_range = janaf.big_range
 small_range = janaf.small_range
