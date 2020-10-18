@@ -11,7 +11,6 @@ from pycycle.cea.unit_comps import EngUnitStaticProps, EngUnitProps
 
 class Thermo(om.Group):
 
-    
     def initialize(self):
         self.options.declare('fl_name',
                               default="flow",
@@ -20,7 +19,7 @@ class Thermo(om.Group):
                               desc='Set the computation mode for the thermodynamics',
                               default='total_TP',
                               values=('total_TP', 'total_SP', 'total_hP', 
-                                    'static_MN', 'static_A', 'static_Ps'))
+                                      'static_MN', 'static_A', 'static_Ps'))
         self.options.declare('method', values=('CEA', ))
         # thermo_kwargs should be a dictionary containing all the information needed to setup
         # the thermo calculations:
@@ -30,10 +29,7 @@ class Thermo(om.Group):
         # The user should define one or more of these dictionaries at the top of their model
         # then pass them into the individual componenents
         self.options.declare('thermo_kwargs', default={},
-                              desc='Defines the thermodynamic data to be used in computations')
-
-    def set_thermo(self, thermo): 
-        self._thermo = thermo # factor to create thermo from
+                             desc='Defines the thermodynamic data to be used in computations')
 
     def setup(self):
         method = self.options['method']
@@ -69,7 +65,6 @@ class Thermo(om.Group):
             in_vars += ('P', )
             # leave S unpromoted to connect to balance lhs
             out_vars += ('h',)
-
         if 'static' in mode: 
             in_vars += (('P', 'Ps'),)
             out_vars += ('h', )
@@ -77,10 +72,6 @@ class Thermo(om.Group):
         self.add_subsystem('base_thermo', base_thermo, 
                            promotes_inputs=in_vars, 
                            promotes_outputs=out_vars)
-
-        # TODO: merge this into base_thermon from CEA
-        if 'static' in mode:  
-            in_vars += (('P', 'Ps'), ) # promote the P as the static Ps
            
         # Add implicit components/balances to depending on the mode and connect them to
         # the properties calculation components
@@ -122,7 +113,6 @@ class Thermo(om.Group):
         # not a big deal right now though
         # Compute English units and promote outputs to the station name
 
-
         in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'b0', 'R')
         if 'static' in mode: 
         # need to redefine this so that P gets promoted as P. 
@@ -130,15 +120,14 @@ class Thermo(om.Group):
 
         fl_name = self.options['fl_name']
         # TODO: remove need for thermo specific data in the flow components
-        self.add_subsystem('flow', EngUnitProps(thermo=None, fl_name=fl_name),
+        self.add_subsystem('flow', EngUnitProps(fl_name=fl_name),
                            promotes_inputs=in_vars,
                            promotes_outputs=(f'{fl_name}:*',))
-
 
         if 'static' in mode:
             in_vars = ('area', 'W', 'V', 'Vsonic', 'MN')
             # TODO: remove need for thermo specific data in the flow components
-            eng_units_statics = EngUnitStaticProps(thermo=None, fl_name=fl_name)
+            eng_units_statics = EngUnitStaticProps(fl_name=fl_name)
             self.add_subsystem('flow_static', eng_units_statics,
                                promotes_inputs=in_vars,
                                promotes_outputs=(f'{fl_name}:*',))
@@ -178,7 +167,6 @@ class Thermo(om.Group):
         ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
         ln_bt.options['maxiter'] = 2
         ln_bt.options['iprint'] = -1
-
 
     def configure(self): 
         b0 = self.base_thermo.b0
