@@ -8,7 +8,7 @@ import numpy as np
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf, Properties
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.inlet import Inlet
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
@@ -49,8 +49,6 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class InletTestCase(unittest.TestCase):
 
     def setUp(self):
-
-        thermo = Properties(janaf, AIR_MIX)
 
         self.prob = Problem()
         self.prob.model = Group()

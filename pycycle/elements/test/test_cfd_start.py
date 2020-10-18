@@ -5,7 +5,7 @@ import openmdao.api as om
 from openmdao.utils.assert_utils import assert_near_equal
 
 
-from pycycle.cea.species_data import janaf
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.cfd_start import CFDStart
 from pycycle.constants import AIR_MIX
 

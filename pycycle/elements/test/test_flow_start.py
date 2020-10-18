@@ -5,7 +5,7 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart, SetWAR
 from pycycle.constants import AIR_MIX, WET_AIR_MIX
 

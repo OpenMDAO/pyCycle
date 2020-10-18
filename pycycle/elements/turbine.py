@@ -6,8 +6,8 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_MIX, AIR_FUEL_MIX
-from pycycle.cea.new_thermo import Thermo
-from pycycle.cea import species_data
+from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 # from pycycle.components.compressor import Power

@@ -2,8 +2,8 @@ import numpy as np
 
 from openmdao.api import ExplicitComponent
 
-from pycycle.cea import species_data
 from pycycle.constants import R_UNIVERSAL_ENG, R_UNIVERSAL_SI, MIN_VALID_CONCENTRATION
+from pycycle.thermo.cea import species_data
 
 
 class PropsRHS(ExplicitComponent):

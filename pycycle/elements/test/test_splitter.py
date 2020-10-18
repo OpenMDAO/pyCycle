@@ -6,7 +6,7 @@ from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.constants import AIR_MIX
-from pycycle.cea.species_data import janaf, Properties
+from pycycle.thermo.cea.species_data import janaf
 
 from pycycle.elements.splitter import Splitter
 from pycycle.elements.flow_start import FlowStart
@@ -60,8 +60,6 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class splitterTestCase(unittest.TestCase):
 
     def setUp(self):
-
-        thermo = Properties(janaf, AIR_MIX)
 
         self.prob = Problem()
 

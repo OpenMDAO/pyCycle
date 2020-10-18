@@ -7,8 +7,8 @@ import openmdao.api as om
 
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.new_thermo import Thermo
-from pycycle.cea import species_data
+from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea import species_data
 from pycycle import constants
 
 

@@ -6,9 +6,9 @@ from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.props_rhs import PropsRHS
-from pycycle.cea.props_calcs import PropsCalcs
-from pycycle.cea import species_data
+from pycycle.thermo.cea.props_rhs import PropsRHS
+from pycycle.thermo.cea.props_calcs import PropsCalcs
+from pycycle.thermo.cea import species_data
 from pycycle import constants
 
 

@@ -5,8 +5,8 @@ from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.chem_eq import ChemEq
-from pycycle.cea import species_data
+from pycycle.thermo.cea.chem_eq import ChemEq
+from pycycle.thermo.cea import species_data
 from pycycle import constants
 
 

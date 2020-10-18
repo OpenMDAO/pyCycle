@@ -16,7 +16,7 @@ class UnitCompBase(ExplicitComponent):
     #     self.fl_name = fl_name
 
     def initialize(self): 
-        self.options.declare('thermo')
+        # self.options.declare('thermo')
         self.options.declare('fl_name')
 
     def setup_io(self):

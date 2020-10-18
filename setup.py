@@ -4,8 +4,9 @@ setup(name='pycycle',
       version='3.0.0',
       packages=[
           'pycycle',
-          'pycycle/cea',
-          'pycycle/cea/thermo_data',
+          'pycycle/thermo',
+          'pycycle/thermo/cea',
+          'pycycle/thermo/cea/thermo_data',
           'pycycle/elements', 
           'pycycle/maps'
       ],

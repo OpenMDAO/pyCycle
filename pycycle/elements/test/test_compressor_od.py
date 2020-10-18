@@ -8,7 +8,7 @@ from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
 
 from pycycle.constants import AIR_MIX
-from pycycle.cea.species_data import janaf, Properties
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
 
 from pycycle.elements.compressor import Compressor
@@ -22,8 +22,6 @@ from pycycle.elements.test.util import check_element_partials
 class CompressorODTestCase(unittest.TestCase):
 
     def setUp(self):
-
-        thermo = Properties(janaf, constants.AIR_MIX)
 
         self.prob = Problem()
 

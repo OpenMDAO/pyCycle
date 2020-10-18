@@ -1,12 +1,13 @@
+from collections import OrderedDict
+
 import numpy as np
 from scipy import interpolate
 
-from collections import OrderedDict
-
-from pycycle.cea.thermo_data import co2_co_o2
-from pycycle.cea.thermo_data import janaf
-from pycycle.cea.thermo_data import wet_air
 from pycycle import constants
+
+from pycycle.thermo.cea.thermo_data import co2_co_o2
+from pycycle.thermo.cea.thermo_data import janaf
+from pycycle.thermo.cea.thermo_data import wet_air
 
 #from ad.admath import log
 from numpy import log
