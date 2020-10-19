@@ -1,0 +1,11 @@
+INFO: checking out_of_order
+INFO: checking system
+INFO: checking solvers
+INFO: checking dup_inputs
+WARNING: The following components have multiple inputs connected to the same source, which can introduce unnecessary data transfer overhead:
+   DESIGN.nozz.mux has inputs ['MN:W', 'Ps:W'] connected to DESIGN.turb.out_stat.flow_static.Fl_O:stat:W
+   DESIGN.nozz.mux has inputs ['Ps:P', 'Ps_calc'] connected to DESIGN.nozz.press_calcs.Ps_calc
+
+INFO: checking missing_recorders
+WARNING: The Problem has no recorder of any kind attached
+INFO: checking comp_has_no_outputs

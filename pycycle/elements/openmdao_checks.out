@@ -1,0 +1,19 @@
+INFO: checking out_of_order
+INFO: checking system
+INFO: checking solvers
+WARNING: Group 'flow_start.exit_static.statics' contains cycles [['chem_eq', 'props', 'ps_resid']], but does not have an iterative linear solver.
+WARNING: PsResid 'flow_start.exit_static.statics.ps_resid' contains implicit variables, but does not have an iterative linear solver and does not implement 'solve_linear'.
+WARNING: Group 'nozz' contains cycles [['PR_bal', 'press_calcs']], but does not have an iterative nonlinear solver.
+WARNING: Group 'nozz' contains cycles [['PR_bal', 'press_calcs']], but does not have an iterative linear solver.
+WARNING: PR_bal 'nozz.PR_bal' contains implicit variables, but does not have an iterative nonlinear solver and does not implement 'solve_nonlinear'.
+WARNING: PR_bal 'nozz.PR_bal' contains implicit variables, but does not have an iterative linear solver and does not implement 'solve_linear'.
+WARNING: Group 'nozz.staticMN.statics' contains cycles [['chem_eq', 'props', 'ps_resid']], but does not have an iterative linear solver.
+WARNING: PsResid 'nozz.staticMN.statics.ps_resid' contains implicit variables, but does not have an iterative linear solver and does not implement 'solve_linear'.
+INFO: checking dup_inputs
+WARNING: The following components have multiple inputs connected to the same source, which can introduce unnecessary data transfer overhead:
+   nozz.mux has inputs ['MN:W', 'Ps:W'] connected to flow_start.exit_static.flow_static.Fl_O:stat:W
+   nozz.mux has inputs ['Ps:P', 'Ps_calc'] connected to nozz.press_calcs.Ps_calc
+
+INFO: checking missing_recorders
+WARNING: The Problem has no recorder of any kind attached
+INFO: checking comp_has_no_outputs
