@@ -19,6 +19,39 @@ products = OrderedDict([
       'wt': 39.948,
       'elements': {'Ar': 1}
     }),
+    ('CH4', {
+      'coeffs':[
+            [ -1.766850998e+05, 2.786181020e+03, -1.202577850e+01, 3.917619290e-02, -3.619054430e-05, # 200 - 1000
+              2.026853043e-08, -4.976705490e-12, -2.331314360e+04,  8.904322750e+01], # 1000 - 6000
+            [ 3.730042760e+06, -1.383501485e+04, 2.049107091e+01, -1.961974759e-03,  4.727313040e-07,
+              -3.728814690e-11,  1.623737207e-15, 7.532066910e+04, -1.219124889e+02],
+      ],
+      'ranges': small_range,
+      'wt': 16.04246,
+      'elements': OrderedDict([('C', 1), ('H', 4)])
+    }),
+    ('C2H4', {
+      'coeffs':[
+            [ -1.163605836e+05, 2.554851510e+03, -1.609746428e+01, 6.625779320e-02, -7.885081860e-05,
+              5.125224820e-08, -1.370340031e-11, -6.176191070e+03,  1.093338343e+02],
+            [ 3.408763670e+06, -1.374847903e+04, 2.365898074e+01, -2.423804419e-03, 4.431395660e-07,
+              -4.352683390e-11, 1.775410633e-15, 8.820429380e+04, -1.371278108e+02]
+      ],
+      'ranges': small_range,
+      'wt': 28.05316,
+      'elements': OrderedDict([('C', 2), ('H', 4)])
+    }),
+    # ('C10H8', {
+    #   'coeffs':[
+    #          [ -2.602920990e+05, 6.237519290e+03, -5.226157400e+01,  2.397710630e-01, -2.912272160e-04, # 200 - 1000
+    #            1.854965710e-07, -4.816685340e-11, -1.114753250e+04,  2.972172708e+02],
+    #          [ 5.905864570e+06, -3.163144910e+04,  7.030252590e+01, -6.018395960e-03,  1.141923860e-06, # 1000 - 6000
+    #            -1.161432010e-10,  4.891928210e-15, 1.962512700e+05, -4.347785692e+02]
+    #   ],
+    #   'ranges': small_range,
+    #   'wt': 128.17052,
+    #   'elements': {'C': 10, 'H': 8}
+    #  }),
     # 'C': {
     #   'coeffs': [
     #         [6.495031470e+02, -9.649010860e-01, 2.504675479e+00, -1.281448025e-05, 1.980133654e-08, # 200 - 1000
@@ -246,15 +279,19 @@ element_wts = {
 }
 
 reactants = { # used to compute the correct amounts of each product for an initial condition
-  'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319), ('H2O', 1)]), #percentage by volume. Note the actual amount of H2O is irrelevant and will be set by WAR
+  'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319)]), #percentage by volume
   # 'air': {'N': 1.5616, 'O':.41959, 'Ar': .00936, 'C': .00032},
+  #'JP-7': {'C': 1.00, 'H': 2.0044},
+  'JP-7': OrderedDict([('C2H4', 1.00), ('H', 0.0044)]), 
+  'Jet-A(g)': OrderedDict([('C2H4', 6), ('H', -1.)]), 
   'H2': OrderedDict([('H2', 1.00)]), 
+  'Methane': OrderedDict([('CH4', 1.00)])
 }
 
 
 
-init_prod_amounts = reactants['air'].copy() # initial value used to set the atomic fractions in the mixture
-
+# init_prod_amounts = reactants['air'].copy() # initial value used to set the atomic fractions in the mixture
+# default_elements = {'Ar':3.23319258e-04, 'C':1.10132241e-05, 'N':5.39157736e-02, 'O':1.44860147e-02}
 
 # tot_amount = 0
 # for r in products.keys(): # assume pure air by default

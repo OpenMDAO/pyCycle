@@ -4,9 +4,8 @@ import numpy as np
 
 import openmdao.api as om 
 
-from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -173,12 +172,13 @@ class Duct(om.Group):
         design = self.options['design']
         expMN = self.options['expMN']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
-        num_prod = len(gas_prods)
+        num_prod = gas_thermo.num_prod
+        num_element = gas_thermo.num_element
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         if expMN > 1e-10: # Calcluate pressure losses as function of Mach number
@@ -200,9 +200,11 @@ class Duct(om.Group):
         self.add_subsystem('q_calc', qCalc(), promotes_inputs=prom_in)
 
         # Total Calc
-        real_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                             init_reacts=elements, fl_name="Fl_O:tot")
-        prom_in = [('init_prod_amounts', 'Fl_I:tot:n')]
+        real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
+        prom_in = [('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect("q_calc.ht_out", "real_flow.h")
@@ -211,8 +213,11 @@ class Duct(om.Group):
         if statics:
             if design:
             #   Calculate static properties
-                out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
@@ -226,8 +231,11 @@ class Duct(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
@@ -247,26 +255,28 @@ class Duct(om.Group):
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='in**2')
 
+        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
+
 
 if __name__ == "__main__":
 
     p = om.Problem()
     p.model = om.Group()
 
-    params = (
-        ('dPqP', 0.02, {'shape': 1, 'desc': 'pressure differential as a fraction of incoming pressure'}),
-        ('Pt_in', 5.0, {'units': 'lbf/inch**2', 'shape': 1, 'desc': 'Inlet total pressure'}),
-        ('MN_in', 0.5)
-    )
-    p.model.add_subsystem('des_vars', om.IndepVarComp(params), promotes=['*'])
+    # params = (
+    #     ('dPqP', 0.02, {'shape': 1, 'desc': 'pressure differential as a fraction of incoming pressure'}),
+    #     ('Pt_in', 5.0, {'units': 'lbf/inch**2', 'shape': 1, 'desc': 'Inlet total pressure'}),
+    #     ('MN_in', 0.5)
+    # )
+    # p.model.add_subsystem('des_vars', om.IndepVarComp(params), promotes=['*'])
 
 
     p.model.add_subsystem('comp', PressureLoss(), promotes=['*'])
     p.model.add_subsystem('loss', MachPressureLossMap(design=True, expMN=2.0), promotes=['*'])
 
     
-    p.setup(check=False)
-    p.run()
+    p.setup(check=False, force_alloc_complex=True)
+    p.run_model()
 
-    p.check_partials()
+    p.check_partials(method='cs', compact_print=True)
 

@@ -41,7 +41,7 @@ class Cycle(om.Group):
 
         # total
         if connect_tot:
-            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R'):
+            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R', 'b0'):
                 self.connect('%s:tot:%s'%(fl_src, v_name), '%s:tot:%s'%(fl_target, v_name))
 
         # static
@@ -49,7 +49,7 @@ class Cycle(om.Group):
             for v_name in ('V', 'Vsonic'):  # ('Wc', 'W', 'FAR'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
-            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho'):
+            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho', 'b0'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
         if connect_w:
@@ -84,13 +84,14 @@ class MPCycle(om.Group):
 
         self._des_od_connections.append((src, target))
 
-    def pyc_use_default_des_od_conns(self): 
+    def pyc_use_default_des_od_conns(self, skip=None): 
         if self._des_pnt is None:
             raise ValueError('Cannot connect between design and off design because no design point has been created. Use pyc_add_pnt to add a design point.')
 
         elif self._od_pnts == []:
             raise ValueError('Cannot connect between design and off design because no off design point has been created. Use pyc_add_pnt to add an off design point.')
 
+        self._default_des_od_cons_skip = skip
         self._use_default_des_od_conns = True
 
     def pyc_add_pnt(self, name, pnt, **kwargs):
@@ -124,7 +125,10 @@ class MPCycle(om.Group):
                 self.connect(f'{self._des_pnt.name}.{src}', f'{od_pnt.name}.{target}')
         
         if self._use_default_des_od_conns: 
+            skip = self._default_des_od_cons_skip
             for elem in self._des_pnt._elements: 
+                if  skip is not None and elem.name in skip: 
+                    continue
                 try: 
                     for src, target in elem.default_des_od_conns: 
                         for od_pnt in self._od_pnts: 

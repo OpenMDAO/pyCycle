@@ -7,12 +7,8 @@ from pycycle.constants import R_UNIVERSAL_SI
 class PsCalc(ExplicitComponent):
     """Mach number, Area calculation for when Ps is known"""
 
-    def initialize(self):
-        self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
-
     def setup(self):
 
-        self.add_input('P', val=.001, units="bar", desc="static pressure")
         self.add_input('gamma', val=1.4)
         self.add_input('n_moles', shape=1)
         self.add_input('Ts', val=518., units="degK", desc="Static temp")

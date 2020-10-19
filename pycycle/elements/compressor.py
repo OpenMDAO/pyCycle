@@ -4,9 +4,8 @@ import itertools
 
 import openmdao.api as om
 
-from pycycle.cea import species_data
-from pycycle.cea.set_total import SetTotal
-from pycycle.cea.set_static import SetStatic
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 from pycycle.constants import AIR_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
@@ -353,6 +352,7 @@ class Compressor(om.Group):
         --------
         map.PRdes
         map.effDes
+        map.RlineMap
         alphaMap
         MN
 
@@ -433,11 +433,12 @@ class Compressor(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
 
-        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_reacts=elements)
         num_prod = thermo.num_prod
+        num_element = thermo.num_element
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -457,12 +458,13 @@ class Compressor(om.Group):
                            'PR', ('Pt_in', 'Fl_I:tot:P')])
 
         # Calculate ideal flow station properties
-        self.add_subsystem('ideal_flow', SetTotal(thermo_data=thermo_data,
-                                                  mode='S',
-                                                  init_reacts=elements),
+        ideal_flow = Thermo(mode='total_SP', 
+                            method='CEA', 
+                            thermo_kwargs={'elements':elements, 
+                                           'spec':thermo_data})
+        self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=[('S', 'Fl_I:tot:S'),
-                                            ('init_prod_amounts',
-                                             'Fl_I:tot:n')])
+                                            ('b0', 'Fl_I:tot:b0')])
         self.connect("press_rise.Pt_out", "ideal_flow.P")
 
         # Calculate enthalpy rise across compressor
@@ -471,11 +473,13 @@ class Compressor(om.Group):
         self.connect("ideal_flow.h", "enth_rise.ideal_ht")
 
         # Calculate real flow station properties
-        real_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                             init_reacts=elements, fl_name="Fl_O:tot")
+        real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[
-                               ('init_prod_amounts', 'Fl_I:tot:n')],
+                               ('b0', 'Fl_I:tot:b0')],
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("enth_rise.ht_out", "real_flow.h")
         self.connect("press_rise.Pt_out", "real_flow.P")
@@ -508,11 +512,13 @@ class Compressor(om.Group):
         for BN in bleeds:
 
             bleed_names.append(BN + '_flow')
-            bleed_flow = SetTotal(thermo_data=thermo_data, mode='h',
-                                  init_reacts=elements, fl_name=BN + ":tot")
+            bleed_flow = Thermo(mode='total_hP', fl_name=BN + ":tot", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
-                                   ('init_prod_amounts', 'Fl_I:tot:n')],
+                                   ('b0', 'Fl_I:tot:b0')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
             self.connect(BN + ':ht', BN + "_flow.h")
             self.connect(BN + ':Pt', BN + "_flow.P")
@@ -523,13 +529,13 @@ class Compressor(om.Group):
         if statics:
             if design:
                 #   Calculate static properties
-                out_stat = SetStatic(
-                    mode='MN', thermo_data=thermo_data, init_reacts=elements,
-                    fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'MN', ('init_prod_amounts',
-                                              'Fl_I:tot:n')],
+                                       'MN', ('b0', 'Fl_I:tot:b0')],
                                    promotes_outputs=['Fl_O:stat:*'])
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
@@ -538,12 +544,13 @@ class Compressor(om.Group):
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
             else:  # Calculate static properties
-                out_stat = SetStatic(
-                    mode='area', thermo_data=thermo_data, init_reacts=elements,
-                    fl_name="Fl_O:stat")
+                out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'area', ('init_prod_amounts', 'Fl_I:tot:n')],
+                                       'area', ('b0', 'Fl_I:tot:b0')],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
@@ -573,6 +580,7 @@ class Compressor(om.Group):
         self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('PR', val=2., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
+        self.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='inch**2')
@@ -580,10 +588,19 @@ class Compressor(om.Group):
 
 if __name__ == "__main__":
 
-    p = om.Problem()
-    p.root = Compressor(design=True)
+    thermo = species_data.Properties(species_data.janaf)
 
-    p.setup()
+    p = om.Problem()
+    p.model = Compressor(design=True)
+
+    p.model.set_input_defaults('Fl_I:tot:h', 1.0, units='Btu/lbm')
+    p.model.set_input_defaults('Fl_I:tot:T', val=518., units='degR')
+    p.model.set_input_defaults('Fl_I:tot:P', val=1., units='lbf/inch**2')
+    p.model.set_input_defaults('Fl_I:tot:S', val=1.0, units='Btu/(lbm*degR)')
+    p.model.set_input_defaults('Fl_I:tot:R', val=1.0, units='Btu/(lbm*degR)')
+    p.model.set_input_defaults('Fl_I:stat:W', val= 0.0, units='lbm/s')
+    p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
+
+    p.setup(force_alloc_complex=True)
     p.run_model()
-    p.check_partials()
-    # p.run()
+    p.check_partials(method='cs', compact_print=True)

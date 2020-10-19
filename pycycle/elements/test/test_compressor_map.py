@@ -2,10 +2,10 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, IndepVarComp
+from openmdao.api import Problem
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.compressor_map import CompressorMap
 from pycycle.maps.axi5 import AXI5
@@ -64,15 +64,6 @@ class CompressorMapTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = Problem()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('Wc', 322.60579101811692, units='lbm/s')
-        des_vars.add_output('Nc', 172.11870165984794, units='rpm')
-        des_vars.add_output('alphaMap', 1.0)
-        des_vars.add_output('s_Nc', 1.721074624)
-        des_vars.add_output('s_PR', 0.147473296)
-        des_vars.add_output('s_Wc', 2.152309293)
-        des_vars.add_output('s_eff', 0.9950409659)
-
         self.prob.model.add_subsystem(
             'map',
             CompressorMap(
@@ -80,9 +71,13 @@ class CompressorMapTestCase(unittest.TestCase):
                 design=False),
             promotes=['*'])
 
-        # prob.print_all_convergence()
-
-        # Target PR: 1.7373664799999999
+        self.prob.model.set_input_defaults('Wc', 322.60579101811692, units='lbm/s')
+        self.prob.model.set_input_defaults('Nc', 172.11870165984794, units='rpm')
+        self.prob.model.set_input_defaults('alphaMap', 1.0)
+        self.prob.model.set_input_defaults('s_Nc', 1.721074624)
+        self.prob.model.set_input_defaults('s_PR', 0.147473296)
+        self.prob.model.set_input_defaults('s_Wc', 2.152309293)
+        self.prob.model.set_input_defaults('s_eff', 0.9950409659)
 
         newton = self.prob.model.nonlinear_solver = NewtonSolver()
         newton.options['atol'] = 1e-8
@@ -99,8 +94,6 @@ class CompressorMapTestCase(unittest.TestCase):
 
 
         self.prob.setup(check=False)
-        # print p['Wc'], p['WcScaled']
-        # p.run()
 
     def test_caseOD1(self):
         # 4 cases to check against
@@ -127,50 +120,50 @@ class CompressorMapTestCase(unittest.TestCase):
             npss = data[h_map['comp.NcMap']]
             pyc = self.prob['NcMap'][0]
             print('NcMap:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.RlineMap']]
             pyc = self.prob['RlineMap'][0]
             print('RlineMap:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of readMap
             npss = data[h_map['comp.effMap']]
             pyc = self.prob['effMap'][0]
             print('effMap:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.PRmap']]
             pyc = self.prob['PRmap'][0]
             print('PRmap:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.WcMap']]
             pyc = self.prob['WcMap'][0]
             print('WcMap:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check outputs of scaledOutput
             npss = data[h_map['comp.eff']]
             pyc = self.prob['eff'][0]
             print('eff:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             # check top level outputs
             npss = data[h_map['comp.PR']]
             pyc = self.prob['PR'][0]
             print('PR:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.SMW']]
             pyc = self.prob['SMW'][0]
             print('SMW:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             npss = data[h_map['comp.SMN']]
             pyc = self.prob['SMN'][0]
             print('SMN:', npss, pyc)
-            assert_rel_error(self, pyc, npss, tol)
+            assert_near_equal(pyc, npss, tol)
 
             print('Wc:', data[h_map['comp.Wc']], self.prob['Wc'][0], self.prob['scaledOutput.Wc'][0])
             print()

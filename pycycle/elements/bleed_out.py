@@ -1,13 +1,12 @@
 """ Class definition for a BleedOut."""
 
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 
 import openmdao.api as om 
 
-from pycycle.cea import species_data
-from pycycle.cea.set_static import SetStatic
-from pycycle.cea.set_total import SetTotal
+from pycycle.thermo.cea import species_data
+from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_MIX
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -106,12 +105,13 @@ class BleedOut(om.Group):
         design = self.options['design']
         bleeds = self.options['bleed_names']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
-        num_prod = len(gas_prods)
+        num_prod = gas_thermo.num_prod
+        num_element = gas_thermo.num_element
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Bleed flow calculations
@@ -125,24 +125,31 @@ class BleedOut(om.Group):
         for BN in bleeds:
 
             bleed_names.append(BN+'_flow')
-            bleed_flow = SetTotal(thermo_data=thermo_data, mode='T',
-                                  init_reacts=elements, fl_name=BN+":tot")
+            bleed_flow = Thermo(mode='total_TP', fl_name=BN+":tot", 
+                                method='CEA', 
+                                thermo_kwargs={'elements':elements, 
+                                               'spec':thermo_data})
             self.add_subsystem(BN+'_flow', bleed_flow,
-                               promotes_inputs=[('init_prod_amounts', 'Fl_I:tot:n'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
+                               promotes_inputs=[('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
 
         # Total Calc
-        real_flow = SetTotal(thermo_data=thermo_data, mode='T',
-                             init_reacts=elements, fl_name="Fl_O:tot")
-        prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
+        real_flow = Thermo(mode='total_TP', fl_name="Fl_O:tot", 
+                           method='CEA', 
+                           thermo_kwargs={'elements':elements, 
+                                          'spec':thermo_data})
+        prom_in = [('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
 
         if statics:
             if design:
             #   Calculate static properties
-                out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -156,8 +163,11 @@ class BleedOut(om.Group):
 
             else:
                 # Calculate static properties
-                out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat", 
+                                  method='CEA', 
+                                  thermo_kwargs={'elements':elements, 
+                                                 'spec':thermo_data})
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -173,6 +183,8 @@ class BleedOut(om.Group):
                                promotes=['*'])
 
         self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
+
+        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
 
 
 if __name__ == "__main__":

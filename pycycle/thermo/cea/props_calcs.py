@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
     from pycycle.cea import species_data
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.co2_co_o2)
 
     p = Problem()
     model = p.model = Group()

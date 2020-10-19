@@ -3,12 +3,11 @@ from pycycle.constants import (AIR_FUEL_MIX, AIR_MIX, WET_AIR_MIX, OXYGEN, OXYGE
                                R_UNIVERSAL_SI, R_UNIVERSAL_ENG, g_c, MIN_VALID_CONCENTRATION, 
                                T_STDeng, P_STDeng, P_REF)
 
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.cfd_start import CFDStart
 from pycycle.elements.inlet import Inlet
-from pycycle.elements.complex_inlet import ComplexInlet
 from pycycle.elements.duct import Duct
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.combustor import Combustor

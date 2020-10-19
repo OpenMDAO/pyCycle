@@ -2,8 +2,8 @@ import numpy as np
 import unittest
 import os
 
-from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.api import Problem, Group
+from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.elements.shaft import Shaft
 
@@ -36,13 +36,12 @@ class ShaftTestCase(unittest.TestCase):
         self.top.model = Group()
         self.top.model.add_subsystem("shaft", Shaft(num_ports=3), promotes=["*"])
 
-        des_vars = self.top.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('trq_0', 17., units='ft*lbf')
-        des_vars.add_output('trq_1', 17., units='ft*lbf')
-        des_vars.add_output('trq_2', 17., units='ft*lbf')
-        des_vars.add_output('Nmech', 17., units='rpm')
-        des_vars.add_output('HPX', 17., units='hp')
-        des_vars.add_output('fracLoss', 17.)
+        self.top.model.set_input_defaults('trq_0', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('trq_1', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('trq_2', 17., units='ft*lbf')
+        self.top.model.set_input_defaults('Nmech', 17., units='rpm')
+        self.top.model.set_input_defaults('HPX', 17., units='hp')
+        self.top.model.set_input_defaults('fracLoss', 17.)
 
         self.top.setup(check=False)
 
@@ -77,12 +76,12 @@ class ShaftTestCase(unittest.TestCase):
             pwrNet_comp = self.top['pwr_net']
 
             tol = 1.0e-4
-            assert_rel_error(self, trqIn_comp, trqIn, tol)
-            assert_rel_error(self, trqOut_comp, trqOut, tol)
-            assert_rel_error(self, trqNet_comp, trqNet, tol)
-            assert_rel_error(self, pwrIn_comp, pwrIn, tol)
-            assert_rel_error(self, pwrOut_comp, pwrOut, tol)
-            assert_rel_error(self, pwrNet_comp, pwrNet, tol)
+            assert_near_equal(trqIn_comp, trqIn, tol)
+            assert_near_equal(trqOut_comp, trqOut, tol)
+            assert_near_equal(trqNet_comp, trqNet, tol)
+            assert_near_equal(pwrIn_comp, pwrIn, tol)
+            assert_near_equal(pwrOut_comp, pwrOut, tol)
+            assert_near_equal(pwrNet_comp, pwrNet, tol)
 
             check_element_partials(self, self.top)
 

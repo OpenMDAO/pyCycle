@@ -2,8 +2,8 @@ import numpy as np
 
 from openmdao.api import ExplicitComponent
 
-from pycycle.cea import species_data
 from pycycle.constants import R_UNIVERSAL_ENG, R_UNIVERSAL_SI, MIN_VALID_CONCENTRATION
+from pycycle.thermo.cea import species_data
 
 
 class PropsRHS(ExplicitComponent):
@@ -23,7 +23,7 @@ class PropsRHS(ExplicitComponent):
                        desc="molar concentration of the mixtures, last element is "
                        "the total molar concentration")  # kg-mol/kg
         self.add_input('n_moles', val=1., desc="1/molar_mass for gaseous mixture")
-        self.add_input('b0', val=np.zeros(num_element),
+        self.add_input('b0', val=thermo.b0,
                        desc="assigned kg-atoms of element i per total kg of reactant")  # kg-atom/kg
 
         self.add_output('rhs_T', val=np.zeros(num_element+1),
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     from openmdao.api import Problem, Group, IndepVarComp, LinearSystemComp
 
-    thermo = species_data.Thermo(species_data.co2_co_o2)
+    thermo = species_data.Properties(species_data.co2_co_o2)
 
     p = Problem()
     p.model = Group()

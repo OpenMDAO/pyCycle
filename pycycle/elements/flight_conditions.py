@@ -1,6 +1,6 @@
 import openmdao.api as om
 
-from pycycle.cea import species_data
+from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_MIX
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
@@ -29,7 +29,10 @@ class FlightConditions(om.Group):
             proms = ['Fl_O:*', 'MN', 'W', 'WAR']
         else:
             proms = ['Fl_O:*', 'MN', 'W']
-        conv.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements, use_WAR=use_WAR), promotes=proms)
+        conv.add_subsystem('fs', FlowStart(thermo_data=thermo_data, 
+                                           elements=elements, 
+                                           use_WAR=use_WAR), 
+                           promotes=proms)
         balance = conv.add_subsystem('balance', om.BalanceComp())
         balance.add_balance('Tt', val=500.0, lower=1e-4, units='degR', desc='Total temperature', eq_units='degR')
         balance.add_balance('Pt', val=14.696, lower=1e-4, units='psi', desc='Total pressure', eq_units='psi')

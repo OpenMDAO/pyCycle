@@ -5,10 +5,10 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.api import Problem, Group
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.cea.species_data import janaf, Thermo
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.inlet import Inlet
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
@@ -53,12 +53,11 @@ class InletTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
-        des_vars = self.prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-        des_vars.add_output('P', 17, units='psi')
-        des_vars.add_output('T', 500.0, units='degR')
-        des_vars.add_output('MN', 0.5)
-        des_vars.add_output('W', 1., units='lbm/s')
-        des_vars.add_output('V', 1., units='ft/s')
+        self.prob.model.set_input_defaults('flow_start.P', 17, units='psi')
+        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
+        self.prob.model.set_input_defaults('inlet.MN', 0.5)
+        self.prob.model.set_input_defaults('inlet.Fl_I:stat:V', 1., units='ft/s')
+        self.prob.model.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
         self.prob.model.add_subsystem('inlet', Inlet(elements=AIR_MIX))
@@ -75,12 +74,6 @@ class InletTestCase(unittest.TestCase):
             self.prob.model.connect('%s:stat:%s' % (
                 fl_src, v_name), '%s:stat:%s' % (fl_target, v_name))
 
-        self.prob.model.connect("P", "flow_start.P")
-        self.prob.model.connect("T", "flow_start.T")
-        self.prob.model.connect("MN", "inlet.MN")
-        self.prob.model.connect("W", "flow_start.W")
-        self.prob.model.connect("V", "inlet.Fl_I:stat:V")
-
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
 
@@ -90,11 +83,11 @@ class InletTestCase(unittest.TestCase):
             self.prob['inlet.ram_recovery'] = data[h_map['eRamBase']]
 
             # input flowstation
-            self.prob['P'] = data[h_map['Fl_I.Pt']]
-            self.prob['T'] = data[h_map['Fl_I.Tt']]
-            self.prob['MN'] = data[h_map['Fl_O.MN']]
-            self.prob['W'] = data[h_map['Fl_I.W']]
-            self.prob['V'] = data[h_map['Fl_I.V']]
+            self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
+            self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
+            self.prob['inlet.MN'] = data[h_map['Fl_O.MN']]
+            self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
+            self.prob['inlet.Fl_I:stat:V'] = data[h_map['Fl_I.V']]
 
             self.prob.run_model()
 
@@ -109,12 +102,11 @@ class InletTestCase(unittest.TestCase):
             ts_computed = self.prob['inlet.Fl_O:stat:T']
 
             tol = 1e-4
-            # rel_err = abs(pt_computed - pt) / pt_computed
-            assert_rel_error(self, pt_computed, pt, tol)
-            assert_rel_error(self, ht_computed, ht, tol)
-            assert_rel_error(self, Fram_computed, Fram, tol)
-            assert_rel_error(self, ps_computed, ps, tol)
-            assert_rel_error(self, ts_computed, ts, tol)
+            assert_near_equal(pt_computed, pt, tol)
+            assert_near_equal(ht_computed, ht, tol)
+            assert_near_equal(Fram_computed, Fram, tol)
+            assert_near_equal(ps_computed, ps, tol)
+            assert_near_equal(ts_computed, ts, tol)
 
             check_element_partials(self, self.prob)
 
