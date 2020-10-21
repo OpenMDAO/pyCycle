@@ -6,8 +6,11 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
+from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.elements.combustor import Combustor
+from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
+from pycycle.thermo.cea import species_data
+from pycycle.elements.combustor import Combustor, MixFuel
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -25,10 +28,47 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 
 class BurnerTestCase(unittest.TestCase):
 
+
+    def test_mix_fuel(self): 
+
+        thermo_spec = species_data.janaf
+
+        p = Problem()
+        p.model.add_subsystem('thermo', Thermo(mode='total_hp', 
+                                               method='CEA', 
+                                               thermo_kwargs={'elements': AIR_ELEMENTS, 
+                                                              'spec':  thermo_spec}), 
+                              promotes=['*'])
+        p = Problem()
+
+        fuel_type = 'JP-7'
+        p.model = MixFuel(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
+                          inflow_elements=AIR_ELEMENTS, fuel_type=fuel_type)
+
+
+        p.setup()
+
+        p['Fl_I:stat:W'] = 38.8
+        p['Fl_I:FAR'] = 0.02673
+        p['Fl_I:tot:h'] = 181.381769
+        p['fuel_Tt'] = 518.
+        p['Fl_I:tot:n'] = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
+                                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
+                                    1.00000000e-10, 7.23198770e-03])
+
+        p.run_model()
+
+        tol = 5e-7
+        assert_near_equal(p['mass_avg_h'], 176.65965638, tolerance=tol)
+        assert_near_equal(p['Wout'], 39.837124, tolerance=tol)
+        assert_near_equal(p['b0_out'], np.array([0.0003149 , 0.00186649, 0.00371561, 0.05251212, 0.01410888]), tolerance=tol)
+
+
+
     def test_case1(self):
 
         prob = Problem()
-        model = prob.model = Group()
+        model = prob.model 
 
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
@@ -56,6 +96,12 @@ class BurnerTestCase(unittest.TestCase):
             prob['MN'] = data[h_map['Fl_O.MN']]
 
             prob.run_model()
+
+            prob.model.combustor.mix_fuel.list_inputs(print_arrays=True)
+            prob.model.combustor.mix_fuel.list_outputs(print_arrays=True)
+            print(prob['Fl_I:tot:b0'])
+            print(prob['Fl_I:tot:n'])
+            exit()
 
             # check outputs
             tol = 1.0e-2

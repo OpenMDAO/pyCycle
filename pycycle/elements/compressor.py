@@ -433,7 +433,7 @@ class Compressor(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
 
-        thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_elements=elements)
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 
@@ -580,27 +580,7 @@ class Compressor(om.Group):
         self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('PR', val=2., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
-        self.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='inch**2')
 
-
-if __name__ == "__main__":
-
-    thermo = species_data.Properties(species_data.janaf)
-
-    p = om.Problem()
-    p.model = Compressor(design=True)
-
-    p.model.set_input_defaults('Fl_I:tot:h', 1.0, units='Btu/lbm')
-    p.model.set_input_defaults('Fl_I:tot:T', val=518., units='degR')
-    p.model.set_input_defaults('Fl_I:tot:P', val=1., units='lbf/inch**2')
-    p.model.set_input_defaults('Fl_I:tot:S', val=1.0, units='Btu/(lbm*degR)')
-    p.model.set_input_defaults('Fl_I:tot:R', val=1.0, units='Btu/(lbm*degR)')
-    p.model.set_input_defaults('Fl_I:stat:W', val= 0.0, units='lbm/s')
-    p.model.set_input_defaults('Fl_I:tot:b0', thermo.b0)
-
-    p.setup(force_alloc_complex=True)
-    p.run_model()
-    p.check_partials(method='cs', compact_print=True)

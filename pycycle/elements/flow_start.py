@@ -2,7 +2,7 @@ from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.constants import AIR_MIX, WET_AIR_MIX
+from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 import numpy as np
 
 class SetWAR(ExplicitComponent):
@@ -26,7 +26,7 @@ class SetWAR(ExplicitComponent):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf, 
                             desc='thermodynamic data set')
-        self.options.declare('elements', default=WET_AIR_MIX,
+        self.options.declare('elements', default=WET_AIR_ELEMENTS,
                               desc='set of elements present in the flow')
 
     def setup(self):
@@ -111,7 +111,7 @@ class FlowStart(Group):
 
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
 
         self.options.declare('use_WAR', default=False, values=[True, False], 
@@ -131,7 +131,7 @@ class FlowStart(Group):
 
                 raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.')
 
-        thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_elements=elements)
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)
 

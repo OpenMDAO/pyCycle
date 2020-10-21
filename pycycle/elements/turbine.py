@@ -5,7 +5,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_MIX, AIR_FUEL_MIX
+from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
@@ -186,13 +186,13 @@ class Bleeds(om.ExplicitComponent):
         self.mixed_elements.update(self.options['bld_flow_elements'])
 
         main_flow_thermo = species_data.Properties(
-            thermo_data, init_reacts=self.mixed_elements)
+            thermo_data, init_elements=self.mixed_elements)
         self.main_flow_prods = main_flow_thermo.products
         self.main_flow_wt_mole = main_flow_thermo.wt_mole
         self.n_main_flow_prods = len(self.main_flow_prods)
 
         bld_flow_thermo = species_data.Properties(
-            thermo_data, init_reacts=self.options['bld_flow_elements'])
+            thermo_data, init_elements=self.options['bld_flow_elements'])
         self.bld_flow_prods = bld_flow_thermo.products
         self.bld_flow_wt_mole = bld_flow_thermo.wt_mole
         self.n_bld_flow_prods = len(self.bld_flow_prods)
@@ -545,9 +545,9 @@ class Turbine(om.Group):
         self.options.declare('map_data', default=LPT2269)
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
-        self.options.declare('bleed_elements', default=AIR_MIX,
+        self.options.declare('bleed_elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
@@ -583,13 +583,13 @@ class Turbine(om.Group):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
         self.gas_prods = gas_thermo.products
         self.num_prod = len(self.gas_prods)
         num_element = gas_thermo.num_element
 
         bld_thermo = species_data.Properties(
-            thermo_data, init_reacts=bleed_elements)
+            thermo_data, init_elements=bleed_elements)
         self.bld_prods = bld_thermo.products
         self.num_bld_prod = len(self.bld_prods)
         num_bld_element = bld_thermo.num_element
@@ -767,59 +767,3 @@ class Turbine(om.Group):
         # if not designFlag: 
         #     self.set_input_defaults('area', val=1, units='in**2')
 
-
-if __name__ == "__main__":
-    from pycycle.api import FlowStart
-    from pycycle.cea import species_data
-    from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
-    from pycycle.connect_flow import connect_flow
-    from openmdao.api import IndepVarComp
-    from pycycle.maps.lpt2269 import LPT2269
-
-    gas = AIR_FUEL_MIX
-
-    prob = om.Problem()
-    prob.model = om.Group()
-
-    dv = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=['*'])
-    dv.add_output('P', 15.8172, units='lbf/inch**2')
-    dv.add_output('T', 2644.02, units='degR')
-    dv.add_output('W', 100.0, units='lbm/s')
-    dv.add_output('eff',0.9, units=None)
-    dv.add_output('P_bld', 16.000, units='lbf/inch**2')
-    dv.add_output('T_bld', 2000.0, units='degR')
-    dv.add_output('W_bld', 1.0, units='lbm/s')
-    dv.add_output('PR', 4.0, units=None)
-    dv.add_output('frac_P', 0.5),
-
-    prob.model.add_subsystem('flow_start', FlowStart(
-        thermo_data=species_data.janaf, elements=AIR_MIX))
-    prob.model.add_subsystem('bld_start', FlowStart(
-        thermo_data=species_data.janaf, elements=AIR_MIX))
-    prob.model.add_subsystem('turbine', Turbine(
-        map_data=LPT2269, design=True, elements=AIR_MIX,
-        bleed_names=['bld1']))
-
-    connect_flow(prob.model, 'flow_start.Fl_O', 'turbine.Fl_I')
-    connect_flow(prob.model, 'bld_start.Fl_O', 'turbine.bld1', connect_stat=False)
-
-    prob.model.connect("P", "flow_start.P")
-    prob.model.connect("T", "flow_start.T")
-    prob.model.connect("W", "flow_start.W")
-    prob.model.connect("P_bld", "bld_start.P")
-    prob.model.connect("T_bld", "bld_start.T")
-    prob.model.connect("W_bld", "bld_start.W")
-    prob.model.connect("PR", "turbine.PR")
-    prob.model.connect('eff', 'turbine.eff')
-    prob.model.connect("frac_P", "turbine.bld1:frac_P")
-
-    prob.setup()
-    # prob.model.flow_start.list_connections()
-    prob.run_model()
-
-    print(prob['turbine.Fl_O:tot:T'])
-    print(prob['turbine.Fl_O:tot:P'])
-    print(prob['turbine.Fl_O:stat:W'])
-    print(prob['bld_start.Fl_O:stat:W'])
-
-    prob.check_partials(compact_print=True, abs_err_tol=1e-3, rel_err_tol=1e-3)

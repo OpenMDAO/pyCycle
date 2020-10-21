@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -32,8 +32,8 @@ class NozzleTestCase(unittest.TestCase):
         self.prob.model = Group()
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX))
-        self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_MIX, lossCoef='Cfg', internal_solver=True))
+                                                              elements=AIR_ELEMENTS))
+        self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_ELEMENTS, lossCoef='Cfg', internal_solver=True))
 
         self.prob.model.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
         self.prob.model.set_input_defaults('flow_start.MN', 0.0)

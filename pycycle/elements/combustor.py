@@ -4,7 +4,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea.species_data import Properties, janaf
@@ -24,7 +24,7 @@ class MixFuel(om.ExplicitComponent):
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
                              desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set, in which case it is used only for outgoing flow.', recordable=False)
-        self.options.declare('inflow_elements', default=AIR_MIX,
+        self.options.declare('inflow_elements', default=AIR_ELEMENTS,
                              desc='set of elements present in the flow')
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
@@ -45,12 +45,12 @@ class MixFuel(om.ExplicitComponent):
         self.mixed_elements = inflow_elements.copy()
         self.mixed_elements.update(thermo_data.reactants[fuel_type]) #adds the fuel elements to the mix outflow
 
-        inflow_thermo = Properties(inflow_thermo_data, init_reacts=inflow_elements)
+        inflow_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
         self.inflow_prods = inflow_thermo.products
         self.inflow_num_prods = len(self.inflow_prods)
         self.inflow_wt_mole = inflow_thermo.wt_mole
 
-        air_fuel_thermo = Properties(thermo_data, init_reacts=self.mixed_elements)
+        air_fuel_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
         self.air_fuel_prods = air_fuel_thermo.products
         self.air_fuel_wt_mole = air_fuel_thermo.wt_mole
         self.aij = air_fuel_thermo.aij
@@ -77,7 +77,10 @@ class MixFuel(om.ExplicitComponent):
         self.add_output('b0_out', val=air_fuel_thermo.b0)
 
         for i, r in enumerate(self.air_fuel_prods):
-            self.init_fuel_amounts_base[i] = thermo_data.reactants[fuel_type].get(r, 0) * thermo_data.products[r]['wt']
+            self.init_fuel_amounts_base[i] = thermo_data.reactants['JP-7-a'].get(r, 0) * thermo_data.products[r]['wt']
+
+        # print('foobar', self.init_fuel_amounts_base)
+        # exit()
 
         # create a mapping between the composition indices of the inflow and outflow arrays
         self.in_out_flow_idx_map = [self.air_fuel_prods.index(prod) for prod in self.inflow_prods]
@@ -85,11 +88,13 @@ class MixFuel(om.ExplicitComponent):
         self.M_air = np.sum(self.init_air_amounts)
         self.M_fuel_base = np.sum(self.init_fuel_amounts_base)
 
-        self.declare_partials('mass_avg_h', ['Fl_I:FAR', 'Fl_I:tot:h'])
-        self.declare_partials('init_prod_amounts', ['Fl_I:FAR', 'Fl_I:tot:n'])
-        self.declare_partials('Wout', ['Fl_I:stat:W', 'Fl_I:FAR'])
-        self.declare_partials('Wfuel', ['Fl_I:stat:W', 'Fl_I:FAR'])
-        self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:n'])
+        # self.declare_partials('mass_avg_h', ['Fl_I:FAR', 'Fl_I:tot:h'])
+        # self.declare_partials('init_prod_amounts', ['Fl_I:FAR', 'Fl_I:tot:n'])
+        # self.declare_partials('Wout', ['Fl_I:stat:W', 'Fl_I:FAR'])
+        # self.declare_partials('Wfuel', ['Fl_I:stat:W', 'Fl_I:FAR'])
+        # self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:n'])
+
+        self.declare_partials('*', '*', method='fd')
 
     def compute(self, inputs, outputs):
         FAR = inputs['Fl_I:FAR']
@@ -127,44 +132,44 @@ class MixFuel(om.ExplicitComponent):
 
         outputs['b0_out'] = np.sum(self.aij*outputs['init_prod_amounts'], axis=1)
 
-    def compute_partials(self, inputs, J):
-        FAR = inputs['Fl_I:FAR']
-        W = inputs['Fl_I:stat:W']
-        ht = inputs['Fl_I:tot:h']
-        n = inputs['Fl_I:tot:n']
+    # def compute_partials(self, inputs, J):
+    #     FAR = inputs['Fl_I:FAR']
+    #     W = inputs['Fl_I:stat:W']
+    #     ht = inputs['Fl_I:tot:h']
+    #     n = inputs['Fl_I:tot:n']
 
-        # AssertionError: 4.2991138611171866e-05 not less than or equal to 1e-05 : DESIGN.burner.mix_fuel: init_prod_amounts  w.r.t Fl_I:tot:n
-        J['mass_avg_h', 'Fl_I:FAR'] = -ht/(1+FAR)**2 + self.fuel_ht/(1+FAR)**2  # - self.fuel_ht*FAR/(1+FAR)**2
-        J['mass_avg_h', 'Fl_I:tot:h'] = 1.0/(1.0 + FAR)
+    #     # AssertionError: 4.2991138611171866e-05 not less than or equal to 1e-05 : DESIGN.burner.mix_fuel: init_prod_amounts  w.r.t Fl_I:tot:n
+    #     J['mass_avg_h', 'Fl_I:FAR'] = -ht/(1+FAR)**2 + self.fuel_ht/(1+FAR)**2  # - self.fuel_ht*FAR/(1+FAR)**2
+    #     J['mass_avg_h', 'Fl_I:tot:h'] = 1.0/(1.0 + FAR)
 
-        J['Wout', 'Fl_I:stat:W'] = (1.0 + FAR)
-        J['Wout', 'Fl_I:FAR'] = W
+    #     J['Wout', 'Fl_I:stat:W'] = (1.0 + FAR)
+    #     J['Wout', 'Fl_I:FAR'] = W
 
-        J['Wfuel', 'Fl_I:stat:W'] = FAR
-        J['Wfuel', 'Fl_I:FAR'] = W
+    #     J['Wfuel', 'Fl_I:stat:W'] = FAR
+    #     J['Wfuel', 'Fl_I:FAR'] = W
 
-        init_air_amounts = np.zeros(len(self.air_fuel_prods))
-        for i, j in enumerate(self.in_out_flow_idx_map):
-            init_air_amounts[j] = n[i]
+    #     init_air_amounts = np.zeros(len(self.air_fuel_prods))
+    #     for i, j in enumerate(self.in_out_flow_idx_map):
+    #         init_air_amounts[j] = n[i]
 
-        init_air_amounts *= self.air_fuel_wt_mole
-        init_air_amounts /= np.sum(init_air_amounts)
-        init_fuel_amounts = self.init_fuel_amounts_base/self.M_fuel_base
+    #     init_air_amounts *= self.air_fuel_wt_mole
+    #     init_air_amounts /= np.sum(init_air_amounts)
+    #     init_fuel_amounts = self.init_fuel_amounts_base/self.M_fuel_base
 
-        J['init_prod_amounts', 'Fl_I:FAR'] = (init_fuel_amounts - init_air_amounts)/(1 + FAR)**2/self.air_fuel_wt_mole
+    #     J['init_prod_amounts', 'Fl_I:FAR'] = (init_fuel_amounts - init_air_amounts)/(1 + FAR)**2/self.air_fuel_wt_mole
 
-        dinit_prod_dn = np.zeros((self.num_prod,self.inflow_num_prods))
-        temp = ((np.eye(self.inflow_num_prods) * self.inflow_wt_mole * np.sum(n*self.inflow_wt_mole)) - \
-                            (np.outer(self.inflow_wt_mole,self.inflow_wt_mole)*n)) / \
-                            (np.sum(n*self.inflow_wt_mole)**2) / (1+FAR) / self.inflow_wt_mole
+    #     dinit_prod_dn = np.zeros((self.num_prod,self.inflow_num_prods))
+    #     temp = ((np.eye(self.inflow_num_prods) * self.inflow_wt_mole * np.sum(n*self.inflow_wt_mole)) - \
+    #                         (np.outer(self.inflow_wt_mole,self.inflow_wt_mole)*n)) / \
+    #                         (np.sum(n*self.inflow_wt_mole)**2) / (1+FAR) / self.inflow_wt_mole
 
-        for i, j in enumerate(self.in_out_flow_idx_map):
-            dinit_prod_dn[j] = temp[:,i]
+    #     for i, j in enumerate(self.in_out_flow_idx_map):
+    #         dinit_prod_dn[j] = temp[:,i]
 
-        J['init_prod_amounts', 'Fl_I:tot:n'] = dinit_prod_dn
+    #     J['init_prod_amounts', 'Fl_I:tot:n'] = dinit_prod_dn
 
-        J['b0_out', 'Fl_I:FAR'] = np.matmul(self.aij,J['init_prod_amounts','Fl_I:FAR'])
-        J['b0_out', 'Fl_I:tot:n'] = np.matmul(self.aij,J['init_prod_amounts', 'Fl_I:tot:n'])
+    #     J['b0_out', 'Fl_I:FAR'] = np.matmul(self.aij,J['init_prod_amounts','Fl_I:FAR'])
+    #     J['b0_out', 'Fl_I:tot:n'] = np.matmul(self.aij,J['init_prod_amounts', 'Fl_I:tot:n'])
 
 
 class Combustor(om.Group):
@@ -211,9 +216,9 @@ class Combustor(om.Group):
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
                              desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set, in which case it is used only for outgoing flow.', recordable=False)
-        self.options.declare('inflow_elements', default=AIR_MIX,
+        self.options.declare('inflow_elements', default=AIR_ELEMENTS,
                              desc='set of elements present in the air flow')
-        self.options.declare('air_fuel_elements', default=AIR_FUEL_MIX,
+        self.options.declare('air_fuel_elements', default=AIR_FUEL_ELEMENTS,
                              desc='set of elements present in the fuel')
         self.options.declare('design', default=True,
                              desc='Switch between on-design and off-design calculation.')
@@ -238,10 +243,10 @@ class Combustor(om.Group):
         statics = self.options['statics']
         fuel_type = self.options['fuel_type']
 
-        air_fuel_thermo = Properties(thermo_data, init_reacts=air_fuel_elements)
+        air_fuel_thermo = Properties(thermo_data, init_elements=air_fuel_elements)
         self.air_fuel_prods = air_fuel_thermo.products
 
-        air_thermo = Properties(inflow_thermo_data, init_reacts=inflow_elements)
+        air_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
         self.air_prods = air_thermo.products
 
         self.num_air_fuel_prod = len(self.air_fuel_prods)

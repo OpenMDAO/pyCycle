@@ -318,7 +318,7 @@ class Nozzle(om.Group):
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
-        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
         self.gas_prods = gas_thermo.products
 
         num_prod = gas_thermo.num_prod
