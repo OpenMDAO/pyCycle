@@ -46,47 +46,55 @@ class MixFuel(om.ExplicitComponent):
         self.mixed_elements.update(thermo_data.reactants[fuel_type]) #adds the fuel elements to the mix outflow
 
         inflow_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
-        self.inflow_prods = inflow_thermo.products
-        self.inflow_num_prods = len(self.inflow_prods)
+        self.inflow_elements = inflow_thermo.elements
         self.inflow_wt_mole = inflow_thermo.wt_mole
 
         air_fuel_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
         self.air_fuel_prods = air_fuel_thermo.products
-        self.air_fuel_wt_mole = air_fuel_thermo.wt_mole
+        self.air_fuel_elements = air_fuel_thermo.elements
+        self.air_fuel_wt_mole = air_fuel_thermo.element_wt
         self.aij = air_fuel_thermo.aij
 
         self.num_prod = n_prods = len(self.air_fuel_prods)
+        self.num_elements = n_elements = len(self.air_fuel_elements)
 
-        self.init_air_amounts = np.zeros(n_prods)
-        self.init_fuel_amounts = np.zeros(n_prods)
-        self.init_fuel_amounts_base = np.zeros(n_prods)
+        self.init_air_amounts = np.zeros(n_elements)
+        self.init_fuel_amounts = np.zeros(n_elements)
+        self.init_fuel_amounts_base = np.zeros(n_elements)
 
         # inputs
         self.add_input('Fl_I:stat:W', val=0.0, desc='weight flow', units='lbm/s')
         self.add_input('Fl_I:FAR', val=0.0, desc='Fuel to air ratio')
         self.add_input('Fl_I:tot:h', val=0.0, desc='total enthalpy', units='Btu/lbm')
-        self.add_input('Fl_I:tot:n', shape=self.inflow_num_prods, desc='incoming flow composition')
+        self.add_input('Fl_I:tot:b0', val=inflow_thermo.b0, desc='incoming flow composition')
         self.add_input('fuel_Tt', val=518., units='degR', desc="fuel temperature")
 
         # outputs
         self.add_output('mass_avg_h', shape=1, units='Btu/lbm',
                         desc="mass flow rate averaged specific enthalpy")
-        self.add_output('init_prod_amounts', shape=n_prods, desc='initial product amounts')
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
         self.add_output('Wfuel', shape=1, units="lbm/s", desc="total fuel massflow out")
         self.add_output('b0_out', val=air_fuel_thermo.b0)
 
-        for i, r in enumerate(self.air_fuel_prods):
-            self.init_fuel_amounts_base[i] = thermo_data.reactants['JP-7-a'].get(r, 0) * thermo_data.products[r]['wt']
+        # for i, r in enumerate(self.air_fuel_prods):
+        #     self.init_fuel_amounts_base[i] = thermo_data.reactants['JP-7-a'].get(r, 0) * thermo_data.products[r]['wt']
 
-        # print('foobar', self.init_fuel_amounts_base)
-        # exit()
+        # ifa_base_moles = self.init_fuel_amounts_base/sum(self.init_fuel_amounts_base)
+        # ifa_base_moles = ifa_base_moles/air_fuel_thermo.wt_mole
+        # init_b = np.sum(air_fuel_thermo.aij * ifa_base_moles, axis=1)
+
+        # print('foobar', sorted(air_fuel_thermo.elements))
+        # print('foobar', init_b)
+        # print()
+
+        for i, e in enumerate(self.air_fuel_elements): 
+            self.init_fuel_amounts_base[i] = thermo_data.reactants[fuel_type].get(e, 0) * thermo_data.element_wts[e]
+
+        self.init_fuel_amounts_base = self.init_fuel_amounts_base/sum(self.init_fuel_amounts_base)
+       
 
         # create a mapping between the composition indices of the inflow and outflow arrays
-        self.in_out_flow_idx_map = [self.air_fuel_prods.index(prod) for prod in self.inflow_prods]
-
-        self.M_air = np.sum(self.init_air_amounts)
-        self.M_fuel_base = np.sum(self.init_fuel_amounts_base)
+        self.in_out_flow_idx_map = [self.air_fuel_elements.index(e) for e in self.inflow_elements]
 
         # self.declare_partials('mass_avg_h', ['Fl_I:FAR', 'Fl_I:tot:h'])
         # self.declare_partials('init_prod_amounts', ['Fl_I:FAR', 'Fl_I:tot:n'])
@@ -99,7 +107,7 @@ class MixFuel(om.ExplicitComponent):
     def compute(self, inputs, outputs):
         FAR = inputs['Fl_I:FAR']
         W = inputs['Fl_I:stat:W']
-        Fl_I_tot_n = inputs['Fl_I:tot:n']
+        Fl_I_tot_b0 = inputs['Fl_I:tot:b0']
 
         if inputs._under_complex_step:
             self.init_air_amounts = self.init_air_amounts.astype(np.complex)
@@ -108,19 +116,18 @@ class MixFuel(om.ExplicitComponent):
 
         # copy the incoming flow into a correctly sized array for the outflow composition
         for i, j in enumerate(self.in_out_flow_idx_map):
-            self.init_air_amounts[j] = Fl_I_tot_n[i]
+            self.init_air_amounts[j] = Fl_I_tot_b0[i]
 
         self.init_air_amounts *= self.air_fuel_wt_mole
         self.init_air_amounts /= np.sum(self.init_air_amounts)
         self.init_air_amounts *= W  # convert to kg and scale with mass flow
 
         # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
-        self.init_fuel_amounts = self.init_fuel_amounts_base/self.M_fuel_base * W * FAR
+        self.init_fuel_amounts = self.init_fuel_amounts_base * W * FAR
 
         self.init_stuff = (self.init_air_amounts + self.init_fuel_amounts)
-        self.sum_stuff = np.sum(self.init_stuff)
-        self.norm_init_stuff = self.init_stuff/self.sum_stuff
-        outputs['init_prod_amounts'] = self.norm_init_stuff/self.air_fuel_wt_mole
+        self.init_stuff /= np.sum(self.init_stuff)
+        outputs['b0_out'] = self.init_stuff/self.air_fuel_wt_mole
 
         self.fuel_ht = 0  # makes ht happy
 
@@ -129,8 +136,6 @@ class MixFuel(om.ExplicitComponent):
         outputs['Wout'] = W * (1+FAR)
 
         outputs['Wfuel'] = W * FAR
-
-        outputs['b0_out'] = np.sum(self.aij*outputs['init_prod_amounts'], axis=1)
 
     # def compute_partials(self, inputs, J):
     #     FAR = inputs['Fl_I:FAR']
@@ -261,7 +266,7 @@ class Combustor(om.Group):
         self.add_subsystem('mix_fuel',
                            MixFuel(inflow_thermo_data=inflow_thermo_data, thermo_data=thermo_data,
                                     inflow_elements=inflow_elements, fuel_type=fuel_type),
-                           promotes=['Fl_I:stat:W','Fl_I:FAR', 'Fl_I:tot:n', 'Fl_I:tot:h', 'Wfuel', 'Wout'])
+                           promotes=['Fl_I:stat:W','Fl_I:FAR', 'Fl_I:tot:b0', 'Fl_I:tot:h', 'Wfuel', 'Wout'])
 
         # Pressure loss
         prom_in = [('Pt_in', 'Fl_I:tot:P'),'dPqP']

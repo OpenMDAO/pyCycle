@@ -62,10 +62,10 @@ class SpeciesDataTestCase(unittest.TestCase):
         elements2 = thermo2.elements
         proportions2 = thermo2.get_b0()
 
-        self.assertEqual(elements, expected_elements)
+        self.assertEqual(set(elements), expected_elements)
         assert_near_equal(proportions, expected_proportions, 1e-4)
 
-        self.assertEqual(elements2, expected_elements2)
+        self.assertEqual(set(elements2), expected_elements2)
         assert_near_equal(proportions2, expected_proportions2, 1e-4)
 
     def test_values(self):
@@ -177,13 +177,13 @@ class SpeciesDataTestCase(unittest.TestCase):
         elements3 = thermo3.elements
 
         self.assertEqual(products1, products1_expected)
-        self.assertEqual(elements1, elements1_expected)
+        self.assertEqual(set(elements1), elements1_expected)
 
         self.assertEqual(products2, products2_expected)
-        self.assertEqual(elements2, elements2_expected)
+        self.assertEqual(set(elements2), elements2_expected)
 
         self.assertEqual(products3, products3_expected)
-        self.assertEqual(elements3, elements3_expected)
+        self.assertEqual(set(elements3), elements3_expected)
 
 
 

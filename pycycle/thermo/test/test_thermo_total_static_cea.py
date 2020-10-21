@@ -18,7 +18,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model.add_subsystem('thermo', Thermo(mode='total_TP', 
                                                method='CEA', 
-                                               thermo_kwargs={'elements': constants.CO2_CO_O2_MIX, 
+                                               thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
                                                               'spec': species_data.co2_co_o2 }), 
                               promotes=['*'])
 
@@ -63,7 +63,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model = Thermo(mode='total_hP', 
                          method = 'CEA', 
-                         thermo_kwargs={'elements': constants.CO2_CO_O2_MIX, 
+                         thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
                                       'spec': species_data.co2_co_o2 }) 
 
         p.setup()
@@ -110,7 +110,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model = Thermo(mode='total_SP', 
                          method = 'CEA', 
-                         thermo_kwargs={'elements': constants.CO2_CO_O2_MIX, 
+                         thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
                                         'spec': species_data.co2_co_o2 }) 
        
         r = p.model
@@ -166,7 +166,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_TP = om.Problem()
         p_TP.model = Thermo(mode='total_TP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_MIX, 
+                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p_TP.setup()
         p_TP.set_solver_print(level=-1)
@@ -174,7 +174,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_hP = om.Problem()
         p_hP.model = Thermo(mode='total_hP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_MIX, 
+                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p_hP.setup()
         p_hP.set_solver_print(level=-1)
@@ -182,7 +182,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_SP = om.Problem()
         p_SP.model = Thermo(mode='total_SP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_MIX, 
+                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p_SP.setup()
         p_SP.set_solver_print(level=-1)
@@ -271,13 +271,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP =  Thermo(mode='total_TP', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_MIX, 
+                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_Ps =  Thermo(mode='static_Ps', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_MIX, 
+                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_Ps', static_Ps)
         p.model.connect('set_total_TP.flow:S', 'set_static_Ps.S')
@@ -312,13 +312,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP =  Thermo(mode='total_TP', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_MIX, 
+                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf })  
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_A =  Thermo(mode='static_A', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_MIX, 
+                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                           'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_A', static_A)
         
@@ -361,13 +361,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP = Thermo(mode='total_TP', 
                           method='CEA', 
-                          thermo_kwargs={'elements': constants.AIR_MIX, 
+                          thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_MN = Thermo(mode='static_MN', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_MIX, 
+                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_MN', static_MN)
 

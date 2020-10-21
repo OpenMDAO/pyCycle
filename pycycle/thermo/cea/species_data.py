@@ -35,7 +35,9 @@ class Properties(object):
 
         if init_elements is not None and init_reacts is None:
 
-            self.elements = set(init_elements.keys())
+            elem_set = set(init_elements.keys())
+            self.elements = sorted(elem_set)
+
 
             valid_elements = set()
 
@@ -50,13 +52,14 @@ class Properties(object):
                         raise ValueError(f'The provided element `{element}` is not used in any products in your thermo data.')
 
             self.products = [name for name, prod_data in self.prod_data.items()
-                         if self.elements.issuperset(prod_data['elements'])]
+                         if elem_set.issuperset(prod_data['elements'])]
         
         elif init_elements is None and init_reacts is not None:
             self.get_elements() #sets self.elements
 
+            elem_set = set(self.elements)
             self.products = [name for name, prod_data in self.prod_data.items()
-                         if self.elements.issuperset(prod_data['elements'])]
+                             if elem_set.issuperset(prod_data['elements'])]
         
         elif init_elements is None and init_reacts is None:
                 raise ValueError('You have not provided elements or initial reactants (init_reacts). In order to set thermodynamic data, one of the two must be provided.')
@@ -173,11 +176,14 @@ class Properties(object):
 
     def get_elements(self):#note, reactants is assumed to be a dictionary
 
-        self.elements = set()
+        elem_set = set()
 
         for name in self.init_reacts: # figure out which elements are present
             if self.init_reacts[name] > 0:
-                self.elements.update(self.prod_data[name]['elements'])
+                elem_set.update(self.prod_data[name]['elements'])
+
+        self.elements = sorted(elem_set)
+
 
         return
 
@@ -243,27 +249,3 @@ class Properties(object):
 
         self.valid_temp_range = (max_low, min_high)
 
-if __name__ == "__main__":
-
-    # thermo = Thermo(co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
-    # thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
-    # thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
-    thermo = Thermo(wet_air, init_reacts=constants.WET_AIR_MIX)
-
-    T = np.ones(len(thermo.products))*800
-    H0 = thermo.H0(T)
-    S0 = thermo.S0(T)
-    Cp0 = thermo.Cp0(T)
-
-    HJ = thermo.H0_applyJ(T, 1.)
-    SJ = thermo.S0_applyJ(T, 1)
-    CpJ = thermo.Cp0_applyJ(T, 1)
-    b0 = thermo.b0
-    print('\nT', T)
-    print('\nH0', H0)
-    print('\nS0', S0)
-    print('\nCp0', Cp0)
-    print('\nHJ', HJ)
-    print('\nSJ', SJ)
-    print('\nCpJ', CpJ)
-    print('\nb0', b0, '\n')
