@@ -6,7 +6,8 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea import species_data
-from pycycle.elements.flow_start import FlowStart, SetWAR
+from pycycle.elements.flow_start import FlowStart
+from pycycle.elements.mix_ratio import MixRatio
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 
 
@@ -156,7 +157,7 @@ class FlowStartTestCase(unittest.TestCase):
             p.model.set_input_defaults('WAR', .01)
             p.setup()
 
-        self.assertEqual(str(cm.exception), "The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.")
+        self.assertEqual(str(cm.exception), 'The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
 
         with self.assertRaises(ValueError) as cm:
@@ -165,53 +166,46 @@ class FlowStartTestCase(unittest.TestCase):
             prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
             prob.setup()
 
-        self.assertEqual(str(cm.exception), "In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.")
+        self.assertEqual(str(cm.exception), 'In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
 
 class WARTestCase(unittest.TestCase):
 
     def test_war_vals(self):
+        """
+        verifies that the MixRatio component gives the right answers when adding water to dry air
+        """
 
         prob = Problem()
 
-        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
+        thermo_spec = species_data.wet_air
+
+        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+
+        prob.model.add_subsystem('war', MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
+                                                 inflow_elements=AIR_ELEMENTS, mix_reactant='water'), 
+                                 promotes=['*'])
         
-        prob.model.set_input_defaults('WAR', .0001)
+
 
         prob.setup(force_alloc_complex=True)
+
+        # p['Fl_I:stat:P'] = 158.428
+        prob['Fl_I:stat:W'] = 38.8
+        prob['mix_ratio'] = .0001 # WAR
+        prob['Fl_I:tot:h'] = 181.381769
+        prob['reactant_Tt'] = 518.
+        prob['Fl_I:tot:b0'] = air_thermo.b0
 
         prob.run_model()
 
         tol = 1e-5
-        assert_near_equal(prob['b0'][0], 3.23286926e-04, tol)
-        assert_near_equal(prob['b0'][1], 1.10121227e-05, tol)
-        assert_near_equal(prob['b0'][2], 1.11016903e-05, tol)
-        assert_near_equal(prob['b0'][3], 5.39103820e-02, tol)
-        assert_near_equal(prob['b0'][4], 1.44901169e-02, tol)
 
-    def test_war_errors(self):
+        assert_near_equal(prob['b0_out'][0], 3.23286926e-04, tol)
+        assert_near_equal(prob['b0_out'][1], 1.10121227e-05, tol)
+        assert_near_equal(prob['b0_out'][2], 1.11005769e-05, tol)
+        assert_near_equal(prob['b0_out'][3], 5.39103820e-02, tol)
+        assert_near_equal(prob['b0_out'][4], 1.44901169e-02, tol)
 
-        with self.assertRaises(ValueError) as cm:
-
-            prob = Problem()
-            prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
-            prob.model.set_input_defaults('WAR', 0.0)
-            
-            prob.setup()
-            prob.run_model()
-
-        self.assertEqual(str(cm.exception), "'war' <class SetWAR>: Error calling compute(), You have turned on the use_WAR option in FlightConditions but you have set WAR to be zero.")
-
-
-        with self.assertRaises(ValueError) as cm:
-
-            p = Problem()
-            p.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
-            p.model.set_input_defaults('WAR', 1.0)
-            
-            p.setup()
-            p.run_model()
-
-        self.assertEqual(str(cm.exception), "'war' <class SetWAR>: Error calling compute(), Cannot specify WAR to have a value of 1. This is a physical impossibility and creates a singularity.")
-
+    
 if __name__ == "__main__":
     unittest.main()

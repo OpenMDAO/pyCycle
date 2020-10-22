@@ -42,12 +42,10 @@ class MixRatio(om.ExplicitComponent):
         self.num_inflow_elements = len(self.inflow_elements)
 
         air_fuel_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
-        self.air_fuel_prods = air_fuel_thermo.products
         self.air_fuel_elements = air_fuel_thermo.elements
         self.air_fuel_wt_mole = air_fuel_thermo.element_wt
         self.aij = air_fuel_thermo.aij
 
-        self.num_prod = n_prods = len(self.air_fuel_prods)
         self.num_elements = n_elements = len(self.air_fuel_elements)
 
         self.init_air_amounts = np.zeros(n_elements)

@@ -1,108 +1,11 @@
+import numpy as np
+
 from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
+from pycycle.elements.mix_ratio import MixRatio
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
-import numpy as np
-
-class SetWAR(ExplicitComponent):
-
-    """
-    Set initial product amounts based on specified WAR
-
-    --------------
-    inputs
-    --------------
-        WAR (water to air ratio by mass)
-
-    --------------
-    outputs
-    --------------
-        b0 (number of atoms present in the flow)
-
-
-    """
-
-    def initialize(self):
-        self.options.declare('thermo_data', default=species_data.janaf, 
-                            desc='thermodynamic data set')
-        self.options.declare('elements', default=WET_AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
-
-    def setup(self):
-
-        thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
-
-        thermo = species_data.Properties(thermo_data, init_elements=elements) #call Thermo function to get the number of dry products in the output
-        shape = thermo.num_element
-
-        self.add_input('WAR', val=0.0001, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
-        
-        self.add_output('b0', shape=(shape,), val=thermo.b0,
-                       desc="stoichiometric ratios by mass of the initial compounds present in the flow, scaled to desired WAR")
-
-        self.declare_partials('b0', 'WAR')
-
-    def compute(self, inputs, outputs):
-
-        WAR = inputs['WAR']
-
-        thermo_data = self.options['thermo_data']
-        original_init_reacts = self.options['elements']
-
-        prod_data = thermo_data.products
-
-        if WAR == 1:
-            raise ValueError('Cannot specify WAR to have a value of 1. This is a physical impossibility and creates a singularity.')
-        elif WAR == 0:
-            raise ValueError('You have turned on the use_WAR option in FlightConditions but you have set WAR to be zero.')
-
-        self.dry_wt = 0 #total weight of dry air
-        self.init_react_amounts = [] #amounts of initial compounds scaled to desired WAR, not including zero value initial trace species
-
-        for i, p in enumerate(original_init_reacts): #calculate total weight of dry air and include non-water values in init_react_amounts
-            if p != 'H2O':
-                self.dry_wt += original_init_reacts[p] * prod_data[p]['wt']
-                self.init_react_amounts.append(original_init_reacts[p])
-
-            else:
-                self.init_react_amounts.append(0)
-                location = i
-
-        self.water_wt = prod_data['H2O']['wt'] #molar weight of water
-
-        n_water = WAR*self.dry_wt/((1 - WAR)*self.water_wt) #volumentric based ratio of water scaled to desired WAR
-
-        self.init_react_amounts[location] = n_water #add in the amount of water scaled to the correct WAR
-        init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Properties())
-        init_reacts['H2O'] = n_water #update with correct water amount
-
-        thermo = species_data.Properties(thermo_data, init_reacts=init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
-        self.aij = thermo.aij
-        self.products = thermo.products #get list of all products
-        self.num_prod = thermo.num_prod
-
-        outputs['b0'] = thermo.b0
-
-    def compute_partials(self, inputs, J):
-
-        WAR = inputs['WAR']
-        original_init_reacts = self.options['elements']
-
-        water_wt = self.water_wt
-        dry_wt = self.dry_wt
-        jac = np.zeros(self.num_prod)
-
-        for i, p in enumerate(original_init_reacts):
-            location = self.products.index(p)
-            if p == 'H2O':
-                jac[location] = 1/water_wt
-
-            else:
-                jac[location] = -self.init_react_amounts[i]/dry_wt
-
-        J['b0', 'WAR'] = np.matmul(self.aij, jac)
 
 
 class FlowStart(Group):
@@ -123,13 +26,13 @@ class FlowStart(Group):
         use_WAR = self.options['use_WAR']
 
         if use_WAR == True:
-            if 'H2O' not in elements:
-                raise ValueError('The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.')
+            if 'H' not in elements or 'O' not in elements:
+                raise ValueError('The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
         elif use_WAR == False:
-            if 'H2O' in elements.keys():
+            if 'H' in elements.keys():
 
-                raise ValueError('In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.')
+                raise ValueError('In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
 
         thermo = species_data.Properties(thermo_data, init_elements=elements)
         self.air_prods = thermo.products
@@ -137,8 +40,11 @@ class FlowStart(Group):
 
         # inputs
         if use_WAR == True:
-            set_WAR = SetWAR(thermo_data=thermo_data, elements=elements)
-            self.add_subsystem('WAR', set_WAR, promotes_inputs=('WAR',), promotes_outputs=('b0',))
+            mix = MixRatio(inflow_thermo_data=thermo_data, thermo_data=thermo_data,
+                           inflow_elements=elements, mix_reactant='water')
+            self.add_subsystem('WAR', mix, 
+                                promotes_inputs=('Fl_I:tot:b0', 'Fl_I:stat:W', ('mix_ratio', 'WAR')), 
+                                promotes_outputs=( ('b0_out', 'b0'), ))
         
 
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
