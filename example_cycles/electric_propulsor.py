@@ -95,6 +95,12 @@ def viewer(prob, pt):
 
     pyc.print_nozzle(prob, [f'{pt}.nozz'])
 
+def map_plots(prob, pt):
+    comp_names = ['fan']
+    comp_full_names = [f'{pt}.{c}' for c in comp_names]
+    pyc.plot_compressor_maps(prob, comp_full_names)
+
+
 
 class MPpropulsor(pyc.MPCycle):
 
@@ -168,5 +174,8 @@ if __name__ == "__main__":
     for pt in ['design']+mp_propulsor.od_pts:
         print('\n', '#'*10, pt, '#'*10)
         viewer(prob, pt)
+
+    map_plots(prob,'design')
+
 
     print("Run time", run_time)
