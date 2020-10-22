@@ -7,7 +7,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart, SetWAR
-from pycycle.constants import AIR_MIX, WET_AIR_MIX
+from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -44,7 +44,7 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
         self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
-        self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -152,7 +152,7 @@ class FlowStartTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             p = Problem()
-            p.model = FlowStart(elements=AIR_MIX, use_WAR=True, thermo_data=species_data.janaf)
+            p.model = FlowStart(elements=AIR_ELEMENTS, use_WAR=True, thermo_data=species_data.janaf)
             p.model.set_input_defaults('WAR', .01)
             p.setup()
 
@@ -162,7 +162,7 @@ class FlowStartTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             prob = Problem()
-            prob.model = FlowStart(elements=WET_AIR_MIX, use_WAR=False, thermo_data=species_data.janaf)
+            prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
             prob.setup()
 
         self.assertEqual(str(cm.exception), "In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.")
@@ -173,7 +173,7 @@ class WARTestCase(unittest.TestCase):
 
         prob = Problem()
 
-        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
+        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
         
         prob.model.set_input_defaults('WAR', .0001)
 
@@ -193,7 +193,7 @@ class WARTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             prob = Problem()
-            prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
+            prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
             prob.model.set_input_defaults('WAR', 0.0)
             
             prob.setup()
@@ -205,7 +205,7 @@ class WARTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             p = Problem()
-            p.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
+            p.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_ELEMENTS), promotes=['*'])
             p.model.set_input_defaults('WAR', 1.0)
             
             p.setup()

@@ -2,7 +2,7 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
+from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.elements.turbine import Bleeds
 from pycycle.flow_in import FlowIn
 
@@ -183,9 +183,9 @@ class Row(om.Group):
 
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)
-        # self.options.declare('main_flow_elements', default=AIR_FUEL_MIX,
+        # self.options.declare('main_flow_elements', default=AIR_FUEL_ELEMENTS,
         #                       desc='set of elements present in the flow')
-        # self.options.declare('bld_flow_elements', default=AIR_MIX,
+        # self.options.declare('bld_flow_elements', default=AIR_ELEMENTS,
         #                       desc='set of elements present in the flow')
 
     def setup(self):
@@ -201,8 +201,8 @@ class Row(om.Group):
         consts.add_output('bld_frac_P', val=1)
 
         self.add_subsystem('mix_n', Bleeds(thermo_data=self.options['thermo_data'],
-                                           main_flow_elements=AIR_FUEL_MIX,
-                                           bld_flow_elements=AIR_MIX,
+                                           main_flow_elements=AIR_FUEL_ELEMENTS,
+                                           bld_flow_elements=AIR_ELEMENTS,
                                            bleed_names=['cool']
                                           ),
                           promotes_inputs=['Pt_in', 'Pt_out', ('W_in','W_primary'), ('n_in', 'n_primary'), ('cool:n', 'n_cool')],
@@ -210,7 +210,7 @@ class Row(om.Group):
 
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                             method='CEA', 
-                            thermo_kwargs={'elements':AIR_FUEL_MIX, 
+                            thermo_kwargs={'elements':AIR_FUEL_ELEMENTS, 
                                            'spec':self.options['thermo_data']})
         self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])
@@ -239,9 +239,9 @@ class TurbineCooling(om.Group):
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('primary_elements', default=AIR_FUEL_MIX,
+        self.options.declare('primary_elements', default=AIR_FUEL_ELEMENTS,
                               desc='set of elements present in the flow')
-        self.options.declare('cool_elements', default=AIR_MIX,
+        self.options.declare('cool_elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
 
         self.options.declare('owns_x_factor', types=bool, default=True, desc='if True, x_factor will be connected to an IndepVarComp inside this element')
@@ -255,7 +255,7 @@ class TurbineCooling(om.Group):
             indeps = self.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
             indeps.add_output('x_factor', val=1.0)
 
-        primary_thermo = species_data.Properties(thermo_data, init_reacts=self.options['primary_elements'])
+        primary_thermo = species_data.Properties(thermo_data, init_elements=self.options['primary_elements'])
 
         in_flow = FlowIn(fl_name='Fl_turb_I', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
         self.add_subsystem('turb_in_flow', in_flow, promotes_inputs=['Fl_turb_I:tot:*', 'Fl_turb_I:stat:*'])
@@ -263,7 +263,7 @@ class TurbineCooling(om.Group):
         in_flow = FlowIn(fl_name='Fl_turb_O', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
         self.add_subsystem('turb_out_flow', in_flow, promotes_inputs=['Fl_turb_O:tot:*', 'Fl_turb_O:stat:*'])
 
-        cool_thermo = species_data.Properties(thermo_data, init_reacts=self.options['cool_elements'])
+        cool_thermo = species_data.Properties(thermo_data, init_elements=self.options['cool_elements'])
         in_flow = FlowIn(fl_name='Fl_cool', num_prods=cool_thermo.num_prod, num_elements=cool_thermo.num_element)
         self.add_subsystem('cool_in_flow', in_flow, promotes_inputs=['Fl_cool:tot:*', 'Fl_cool:stat:*'])
 

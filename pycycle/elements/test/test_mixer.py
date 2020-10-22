@@ -9,7 +9,7 @@ from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
+from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
@@ -32,7 +32,7 @@ class MixerTestcase(unittest.TestCase):
         p.model.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
         p.model.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
 
-        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
+        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
         connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
@@ -60,7 +60,7 @@ class MixerTestcase(unittest.TestCase):
         p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T', 'W'])
         p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T', 'W'])
 
-        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
+        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
         connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
@@ -88,11 +88,11 @@ class MixerTestcase(unittest.TestCase):
             p.model.set_input_defaults('start2.MN', 0.4463)
             p.model.set_input_defaults('start2.W', 158., units='lbm/s')
 
-            p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_MIX))
-            p.model.add_subsystem('start2', FlowStart(elements=AIR_MIX))
+            p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
+            p.model.add_subsystem('start2', FlowStart(elements=AIR_ELEMENTS))
 
             p.model.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream,
-                                                 Fl_I1_elements=AIR_FUEL_MIX, Fl_I2_elements=AIR_MIX))
+                                                 Fl_I1_elements=AIR_FUEL_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
             connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
             connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')

@@ -160,8 +160,7 @@ class MixFuel(om.ExplicitComponent):
         term1 = -self.init_air_amounts/sum_iam**2
         d_iam1__db0 = np.einsum('i,j->ij', term1, d_iam0__db0).dot(self.in_out_flow_idx_map)
         d_iam0__db0 = np.einsum('i,ij->ij', d_iam0__db0, self.in_out_flow_idx_map)
-
-        # J['b0_out', 'Fl_I:tot:b0'] = (d_iam0__db0 + d_iam1__db0)*W
+        
         self.init_air_amounts /= sum_iam
 
         self.init_air_amounts *= W  # convert to kg and scale with mass flow
@@ -172,9 +171,6 @@ class MixFuel(om.ExplicitComponent):
         init_stuff = (self.init_air_amounts + init_fuel_amounts)
         sum_is = np.sum(init_stuff)
    
-        
-
-
         dinit_fuel__dFAR = self.init_fuel_amounts_base * W # check
         J['b0_out', 'Fl_I:FAR'] = (-(self.init_air_amounts + init_fuel_amounts)/sum_is**2 *np.sum(dinit_fuel__dFAR)
                                    + dinit_fuel__dFAR/sum_is) / self.air_fuel_wt_mole

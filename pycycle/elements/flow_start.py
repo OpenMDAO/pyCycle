@@ -34,7 +34,7 @@ class SetWAR(ExplicitComponent):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        thermo = species_data.Properties(thermo_data, elements) #call Thermo function to get the number of dry products in the output
+        thermo = species_data.Properties(thermo_data, init_elements=elements) #call Thermo function to get the number of dry products in the output
         shape = thermo.num_element
 
         self.add_input('WAR', val=0.0001, desc='water to air ratio by mass') #note: if WAR is set to 1 the equation becomes singular
@@ -78,7 +78,7 @@ class SetWAR(ExplicitComponent):
         init_reacts = original_init_reacts.copy() #dictionary containing the initial reactants with water scaled to desired WAR (used for passing to species_data.Properties())
         init_reacts['H2O'] = n_water #update with correct water amount
 
-        thermo = species_data.Properties(thermo_data, init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
+        thermo = species_data.Properties(thermo_data, init_reacts=init_reacts) #call Thermo function with correct ratios to get output values including zero value trace species
         self.aij = thermo.aij
         self.products = thermo.products #get list of all products
         self.num_prod = thermo.num_prod
@@ -165,69 +165,3 @@ class FlowStart(Group):
         self.connect('totals.gamma', 'exit_static.guess:gamt')
 
         self.set_input_defaults('b0', thermo.b0)
-
-
-if __name__ == "__main__": 
-    from collections import OrderedDict
-
-    from openmdao.api import Problem, IndepVarComp
-
-    print('\n-----\nFlowStart\n-----\n')
-
-    p = Problem()
-    p.model = FlowStart(elements=AIR_MIX, use_WAR=False, thermo_data=species_data.janaf)
-    # p.model.add_subsystem('WAR_start', IndepVarComp('WAR', .1), promotes=['*'])
-    p.model.add_subsystem('temp', IndepVarComp('T', 4000., units="degR"), promotes=["*"])
-    p.model.add_subsystem('pressure', IndepVarComp('P', 1.0342, units="bar"), promotes=["*"])
-    p.model.add_subsystem('W', IndepVarComp('W', 100.0), promotes=['*'])
-
-    p.setup()
-
-    def find_order(group):
-        subs = OrderedDict()
-
-        for s in group.subsystems():
-            if isinstance(s, Group):
-                subs[s.name] = find_order(s)
-            else:
-                subs[s.name] = {}
-        return subs
-
-    # order = find_order(p.root)
-    # import json
-    # print(json.dumps(order, indent=4))
-    # exit()
-
-    # p['exit_static.mach_calc.Ps_guess'] = .97
-    import time
-    st = time.time()
-    p.run_model()
-    print("time", time.time() - st)
-
-    print("Temp", p['T'], p['Fl_O:tot:T'])
-    print("Pressure", p['P'], p['Fl_O:tot:P'])
-    print("h", p['totals.h'], p['Fl_O:tot:h'])
-    print("S", p['totals.S'])
-    print("actual Ps", p['exit_static.Ps'], p['Fl_O:stat:P'])
-    print("Mach", p['Fl_O:stat:MN'])
-    print("n tot", p['Fl_O:tot:n'])
-    print("n stat", p['Fl_O:stat:n'])
-
-
-    print('\n-----\nWAR\n-----\n')
-
-    prob = Problem()
-    prob.model = Group()
-
-    des_vars = prob.model.add_subsystem('des_vars', IndepVarComp(), promotes=['*'])
-
-    des_vars.add_output('WAR', .0001),
-
-    prob.model.add_subsystem('WAR', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
-
-    prob.setup(force_alloc_complex=True)
-
-    prob.run_model()
-
-    prob.check_partials(method='cs', compact_print=True)
-    print('b0', prob['b0'])

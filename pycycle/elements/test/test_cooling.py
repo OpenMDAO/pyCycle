@@ -109,7 +109,7 @@ from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, combustor, flow_start
 from pycycle.thermo.cea import species_data
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+from pycycle.constants import AIR_FUEL_ELEMENTS
 
 
 class Tests(unittest.TestCase):
@@ -126,7 +126,7 @@ class Tests(unittest.TestCase):
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
                            1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
+        # p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
         p.model.set_input_defaults('burner_flow.P', val=616.736, units='psi')
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
@@ -137,7 +137,7 @@ class Tests(unittest.TestCase):
             'burner_flow',
             flow_start.FlowStart(
                 thermo_data=species_data.janaf,
-                elements=AIR_FUEL_MIX))
+                elements=AIR_FUEL_ELEMENTS))
         p.model.connect('mix_fuel.b0_out', 'burner_flow.b0')
 
         self.prob = p
@@ -200,7 +200,7 @@ class Tests(unittest.TestCase):
 
         p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
 
-        p.model.connect('mix_fuel.init_prod_amounts', 'row.n_primary')
+        p.model.connect('mix_fuel.b0', 'row.n_primary')
 
         p.setup()
 
@@ -239,7 +239,7 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.init_prod_amounts', 'turb_cool.Fl_turb_I:tot:n')
+        p.model.connect('mix_fuel.b0', 'turb_cool.Fl_turb_I:tot:b0')
 
         p.setup()
         p.set_solver_print(0)

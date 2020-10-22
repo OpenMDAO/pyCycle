@@ -60,6 +60,7 @@ class BurnerTestCase(unittest.TestCase):
         assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
         data = p.check_partials(out_stream=None, method='cs')
+        # data = p.check_partials(method='cs')
         assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
 
 

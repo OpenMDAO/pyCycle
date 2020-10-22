@@ -3,7 +3,7 @@ import openmdao.api as om
 
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea.species_data import Properties, janaf
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 
 
@@ -15,9 +15,9 @@ class MixFlow(om.ExplicitComponent):
     def initialize(self):
         self.options.declare('thermo_data', default=janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('Fl_I1_elements', default=AIR_MIX,
+        self.options.declare('Fl_I1_elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
-        self.options.declare('Fl_I2_elements', default=AIR_FUEL_MIX,
+        self.options.declare('Fl_I2_elements', default=AIR_FUEL_ELEMENTS,
                               desc='set of elements present in the flow')
 
     def setup(self):
@@ -265,9 +265,9 @@ class Mixer(om.Group):
 
         self.options.declare('thermo_data', default=janaf,
                               desc='thmodynamic data set', recordable=False)
-        self.options.declare('Fl_I1_elements', default=AIR_FUEL_MIX,
+        self.options.declare('Fl_I1_elements', default=AIR_FUEL_ELEMENTS,
                               desc='set of elements present in the flow')
-        self.options.declare('Fl_I2_elements', default=AIR_MIX,
+        self.options.declare('Fl_I2_elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')

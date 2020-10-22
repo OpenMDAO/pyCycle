@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle import constants
 
 from pycycle.elements.test.util import check_element_partials
@@ -57,8 +57,8 @@ class DuctTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX), promotes=['MN', 'P', 'T'])
-        self.prob.model.add_subsystem('duct', Duct(elements=AIR_MIX), promotes=['MN'])
+                                                              elements=AIR_ELEMENTS), promotes=['MN', 'P', 'T'])
+        self.prob.model.add_subsystem('duct', Duct(elements=AIR_ELEMENTS), promotes=['MN'])
 
         connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct.Fl_I')
 
@@ -111,13 +111,13 @@ class DuctTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX), promotes=['P', 'T', 'MN', 'W'])
+                                                              elements=AIR_ELEMENTS), promotes=['P', 'T', 'MN', 'W'])
         self.prob.model.add_subsystem('flow_start_OD', FlowStart(thermo_data=janaf,
-                                                              elements=AIR_MIX), promotes=['P', 'T', 'W'])
+                                                              elements=AIR_ELEMENTS), promotes=['P', 'T', 'W'])
 
         expMN = 1.0
-        self.prob.model.add_subsystem('duct_des', Duct(elements=AIR_MIX, expMN=expMN), promotes=['MN'])
-        self.prob.model.add_subsystem('duct_OD', Duct(elements=AIR_MIX, expMN=expMN, design=False))
+        self.prob.model.add_subsystem('duct_des', Duct(elements=AIR_ELEMENTS, expMN=expMN), promotes=['MN'])
+        self.prob.model.add_subsystem('duct_OD', Duct(elements=AIR_ELEMENTS, expMN=expMN, design=False))
 
         connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct_des.Fl_I')
         connect_flow(self.prob.model, 'flow_start_OD.Fl_O', 'duct_OD.Fl_I')
