@@ -48,6 +48,7 @@ class MixFuel(om.ExplicitComponent):
         inflow_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
         self.inflow_elements = inflow_thermo.elements
         self.inflow_wt_mole = inflow_thermo.wt_mole
+        self.num_inflow_elements = len(self.inflow_elements)
 
         air_fuel_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
         self.air_fuel_prods = air_fuel_thermo.products
@@ -76,17 +77,6 @@ class MixFuel(om.ExplicitComponent):
         self.add_output('Wfuel', shape=1, units="lbm/s", desc="total fuel massflow out")
         self.add_output('b0_out', val=air_fuel_thermo.b0)
 
-        # for i, r in enumerate(self.air_fuel_prods):
-        #     self.init_fuel_amounts_base[i] = thermo_data.reactants['JP-7-a'].get(r, 0) * thermo_data.products[r]['wt']
-
-        # ifa_base_moles = self.init_fuel_amounts_base/sum(self.init_fuel_amounts_base)
-        # ifa_base_moles = ifa_base_moles/air_fuel_thermo.wt_mole
-        # init_b = np.sum(air_fuel_thermo.aij * ifa_base_moles, axis=1)
-
-        # print('foobar', sorted(air_fuel_thermo.elements))
-        # print('foobar', init_b)
-        # print()
-
         for i, e in enumerate(self.air_fuel_elements): 
             self.init_fuel_amounts_base[i] = thermo_data.reactants[fuel_type].get(e, 0) * thermo_data.element_wts[e]
 
@@ -94,15 +84,18 @@ class MixFuel(om.ExplicitComponent):
        
 
         # create a mapping between the composition indices of the inflow and outflow arrays
-        self.in_out_flow_idx_map = [self.air_fuel_elements.index(e) for e in self.inflow_elements]
+        # which is basically a permutation matrix of ones resize the input to the output
 
-        # self.declare_partials('mass_avg_h', ['Fl_I:FAR', 'Fl_I:tot:h'])
-        # self.declare_partials('init_prod_amounts', ['Fl_I:FAR', 'Fl_I:tot:n'])
-        # self.declare_partials('Wout', ['Fl_I:stat:W', 'Fl_I:FAR'])
-        # self.declare_partials('Wfuel', ['Fl_I:stat:W', 'Fl_I:FAR'])
-        # self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:n'])
+        self.in_out_flow_idx_map = np.zeros((n_elements, len(self.inflow_elements)))
+        for i,e in enumerate(self.inflow_elements): 
+            j = self.air_fuel_elements.index(e)
+            self.in_out_flow_idx_map[j,i] = 1.
 
-        self.declare_partials('*', '*', method='fd')
+        self.declare_partials('mass_avg_h', ['Fl_I:FAR', 'Fl_I:tot:h'])
+        self.declare_partials('Wout', ['Fl_I:stat:W', 'Fl_I:FAR'])
+        self.declare_partials('Wfuel', ['Fl_I:stat:W', 'Fl_I:FAR'])
+        self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:b0'])
+
 
     def compute(self, inputs, outputs):
         FAR = inputs['Fl_I:FAR']
@@ -115,19 +108,21 @@ class MixFuel(om.ExplicitComponent):
             self.init_air_amounts = self.init_air_amounts.real
 
         # copy the incoming flow into a correctly sized array for the outflow composition
-        for i, j in enumerate(self.in_out_flow_idx_map):
-            self.init_air_amounts[j] = Fl_I_tot_b0[i]
+        self.init_air_amounts = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
 
         self.init_air_amounts *= self.air_fuel_wt_mole
         self.init_air_amounts /= np.sum(self.init_air_amounts)
         self.init_air_amounts *= W  # convert to kg and scale with mass flow
 
-        # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
-        self.init_fuel_amounts = self.init_fuel_amounts_base * W * FAR
 
-        self.init_stuff = (self.init_air_amounts + self.init_fuel_amounts)
-        self.init_stuff /= np.sum(self.init_stuff)
-        outputs['b0_out'] = self.init_stuff/self.air_fuel_wt_mole
+        # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
+        init_fuel_amounts = self.init_fuel_amounts_base * W * FAR
+
+
+        init_stuff = (self.init_air_amounts + init_fuel_amounts)
+        init_stuff /= np.sum(init_stuff)
+
+        outputs['b0_out'] = init_stuff/self.air_fuel_wt_mole
 
         self.fuel_ht = 0  # makes ht happy
 
@@ -137,44 +132,56 @@ class MixFuel(om.ExplicitComponent):
 
         outputs['Wfuel'] = W * FAR
 
-    # def compute_partials(self, inputs, J):
-    #     FAR = inputs['Fl_I:FAR']
-    #     W = inputs['Fl_I:stat:W']
-    #     ht = inputs['Fl_I:tot:h']
-    #     n = inputs['Fl_I:tot:n']
+    def compute_partials(self, inputs, J):
+        FAR = inputs['Fl_I:FAR']
+        W = inputs['Fl_I:stat:W']
+        ht = inputs['Fl_I:tot:h']
+        Fl_I_tot_b0 = inputs['Fl_I:tot:b0']
 
-    #     # AssertionError: 4.2991138611171866e-05 not less than or equal to 1e-05 : DESIGN.burner.mix_fuel: init_prod_amounts  w.r.t Fl_I:tot:n
-    #     J['mass_avg_h', 'Fl_I:FAR'] = -ht/(1+FAR)**2 + self.fuel_ht/(1+FAR)**2  # - self.fuel_ht*FAR/(1+FAR)**2
-    #     J['mass_avg_h', 'Fl_I:tot:h'] = 1.0/(1.0 + FAR)
+        # AssertionError: 4.2991138611171866e-05 not less than or equal to 1e-05 : DESIGN.burner.mix_fuel: init_prod_amounts  w.r.t Fl_I:tot:n
+        J['mass_avg_h', 'Fl_I:FAR'] = -ht/(1+FAR)**2 + self.fuel_ht/(1+FAR)**2  # - self.fuel_ht*FAR/(1+FAR)**2
+        J['mass_avg_h', 'Fl_I:tot:h'] = 1.0/(1.0 + FAR)
 
-    #     J['Wout', 'Fl_I:stat:W'] = (1.0 + FAR)
-    #     J['Wout', 'Fl_I:FAR'] = W
+        J['Wout', 'Fl_I:stat:W'] = (1.0 + FAR)
+        J['Wout', 'Fl_I:FAR'] = W
 
-    #     J['Wfuel', 'Fl_I:stat:W'] = FAR
-    #     J['Wfuel', 'Fl_I:FAR'] = W
+        J['Wfuel', 'Fl_I:stat:W'] = FAR
+        J['Wfuel', 'Fl_I:FAR'] = W
 
-    #     init_air_amounts = np.zeros(len(self.air_fuel_prods))
-    #     for i, j in enumerate(self.in_out_flow_idx_map):
-    #         init_air_amounts[j] = n[i]
+        # for i, j in enumerate(self.in_out_flow_idx_map):
+        #     self.init_air_amounts[j] = Fl_I_tot_b0[i]
+        self.init_air_amounts = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
 
-    #     init_air_amounts *= self.air_fuel_wt_mole
-    #     init_air_amounts /= np.sum(init_air_amounts)
-    #     init_fuel_amounts = self.init_fuel_amounts_base/self.M_fuel_base
+        self.init_air_amounts *= self.air_fuel_wt_mole
+        # iam => init_air_amounts
+        sum_iam = np.sum(self.init_air_amounts)
+        d_iam0__db0 = self.in_out_flow_idx_map.dot(np.ones(4))*self.air_fuel_wt_mole
 
-    #     J['init_prod_amounts', 'Fl_I:FAR'] = (init_fuel_amounts - init_air_amounts)/(1 + FAR)**2/self.air_fuel_wt_mole
+        term1 = -self.init_air_amounts/sum_iam**2
+        d_iam1__db0 = np.einsum('i,j->ij', term1, d_iam0__db0).dot(self.in_out_flow_idx_map)
+        d_iam0__db0 = np.einsum('i,ij->ij', d_iam0__db0, self.in_out_flow_idx_map)
 
-    #     dinit_prod_dn = np.zeros((self.num_prod,self.inflow_num_prods))
-    #     temp = ((np.eye(self.inflow_num_prods) * self.inflow_wt_mole * np.sum(n*self.inflow_wt_mole)) - \
-    #                         (np.outer(self.inflow_wt_mole,self.inflow_wt_mole)*n)) / \
-    #                         (np.sum(n*self.inflow_wt_mole)**2) / (1+FAR) / self.inflow_wt_mole
+        # J['b0_out', 'Fl_I:tot:b0'] = (d_iam0__db0 + d_iam1__db0)*W
+        self.init_air_amounts /= sum_iam
 
-    #     for i, j in enumerate(self.in_out_flow_idx_map):
-    #         dinit_prod_dn[j] = temp[:,i]
+        self.init_air_amounts *= W  # convert to kg and scale with mass flow
+        d_iam__db0 = (d_iam0__db0 + d_iam1__db0)*W
 
-    #     J['init_prod_amounts', 'Fl_I:tot:n'] = dinit_prod_dn
+        init_fuel_amounts = self.init_fuel_amounts_base * W * FAR
 
-    #     J['b0_out', 'Fl_I:FAR'] = np.matmul(self.aij,J['init_prod_amounts','Fl_I:FAR'])
-    #     J['b0_out', 'Fl_I:tot:n'] = np.matmul(self.aij,J['init_prod_amounts', 'Fl_I:tot:n'])
+        init_stuff = (self.init_air_amounts + init_fuel_amounts)
+        sum_is = np.sum(init_stuff)
+   
+        
+
+
+        dinit_fuel__dFAR = self.init_fuel_amounts_base * W # check
+        J['b0_out', 'Fl_I:FAR'] = (-(self.init_air_amounts + init_fuel_amounts)/sum_is**2 *np.sum(dinit_fuel__dFAR)
+                                   + dinit_fuel__dFAR/sum_is) / self.air_fuel_wt_mole
+
+        for i in range(self.num_inflow_elements): 
+            # print('bar', d_iam__db0[:,0]/sum_is - init_stuff[0]/sum_is**2 * np.sum(d_iam__db0[:,0]))
+            J['b0_out', 'Fl_I:tot:b0'][:,i] = (d_iam__db0[:,i]/sum_is - init_stuff[i]/sum_is**2 * np.sum(d_iam__db0[:,i]))/self.air_fuel_wt_mole
 
 
 class Combustor(om.Group):

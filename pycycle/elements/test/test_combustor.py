@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.thermo.thermo import Thermo
@@ -43,7 +43,7 @@ class BurnerTestCase(unittest.TestCase):
                           inflow_elements=AIR_ELEMENTS, fuel_type=fuel_type)
 
 
-        p.setup()
+        p.setup(force_alloc_complex=True)
 
         # p['Fl_I:stat:P'] = 158.428
         p['Fl_I:stat:W'] = 38.8
@@ -59,6 +59,8 @@ class BurnerTestCase(unittest.TestCase):
         assert_near_equal(p['Wout'], 39.837124, tolerance=tol)
         assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
+        data = p.check_partials(out_stream=None, method='cs')
+        assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
 
 
     def test_case1(self):
