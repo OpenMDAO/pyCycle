@@ -292,5 +292,6 @@ reactants = { # used to compute the correct amounts of each product for an initi
   'H2': OrderedDict([('H', 2.00)]), 
   
   # 'Methane': OrderedDict([('CH4', 1.00)])
-  'Methane': OrderedDict([('C', 1.), ('H', 4.)])
+  'Methane': OrderedDict([('C', 1.), ('H', 4.)]),
+  'water': OrderedDict([('H', 2.), ('O', 1.)])
 }

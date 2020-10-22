@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea import species_data
-from pycycle.elements.combustor import Combustor, MixFuel
+from pycycle.elements.combustor import Combustor
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -28,41 +28,6 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 
 
 class BurnerTestCase(unittest.TestCase):
-
-
-    def test_mix_fuel(self): 
-
-        thermo_spec = species_data.janaf
-
-        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
-
-        p = Problem()
-
-        fuel_type = 'JP-7'
-        p.model = MixFuel(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
-                          inflow_elements=AIR_ELEMENTS, fuel_type=fuel_type)
-
-
-        p.setup(force_alloc_complex=True)
-
-        # p['Fl_I:stat:P'] = 158.428
-        p['Fl_I:stat:W'] = 38.8
-        p['Fl_I:FAR'] = 0.02673
-        p['Fl_I:tot:h'] = 181.381769
-        p['fuel_Tt'] = 518.
-        p['Fl_I:tot:b0'] = air_thermo.b0
-
-        p.run_model()
-
-        tol = 5e-7
-        assert_near_equal(p['mass_avg_h'], 176.65965638, tolerance=tol)
-        assert_near_equal(p['Wout'], 39.837124, tolerance=tol)
-        assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
-
-        data = p.check_partials(out_stream=None, method='cs')
-        # data = p.check_partials(method='cs')
-        assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
-
 
     def test_case1(self):
 
