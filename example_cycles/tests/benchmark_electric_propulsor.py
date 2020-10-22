@@ -63,10 +63,10 @@ class ElectricPropulsorTestCase(unittest.TestCase):
         assert_near_equal(prob['design.fan.SMW'], 29.886, tol)
 
 
-        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 315.456 , tol)
-        assert_near_equal(prob['off_design.nozz.Fg'], 9656.57625157, tol)
-        assert_near_equal(prob['off_design.fan.SMN'], 22.18076712, tol)
-        assert_near_equal(prob['off_design.fan.SMW'], 18.306011, tol)
+        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 315.3438487 , tol)
+        assert_near_equal(prob['off_design.nozz.Fg'], 9653.17011134, tol)
+        assert_near_equal(prob['off_design.fan.SMN'], 22.13770023, tol)
+        assert_near_equal(prob['off_design.fan.SMW'], 18.95649282, tol)
 
 if __name__ == "__main__":
     unittest.main()

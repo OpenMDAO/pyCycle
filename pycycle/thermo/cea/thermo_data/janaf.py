@@ -279,11 +279,7 @@ element_wts = {
 }
 
 reactants = { # used to compute the correct amounts of each product for an initial condition
-  # 'air': OrderedDict([('N2', 78.084), ('O2', 20.9476), ('Ar', .9365), ('CO2', .0319)]), #percentage by volume
-  'air': {'N': 1.5616, 'O':.41959, 'Ar': .00936, 'C': .00032},
-  
   'JP-7': {'C': 2.00, 'H': 4.0044},
-  'JP-7-a': OrderedDict([('C2H4', 1.00), ('H', 0.0044)]), 
   
   # 'Jet-A(g)': OrderedDict([('C2H4', 6), ('H', -1.)]), 
   'Jet-A(g)': OrderedDict([('C', 12.), ('H', 23.)]), 
@@ -293,5 +289,5 @@ reactants = { # used to compute the correct amounts of each product for an initi
   
   # 'Methane': OrderedDict([('CH4', 1.00)])
   'Methane': OrderedDict([('C', 1.), ('H', 4.)]),
-  'water': OrderedDict([('H', 2.), ('O', 1.)])
+  'Water': OrderedDict([('H', 2.), ('O', 1.)])
 }

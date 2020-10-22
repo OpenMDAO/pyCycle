@@ -66,8 +66,9 @@ class Properties(object):
         
         else:
             raise ValueError('You have provided both elements and initial reactants (init_reacts). In order to set thermodynamic data, you must only provide one or the other.')       
-        
+
         self.set_data(init_reacts)
+
 
     def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
         Tt = Tt[0]
@@ -166,7 +167,9 @@ class Properties(object):
 
         else:
 
-            self.b0 = list(self.init_elements.values())
+            self.b0 = np.zeros(self.num_element)
+            for i,e in enumerate(element_list): 
+                self.b0[i] = self.init_elements[e]
 
             self.b0 = self.b0*self.element_wt
             self.b0 = self.b0/np.sum(self.b0)
@@ -196,6 +199,7 @@ class Properties(object):
 
         b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
         init_reacts = np.fromiter(self.init_reacts.values(), dtype=float) 
+
 
         for e in element_list:
             row = []
