@@ -182,7 +182,7 @@ class WARTestCase(unittest.TestCase):
         air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
 
         prob.model.add_subsystem('war', MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
-                                                 inflow_elements=AIR_ELEMENTS, mix_reactant='water'), 
+                                                 inflow_elements=AIR_ELEMENTS, mix_reactants='Water'), 
                                  promotes=['*'])
         
 
@@ -191,9 +191,8 @@ class WARTestCase(unittest.TestCase):
 
         # p['Fl_I:stat:P'] = 158.428
         prob['Fl_I:stat:W'] = 38.8
-        prob['mix_ratio'] = .0001 # WAR
+        prob['mix:ratio'] = .0001 # WAR
         prob['Fl_I:tot:h'] = 181.381769
-        prob['reactant_Tt'] = 518.
         prob['Fl_I:tot:b0'] = air_thermo.b0
 
         prob.run_model()

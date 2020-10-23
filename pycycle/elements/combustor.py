@@ -103,8 +103,8 @@ class Combustor(om.Group):
         # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
                            MixRatio(inflow_thermo_data=inflow_thermo_data, thermo_data=thermo_data,
-                                    inflow_elements=inflow_elements, mix_reactant=fuel_type),
-                           promotes=['Fl_I:stat:W', ('mix_ratio', 'Fl_I:FAR'), 'Fl_I:tot:b0', 'Fl_I:tot:h', 'Wfuel', 'Wout'])
+                                    inflow_elements=inflow_elements, mix_reactants=fuel_type),
+                           promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:b0', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 
         # Pressure loss
         prom_in = [('Pt_in', 'Fl_I:tot:P'),'dPqP']
