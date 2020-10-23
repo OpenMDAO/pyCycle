@@ -252,9 +252,9 @@ class Bleeds(om.ExplicitComponent):
         Pt_out = inputs['Pt_out']
         delta_Pt = inputs['Pt_in'] - Pt_out
 
-        n_mass = inputs['n_in'] * self.main_flow_wt_mole
+        n_mass = inputs['n_in'] * self.main_flow_wt_mole # converts to kg
 
-        flow_mass = n_mass / np.sum(n_mass) * W_in
+        flow_mass = n_mass / np.sum(n_mass) * W_in # normalized then scaled to main flow mass
 
         # calculate W_out, bleed total pressure and composition based on
         # primary flow
@@ -264,16 +264,16 @@ class Bleeds(om.ExplicitComponent):
         bleeds = self.options['bleed_names']
         for BN in bleeds:
             outputs[BN + ':Pt'] = Pt_out + inputs[BN+':frac_P'] * delta_Pt
-            W_bld += inputs[BN + ':W']
+            W_bld += inputs[BN + ':W'] 
             n_bld_tot += inputs[BN + ':n']
 
         W_out += W_bld
 
         if len(bleeds) > 0:
-            n_bld_mass = n_bld_tot * self.bld_flow_wt_mole
-            bld_mass = n_bld_mass / np.sum(n_bld_mass) * W_bld
+            n_bld_mass = n_bld_tot * self.bld_flow_wt_mole # converts to KG 
+            bld_mass = n_bld_mass / np.sum(n_bld_mass) * W_bld # normalizes to 1 then scales to W_bld
 
-            flow_mass += self.mix_mat.dot(bld_mass)
+            flow_mass += self.mix_mat.dot(bld_mass) #re-maps to the output flow product size and adds it to the main flow
 
         # determine the exit composition
         flow_mass_norm = flow_mass / W_out
@@ -307,10 +307,10 @@ class Bleeds(om.ExplicitComponent):
             n_bld_tot += inputs[BN + ':n']
 
         if len(bleeds) > 0:
-            n_bld_mass = n_bld_tot * bfwm
-            bld_mass_sum = np.sum(n_bld_mass)
-            bld_mass = n_bld_mass / bld_mass_sum * W_bld
-            bld_mass_flw = self.mix_mat.dot(bld_mass)
+            n_bld_mass = n_bld_tot * bfwm # converts to KG 
+            bld_mass_sum = np.sum(n_bld_mass) 
+            bld_mass = n_bld_mass / bld_mass_sum * W_bld # normalizes to 1 then scales to W_bld
+            bld_mass_flw = self.mix_mat.dot(bld_mass) #re-maps to the output flow product size
 
             flow_mass += bld_mass_flw
 
