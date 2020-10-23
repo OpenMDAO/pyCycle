@@ -1,5 +1,9 @@
 import sys
 
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+
 
 def print_flow_station(prob, fs_names, file=sys.stdout):
     names = ['tot:P', 'tot:T', 'tot:h', 'tot:S', 'stat:P', 'stat:W', 'stat:MN', 'stat:V', 'stat:area']
@@ -244,3 +248,74 @@ def print_mixer(prob, element_names, file=sys.stdout):
                                    prob[e_name+'.Fl_I2_calc:stat:MN'][0]),
                                    prob[e_name+'.ER',][0],
                   file=file, flush=True)
+
+
+def plot_compressor_maps(prob, element_names, eff_vals=np.array([0,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]),alphas=[0]):
+
+    for e_name in element_names:
+        comp = prob.model._get_subsystem(e_name)
+        map_data = comp.options['map_data']
+
+        s_Wc = prob[e_name+'.s_Wc']
+        s_PR = prob[e_name+'.s_PR']
+        s_eff = prob[e_name+'.s_eff']
+        s_Nc = prob[e_name+'.s_Nc']
+
+        RlineMap, NcMap = np.meshgrid(map_data.RlineMap, map_data.NcMap, sparse=False)
+
+        for alpha in alphas:
+          scaled_PR = (map_data.PRmap[alpha,:,:] - 1.) * s_PR + 1.
+
+          plt.figure(figsize=(11,8))
+          Nc = plt.contour(map_data.WcMap[alpha,:,:]*s_Wc,scaled_PR,NcMap*s_Nc,colors='k',levels=map_data.NcMap*s_Nc)
+          R = plt.contour(map_data.WcMap[alpha,:,:]*s_Wc,scaled_PR,RlineMap,colors='k',levels=map_data.RlineMap)
+          eff = plt.contourf(map_data.WcMap[alpha,:,:]*s_Wc,scaled_PR,map_data.effMap[alpha,:,:]*s_eff,levels=eff_vals)
+
+          plt.colorbar(eff)
+
+          plt.plot(prob[e_name+'.Wc'], prob[e_name+'.map.scalars.PR'][0], 'ko')
+
+          plt.clabel(Nc, fontsize=9, inline=False)
+          plt.clabel(R, fontsize=9, inline=False)
+          # plt.clabel(eff, fontsize=9, inline=True)
+
+          plt.xlabel('Wc, lbm/s')
+          plt.ylabel('PR')
+          plt.title(e_name)
+          # plt.show()
+          plt.savefig(e_name+'.pdf')  
+
+
+def plot_turbine_maps(prob, element_names, eff_vals=np.array([0,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]),alphas=[0]):
+
+    for e_name in element_names:
+        comp = prob.model._get_subsystem(e_name)
+        map_data = comp.options['map_data']
+
+        s_Wp = prob[e_name+'.s_Wp']
+        s_PR = prob[e_name+'.s_PR']
+        s_eff = prob[e_name+'.s_eff']
+        s_Np = prob[e_name+'.s_Np']
+
+        PRmap, NpMap = np.meshgrid(map_data.PRmap, map_data.NpMap, sparse=False)
+
+        for alpha in alphas:
+          scaled_PR = (PRmap - 1.) * s_PR + 1.
+
+          plt.figure(figsize=(11,8))
+          Nc = plt.contour(map_data.WpMap[alpha,:,:]*s_Wp,scaled_PR,NpMap*s_Np,colors='k',levels=map_data.NpMap*s_Np)
+          eff = plt.contourf(map_data.WpMap[alpha,:,:]*s_Wp,scaled_PR,map_data.effMap[alpha,:,:]*s_eff,levels=eff_vals)
+
+          plt.colorbar(eff)
+
+          plt.plot(prob[e_name+'.Wp'], prob[e_name+'.map.scalars.PR'][0], 'ko')
+
+          plt.clabel(Nc, fontsize=9, inline=False)
+          # plt.clabel(eff, fontsize=9, inline=True)
+
+          plt.xlabel('Wc, lbm/s')
+          plt.ylabel('PR')
+          plt.title(e_name)
+          # plt.show()
+          plt.savefig(e_name+'.pdf')  
+
