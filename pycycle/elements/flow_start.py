@@ -40,7 +40,7 @@ class FlowStart(Group):
 
         # inputs
         if use_WAR == True:
-            mix = MixRatio(inflow_thermo_data=thermo_data, thermo_data=thermo_data,
+            mix = MixRatio(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
                            inflow_elements=elements, mix_elements='Water')
             self.add_subsystem('WAR', mix, 
                                 promotes_inputs=('Fl_I:tot:b0', 'Fl_I:stat:W', ('mix:ratio', 'WAR')), 

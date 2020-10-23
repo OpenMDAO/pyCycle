@@ -20,9 +20,9 @@ class MixRatioTestCase(unittest.TestCase):
             p = om.Problem()
 
             fuel = 'JP-7'
-            p.model = MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
+            p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                                inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
-                               mix_spec=fuel, mix_names='fuel')
+                               mix_elements=fuel, mix_names='fuel')
 
 
             p.setup(force_alloc_complex=True)
@@ -56,7 +56,7 @@ class MixRatioTestCase(unittest.TestCase):
             p = om.Problem()
 
             fuel = 'JP-7'
-            p.model = MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
+            p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                                inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
                                mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
 

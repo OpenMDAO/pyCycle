@@ -15,7 +15,7 @@ class MixRatio(om.ExplicitComponent):
                              desc=('Thermodynamic data set for incoming flow. This only needs to be set if different '
                                    'thermo data is used for incoming flow and outgoing flow.'), 
                              recordable=False)
-        self.options.declare('thermo_data', default=janaf,
+        self.options.declare('mix_thermo_data', default=janaf,
                              desc=('Thermodynamic data set for flow. This is used for incoming and '
                                    'outgoing flow unless inflow_thermo_data is set, in which case it '
                                    'is used only for outgoing flow.'), 
@@ -30,7 +30,7 @@ class MixRatio(om.ExplicitComponent):
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
     def setup(self):
-        thermo_data = self.options['thermo_data']
+        thermo_data = self.options['mix_thermo_data']
         if self.options['inflow_thermo_data'] is not None:
             # Set the inflow thermodynamic data package if it is different from the outflow one
             inflow_thermo_data = self.options['inflow_thermo_data']
@@ -40,11 +40,11 @@ class MixRatio(om.ExplicitComponent):
             inflow_thermo_data = thermo_data
 
         mix_mode = self.options['mix_mode']
-        if mix_mode == "reactant": 
-            mix_reactants = self.options['mix_elements']
-            if isinstance(mix_reactants, str): # cast it to tuple
-                mix_reactants = (mix_reactants,)
-            self.mix_reactants = mix_reactants
+
+        mix_elements = self.options['mix_elements']
+        if isinstance(mix_elements, str): # cast it to tuple
+            mix_elements = (mix_elements,)
+        self.mix_elements = mix_elements
 
         mix_names = self.options['mix_names']
         if isinstance(mix_names, str): # cast it to tuple 
@@ -55,24 +55,17 @@ class MixRatio(om.ExplicitComponent):
 
 
         self.mixed_elements = inflow_elements.copy()
-        for reactant in mix_reactants: 
-            self.mixed_elements.update(thermo_data.reactants[reactant]) #adds the fuel elements to the mix outflow
+        if mix_mode == "reactant": # get the elements from the reactant dict in the thermo_data
+            for reactant in mix_elements: 
+                self.mixed_elements.update(thermo_data.reactants[reactant]) #adds the fuel elements to the mix outflow
 
         inflow_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
         self.inflow_elements = inflow_thermo.elements
-        self.inflow_wt_mole = inflow_thermo.wt_mole
         self.num_inflow_elements = len(self.inflow_elements)
 
-        air_fuel_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
-        self.air_fuel_elements = air_fuel_thermo.elements
-        self.air_fuel_wt_mole = air_fuel_thermo.element_wt
-        self.aij = air_fuel_thermo.aij
-
-        self.num_elements = n_elements = len(self.air_fuel_elements)
-
-        self.init_air_amounts = np.zeros(n_elements)
-        self.init_fuel_amounts = np.zeros(n_elements)
-
+        mix_thermo = Properties(thermo_data, init_elements=self.mixed_elements)
+        self.air_fuel_elements = mix_thermo.elements
+        self.air_fuel_wt_mole = mix_thermo.element_wt
 
         # inputs
         self.add_input('Fl_I:stat:W', val=0.0, desc='weight flow', units='lbm/s')
@@ -80,30 +73,40 @@ class MixRatio(om.ExplicitComponent):
         self.add_input('Fl_I:tot:b0', val=inflow_thermo.b0, desc='incoming flow composition')
         
         for name in mix_names: 
-            self.add_input(f'{name}:h', val=0.0, units='Btu/lbm', desc="reactant enthalpy")
-            self.add_input(f'{name}:ratio', val=0.0, desc='reactant to air mass ratio')
+            if mix_mode == 'reactant': 
+                self.add_input(f'{name}:h', val=0.0, units='Btu/lbm', desc="reactant enthalpy")
+                self.add_input(f'{name}:ratio', val=0.0, desc='reactant to air mass ratio')
+            else: 
+                # create the Fl_I variables
+                pass
             self.add_output(f'{name}:W', shape=1, units="lbm/s", desc="total fuel massflow out")
 
         # outputs
         self.add_output('mass_avg_h', shape=1, units='Btu/lbm',
                         desc="mass flow rate averaged specific enthalpy")
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
-        self.add_output('b0_out', val=air_fuel_thermo.b0)
+        self.add_output('b0_out', val=mix_thermo.b0)
 
         self.init_fuel_amounts_1kg = {}
-        self.in_out_flow_idx_map = {}
-        for reactant in mix_reactants: 
-            self.init_fuel_amounts_1kg[reactant] = np.zeros(n_elements)
-            ifa_1kg = self.init_fuel_amounts_1kg[reactant]
-            for i, e in enumerate(self.air_fuel_elements): 
-                ifa_1kg[i] = thermo_data.reactants[reactant].get(e, 0) * thermo_data.element_wts[e]
 
-            ifa_1kg[:] = ifa_1kg/sum(ifa_1kg) # make it 1 kg of fuel
+        if mix_mode == 'reactant': 
+            for reactant in mix_elements: 
+                self.init_fuel_amounts_1kg[reactant] = np.zeros(mix_thermo.num_element)
+                ifa_1kg = self.init_fuel_amounts_1kg[reactant]
+                for i, e in enumerate(self.air_fuel_elements): 
+                    ifa_1kg[i] = thermo_data.reactants[reactant].get(e, 0) * thermo_data.element_wts[e]
+
+                ifa_1kg[:] = ifa_1kg/sum(ifa_1kg) # make it 1 kg of fuel
+
+        else: 
+            # create an index map for each inflow 
+            # create an array of elemental molar masses
+            pass
        
-            # create a mapping between the composition indices of the inflow and outflow arrays
-            # which is basically a permutation matrix of ones resize the input to the output
+        # create a mapping between the composition indices of the inflow and outflow arrays
+        # which is basically a permutation matrix of ones resize the input to the output
 
-        self.in_out_flow_idx_map = np.zeros((n_elements, len(self.inflow_elements)))
+        self.in_out_flow_idx_map = np.zeros((mix_thermo.num_element, inflow_thermo.num_element))
         for i,e in enumerate(self.inflow_elements): 
             j = self.air_fuel_elements.index(e)
             self.in_out_flow_idx_map[j,i] = 1.
@@ -128,11 +131,6 @@ class MixRatio(om.ExplicitComponent):
         W = inputs['Fl_I:stat:W']
         Fl_I_tot_b0 = inputs['Fl_I:tot:b0']
 
- 
-        if inputs._under_complex_step:
-            init_stuff = self.init_air_amounts.astype(np.complex)
-        else:
-            init_stuff = self.init_air_amounts.real
 
         # copy the incoming flow into a correctly sized array for the outflow composition
         init_stuff = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
@@ -144,14 +142,26 @@ class MixRatio(om.ExplicitComponent):
         mass_avg_h = inputs['Fl_I:tot:h'] * W
         W_out = W.copy()
 
-        for name, reactant in zip(self.mix_names, self.mix_reactants): 
-            ratio = inputs[f'{name}:ratio']
-            # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
-            outputs[f'{name}:W'] = W_mix = W*ratio
-            init_stuff += self.init_fuel_amounts_1kg[reactant]*W_mix
 
-            mass_avg_h += inputs[f'{name}:h'] * W_mix
-            W_out += W_mix
+        mix_mode = self.options['mix_mode']
+        if mix_mode == 'reactant': 
+            for name, reactant in zip(self.mix_names, self.mix_elements): 
+                ratio = inputs[f'{name}:ratio']
+                # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
+                outputs[f'{name}:W'] = W_mix = W*ratio
+                init_stuff += self.init_fuel_amounts_1kg[reactant]*W_mix
+
+                mass_avg_h += inputs[f'{name}:h'] * W_mix
+                W_out += W_mix
+
+        else: # inflow mixing
+            for name in self.mix_names: 
+                mix_stuff = inputs[f'{mix}:b0']
+                mix_stuff *= self.mix_wt_mole[name]
+                mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
+                mix_stuff *= inputs[f'{mix}:W'] # scale to actual mass flow of that mix stream
+                
+                init_stuff += mix_stuff
 
         init_stuff /= np.sum(init_stuff) # scale back to 1 kg
         outputs['b0_out'] = init_stuff/self.air_fuel_wt_mole
