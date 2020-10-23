@@ -152,6 +152,7 @@ class Thermo(om.Group):
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['maxiter'] = 100
+        # newton.options['max_sub_solves'] = 100
         newton.options['atol'] = 1e-10
         newton.options['rtol'] = 1e-10
         newton.options['stall_limit'] = 4

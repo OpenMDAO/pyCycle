@@ -160,13 +160,13 @@ class FlowStartTestCase(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
 
-        with self.assertRaises(ValueError) as cm:
+        # with self.assertRaises(ValueError) as cm:
 
-            prob = Problem()
-            prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
-            prob.setup()
+        #     prob = Problem()
+        #     prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
+        #     prob.setup()
 
-        self.assertEqual(str(cm.exception), 'In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
+        # self.assertEqual(str(cm.exception), 'In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
 
 class WARTestCase(unittest.TestCase):
 

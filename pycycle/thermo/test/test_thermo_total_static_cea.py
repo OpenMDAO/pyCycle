@@ -68,7 +68,6 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.setup()
         # TODO: Investigate this weirdness.... this case won't work if you thermo_TP fully solve itself
-        p.model.base_thermo.chem_eq.nonlinear_solver.options['maxiter'] = 1
         p.set_solver_print(level=-1)
 
         p.set_val('h', 340, units='cal/g')
@@ -107,6 +106,8 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
     def test_set_total_SP(self):
 
+        #
+
         p = om.Problem()
         p.model = Thermo(mode='total_SP', 
                          method = 'CEA', 
@@ -117,9 +118,15 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
 
         p.setup(check=False)
+
+        # NOTE: This case is very touchy and requires weird solver settings
         p.model.nonlinear_solver.options['solve_subsystems'] = True
         p.model.base_thermo.chem_eq.nonlinear_solver.options['maxiter'] = 1
-        p.set_solver_print(level=-1)
+
+        p.model.base_thermo.chem_eq.nonlinear_solver.linesearch = om.ArmijoGoldsteinLS()
+        p.model.base_thermo.chem_eq.nonlinear_solver.linesearch.options['maxiter'] = 2
+        
+        p.set_solver_print(level=2)
         p.final_setup()
 
         # p.model.nonlinear_solver.options['maxiter'] = 0

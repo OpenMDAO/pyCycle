@@ -90,7 +90,7 @@ class Turbojet(pyc.Cycle):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
+        # self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
@@ -101,7 +101,7 @@ class Turbojet(pyc.Cycle):
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
         
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
 def viewer(prob, pt, file=sys.stdout):
     """

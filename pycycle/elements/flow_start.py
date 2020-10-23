@@ -29,11 +29,7 @@ class FlowStart(Group):
             if 'H' not in elements or 'O' not in elements:
                 raise ValueError('The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
-        elif use_WAR == False:
-            if 'H' in elements.keys():
-
-                raise ValueError('In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
-
+    
         thermo = species_data.Properties(thermo_data, init_elements=elements)
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)

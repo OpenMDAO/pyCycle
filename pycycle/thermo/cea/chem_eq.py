@@ -74,11 +74,11 @@ class ChemEq(om.ImplicitComponent):
         self.options['assembled_jac_type'] = 'dense'
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
-        # ln_bt = newton.linesearch = om.BoundsEnforceLS()
-        ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
-        ln_bt.options['maxiter'] = 2
-        ln_bt.options['bound_enforcement'] = 'scalar'
+        ln_bt = newton.linesearch = om.BoundsEnforceLS()
+        # ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
+        # ln_bt.options['maxiter'] = 2
         ln_bt.options['iprint'] = -1
+        # ln_bt.options['print_bound_enforce'] = True
 
         # Once the concentration of a species reaches its minimum, we
         # can essentially remove it from the problem. This switch controls

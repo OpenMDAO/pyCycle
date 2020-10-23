@@ -107,7 +107,7 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
-from pycycle.elements import cooling, combustor, flow_start
+from pycycle.elements import cooling, mix_ratio, flow_start
 from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_FUEL_ELEMENTS
 
@@ -120,7 +120,7 @@ class Tests(unittest.TestCase):
 
         # values needed for the flow initialization from the burner exit
         p.model.set_input_defaults('mix_fuel.Fl_I:stat:W', val=60.32, units="lbm/s")
-        p.model.set_input_defaults('mix_fuel.Fl_I:FAR', val=0.0304)
+        p.model.set_input_defaults('mix_fuel.mix:ratio', val=0.0304)
         p.model.set_input_defaults('mix_fuel.Fl_I:tot:h', val=298.48, units='Btu/lbm')
 
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
@@ -131,7 +131,8 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
         # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', combustor.MixFuel(thermo_data=species_data.janaf))
+        p.model.add_subsystem('mix_fuel', mix_ratio.MixRatio(mix_thermo_data=species_data.janaf))
+
 
         p.model.add_subsystem(
             'burner_flow',
@@ -200,7 +201,7 @@ class Tests(unittest.TestCase):
 
         p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
 
-        p.model.connect('mix_fuel.b0', 'row.n_primary')
+        p.model.connect('burner_flow.Fl_O:tot:n', 'row.n_primary')
 
         p.setup()
 
@@ -213,6 +214,11 @@ class Tests(unittest.TestCase):
         # first row mass flow is primary + cooling
         assert_near_equal(p['row.W_out'], 66.60, tol)
         assert_near_equal(p['row.Fl_O:tot:T'], 3299.28, tol)
+
+        print('foobar')
+        np.set_printoptions(precision=15)
+        print('row bleeds burner_flow_b0', p['burner_flow.Fl_O:tot:b0'])
+        print('row bleeds Fl_O:tot:b0', p['row.Fl_O:tot:b0'])
 
     def test_turbine_cooling(self):
         """test the flow calculations and final temperatures for multiple rows"""
@@ -239,7 +245,7 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.b0', 'turb_cool.Fl_turb_I:tot:b0')
+        p.model.connect('mix_fuel.b0_out', 'turb_cool.Fl_turb_I:tot:b0')
 
         p.setup()
         p.set_solver_print(0)

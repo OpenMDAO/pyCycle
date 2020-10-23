@@ -196,6 +196,7 @@ class Bleeds(om.ExplicitComponent):
         self.bld_flow_prods = bld_flow_thermo.products
         self.bld_flow_wt_mole = bld_flow_thermo.wt_mole
         self.n_bld_flow_prods = len(self.bld_flow_prods)
+        self.bld_aij = bld_flow_thermo.aij
 
         self.aij = main_flow_thermo.aij
 
@@ -266,6 +267,8 @@ class Bleeds(om.ExplicitComponent):
             outputs[BN + ':Pt'] = Pt_out + inputs[BN+':frac_P'] * delta_Pt
             W_bld += inputs[BN + ':W'] 
             n_bld_tot += inputs[BN + ':n']
+
+        print('bleed input b0', np.sum(self.bld_aij*n_bld_tot, axis=1))
 
         W_out += W_bld
 
