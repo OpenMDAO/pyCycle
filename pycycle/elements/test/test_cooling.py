@@ -175,10 +175,12 @@ class Tests(unittest.TestCase):
         """test the flow mixing calculations for a single row"""
         p = self.prob
 
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('row.n_cool', val=n_init)  # product ratios for clean air
+        # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
+        #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
+        #                    1.00000000e-10, 7.23198770e-03])
+        # p.model.set_input_defaults('row.n_cool', val=n_init)  # product ratios for clean air
+        b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p.model.set_input_defaults('row.cool:b0', val=b0_air)
         p.model.set_input_defaults('Pt_in', val=616.736, units='psi')
         p.model.set_input_defaults('Pt_out', val=149.113, units='psi')
         p.model.set_input_defaults('row.x_factor', val=.9)
@@ -201,7 +203,7 @@ class Tests(unittest.TestCase):
 
         p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
 
-        p.model.connect('burner_flow.Fl_O:tot:n', 'row.n_primary')
+        p.model.connect('burner_flow.Fl_O:tot:b0', 'row.b0_primary')
 
         p.setup()
 
@@ -215,19 +217,15 @@ class Tests(unittest.TestCase):
         assert_near_equal(p['row.W_out'], 66.60, tol)
         assert_near_equal(p['row.Fl_O:tot:T'], 3299.28, tol)
 
-        print('foobar')
-        np.set_printoptions(precision=15)
-        print('row bleeds burner_flow_b0', p['burner_flow.Fl_O:tot:b0'])
-        print('row bleeds Fl_O:tot:b0', p['row.Fl_O:tot:b0'])
-
     def test_turbine_cooling(self):
         """test the flow calculations and final temperatures for multiple rows"""
         p = self.prob
 
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('turb_cool.Fl_cool:tot:n', val=n_init)  # product ratios for clean air
+        # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
+        #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
+        #                    1.00000000e-10, 7.23198770e-03])
+        b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p.model.set_input_defaults('turb_cool.Fl_cool:tot:b0', val=b0_air)  # product ratios for clean air
         p.model.set_input_defaults('turb_cool.turb_pwr', val=24193.5, units='hp')
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:P', val=616.736, units='psi')
         p.model.set_input_defaults('turb_cool.Fl_turb_O:tot:P', val=149.113, units='psi')
@@ -254,7 +252,7 @@ class Tests(unittest.TestCase):
 
         p.run_model()
 
-        tol = 3e-4
+        tol = 4e-4
 
         assert_near_equal(p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
         assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2846.45, tol)
@@ -262,9 +260,9 @@ class Tests(unittest.TestCase):
         assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2412.12, tol)
 
         assert_near_equal(p['turb_cool.row_0.W_cool'], 4.44635, tol)
-        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.3002, tol)
-        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.71, tol)
-        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91966, tol)
+        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.2981, tol)
+        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.7079, tol)
+        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91799, tol)
 
         np.set_printoptions(precision=5)
         check = p.check_partials(includes=['turb_cool.row_0.cooling_calcs',

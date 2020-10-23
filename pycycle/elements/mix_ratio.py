@@ -175,12 +175,14 @@ class MixRatio(om.ExplicitComponent):
 
         else: # inflow mixing
             for name in self.mix_names: 
+                W_mix = inputs[f'{name}:W']
                 mix_stuff = inputs[f'{name}:b0']
                 mix_stuff *= self.mix_wt_mole[name]
                 mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
-                mix_stuff *= inputs[f'{name}:W'] # scale to actual mass flow of that mix stream
+                mix_stuff *= W_mix# scale to actual mass flow of that mix stream
                 
                 init_stuff += self.mix_out_flow_idx_maps[name].dot(mix_stuff)
+                W_out += W_mix
 
         init_stuff /= np.sum(init_stuff) # scale back to 1 kg
         outputs['b0_out'] = init_stuff/self.air_fuel_wt_mole
