@@ -22,7 +22,7 @@ class MixRatioTestCase(unittest.TestCase):
             fuel = 'JP-7'
             p.model = MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
                                inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
-                               mix_reactants=fuel, mix_names='fuel')
+                               mix_spec=fuel, mix_names='fuel')
 
 
             p.setup(force_alloc_complex=True)
@@ -58,7 +58,7 @@ class MixRatioTestCase(unittest.TestCase):
             fuel = 'JP-7'
             p.model = MixRatio(inflow_thermo_data=thermo_spec, thermo_data=thermo_spec,
                                inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
-                               mix_reactants=[fuel, fuel], mix_names=['fuel1','fuel2'])
+                               mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
 
 
             p.setup(force_alloc_complex=True)

@@ -25,7 +25,7 @@ class MixRatio(om.ExplicitComponent):
 
         self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
 
-        self.options.declare('mix_reactants', default="JP-7",
+        self.options.declare('mix_elements', default="JP-7",
                              desc='Type of fuel.', types=(str, list, tuple))
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
@@ -41,7 +41,7 @@ class MixRatio(om.ExplicitComponent):
 
         mix_mode = self.options['mix_mode']
         if mix_mode == "reactant": 
-            mix_reactants = self.options['mix_reactants']
+            mix_reactants = self.options['mix_elements']
             if isinstance(mix_reactants, str): # cast it to tuple
                 mix_reactants = (mix_reactants,)
             self.mix_reactants = mix_reactants
