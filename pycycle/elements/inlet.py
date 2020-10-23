@@ -12,6 +12,70 @@ from pycycle.passthrough import PassThrough
 
 #from pycycle.elements.test.util import regression_generator
 
+class RamRecovery(om.ExplicitComponent):
+    """
+    Performs subsonic, supersonic, and hypsersonic inlet ram recovery calculations.
+    """
+    def initialize(self):
+        self.options.declare('MilSpec', default=False,
+                              desc='Use Mil Spec ram recovery calculations')
+
+    def setup(self):
+        # inputs
+        self.add_input('MN_in', val=0.5, units=None, desc='Flight Mach Number')
+        self.add_input('ram_recovery', val=1.0, desc='Ram Recovery Base')
+
+        # outputs
+        self.add_output('P_recovery', val=1.0, units=None, desc='Mil Spec Ram Recovery')
+        
+        self.declare_partials('P_recovery', ['ram_recovery', 'MN_in'])
+
+    def compute(self, inputs, outputs):
+        
+        ram_recovery = inputs['ram_recovery']
+        MN_in = inputs['MN_in']
+        
+        MS = self.options['MilSpec']
+        
+        if not MS:
+            outputs['P_recovery'] = ram_recovery
+        
+        if MS:
+            
+            if MN_in < 1.0:
+                outputs['P_recovery'] = ram_recovery
+            
+            elif MN_in >= 1.0 and MN_in < 5.0:
+                outputs['P_recovery'] = ram_recovery *(1-(0.075*((MN_in-1)**1.35)))
+            
+            elif MN_in >= 5.0:
+                outputs['P_recovery'] = 800/(MN_in**4 + 935)
+
+    def compute_partials(self, inputs, J):
+        
+        MN_in = inputs['MN_in']
+        ram_recovery = inputs['ram_recovery']
+        
+        MS = self.options['MilSpec']
+        
+        if not MS:
+            J['P_recovery', 'etaBase'] = 1
+            J['P_recovery', 'MN_in'] = 0
+        
+        if MS:
+            
+            if MN_in < 1.0:
+                J['P_recovery', 'etaBase'] = 1
+                J['P_recovery', 'MN_in'] = 0
+            
+            elif MN_in >= 1.0 and MN_in < 5.0:
+                J['P_recovery', 'ram_recovery'] = 1-(0.075*((MN_in-1)**1.35))
+                J['P_recovery', 'MN_in'] = -0.10125*ram_recovery*((MN_in-1)**0.35)
+            
+            elif MN_in >= 5.0:
+                J['P_recovery', 'ram_recovery'] = 0
+                J['P_recovery', 'MN_in'] = -(3200 * MN_in**3)/((MN_in**4 + 935)**2)
+
 class Calcs(om.ExplicitComponent):
     """
     Performs inlet engineering calculations.
@@ -20,7 +84,7 @@ class Calcs(om.ExplicitComponent):
     def setup(self):
         # inputs
         self.add_input('Pt_in', val=5.0, units='lbf/inch**2', desc='Entrance total pressure')
-        self.add_input('ram_recovery', val=1.0, desc='Ram recovery')
+        self.add_input('P_recovery', val=1.0, desc='Ram recovery')
         self.add_input('V_in', val=0.0, units='ft/s', desc='Entrance velocity')
         self.add_input('W_in', val=100.0, units='lbm/s', desc='Entrance flow rate')
 
@@ -28,16 +92,16 @@ class Calcs(om.ExplicitComponent):
         self.add_output('Pt_out', val=14.696, units='lbf/inch**2', desc='Exit total pressure')
         self.add_output('F_ram', val=1.0, units='lbf', desc='Ram drag')
 
-        self.declare_partials('Pt_out', ['Pt_in', 'ram_recovery'])
+        self.declare_partials('Pt_out', ['Pt_in', 'P_recovery'])
         self.declare_partials('F_ram', ['V_in', 'W_in'])
 
     def compute(self, inputs, outputs):
-        outputs['Pt_out'] = inputs['Pt_in'] * inputs['ram_recovery']
+        outputs['Pt_out'] = inputs['Pt_in'] * inputs['P_recovery']
         outputs['F_ram'] = inputs['W_in'] * inputs['V_in'] / g_c
 
     def compute_partials(self, inputs, J):
-        J['Pt_out', 'Pt_in'] = inputs['ram_recovery']
-        J['Pt_out', 'ram_recovery'] = inputs['Pt_in']
+        J['Pt_out', 'Pt_in'] = inputs['P_recovery']
+        J['Pt_out', 'P_recovery'] = inputs['Pt_in']
         J['F_ram', 'V_in'] = inputs['W_in'] / g_c
         J['F_ram', 'W_in'] = inputs['V_in'] / g_c
 
@@ -86,6 +150,8 @@ class Inlet(om.Group):
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
+        self.options.declare('MilSpec', default=False,
+                              desc='Accounts for MN effect on pressure recovery')
 
         self.default_des_od_conns = [
             # (design src, off-design target)
@@ -98,6 +164,7 @@ class Inlet(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
         design = self.options['design']
+        MS = self.options['MilSpec']
 
         gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
         gas_prods = gas_thermo.products
@@ -108,9 +175,11 @@ class Inlet(om.Group):
         flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
+        self.add_subsystem('RamRecovery', RamRecovery(MilSpec=MS), promotes_inputs=['ram_recovery', ('MN_in', 'Fl_I:stat:MN')], promotes_outputs=['P_recovery'])
+        
         # Perform inlet engineering calculations
         self.add_subsystem('calcs_inlet', Calcs(),
-                           promotes_inputs=['ram_recovery', ('Pt_in', 'Fl_I:tot:P'),
+                           promotes_inputs=['P_recovery', ('Pt_in', 'Fl_I:tot:P'),
                                             ('V_in', 'Fl_I:stat:V'), ('W_in', 'Fl_I:stat:W')],
                            promotes_outputs=['F_ram'])
 
@@ -177,13 +246,15 @@ if __name__ == "__main__":
     from pycycle import constants
 
     p = om.Problem()
-    p.model = Inlet()
+    p.model = Inlet(MilSpec=True)
 
     thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
     p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
     p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
     p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
     p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
+    p.model.set_input_defaults('Fl_I:stat:MN', 1.3, units=None)
+    p.model.set_input_defaults('ram_recovery', 0.93, units=None)
 
     p.setup()
 
