@@ -30,6 +30,7 @@ class MixRatio(om.ExplicitComponent):
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
     def setup(self):
+
         thermo_data = self.options['mix_thermo_data']
         if self.options['inflow_thermo_data'] is not None:
             # Set the inflow thermodynamic data package if it is different from the outflow one

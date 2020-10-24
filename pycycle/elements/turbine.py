@@ -513,16 +513,6 @@ class Turbine(om.Group):
             self.set_input_defaults(f'{BN}:tot:b0', bld_thermo.b0)
 
         # # Calculate bleed parameters
-        # blds = Bleeds(bleed_names=bleeds, thermo_data = thermo_data, 
-        #         main_flow_elements=elements, bld_flow_elements = bleed_elements)
-        # self.add_subsystem('blds', blds,
-        #                    promotes_inputs=[('W_in', 'Fl_I:stat:W'),
-        #                                     ('Pt_in', 'Fl_I:tot:P'), ('n_in', 'Fl_I:tot:n')] +
-        #                    ['{}:frac_P'.format(BN) for BN in bleeds] +
-        #                    [('{}:W'.format(BN), '{}:stat:W'.format(BN)) for BN in bleeds] +
-        #                    [('{}:n'.format(BN), '{}:tot:n'.format(BN))
-        #                     for BN in bleeds],
-        #                    promotes_outputs=['W_out'])
         blds = BleedPressure(bleed_names=bleeds)
         self.add_subsystem('blds', blds, 
                            promotes_inputs=[('Pt_in', 'Fl_I:tot:P'),] + [f'{BN}:frac_P' for BN in bleeds]
@@ -531,20 +521,16 @@ class Turbine(om.Group):
 
         bleed_element_list = [bleed_elements for name in bleeds]
         bld_mix = MixRatio(mix_thermo_data=thermo_data, inflow_elements=elements, 
-                           mix_elements=bleed_element_list, mix_names=bleeds)
+                           mix_elements=bleed_element_list, mix_names=bleeds, mix_mode='flow')
         self.add_subsystem('bld_mix', bld_mix, 
                            promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:b0'] + 
                                            [(f'{BN}:W', f'{BN}:stat:W') for BN in bleeds] + 
-                                           [(f'{BN}:b0', f'{BN}:stat:b0') for BN in bleeds], 
+                                           [(f'{BN}:b0', f'{BN}:tot:b0') for BN in bleeds], 
                            promotes_outputs=[('Wout', 'W_out')]
                            )
 
         bleed_names2 = []
         for BN in bleeds:
-            # self.connect(BN+':stat:W','blds.{}:W'.format(BN))
-            # self.connect(BN+':tot:n','blds.{}:n'.format(BN))
-            # self.connect(BN+':stat:W','blds.%s:'%BN)
-
             # Determine bleed inflow properties
             bleed_names2.append(BN + '_inflow')
             inflow = Thermo(mode='total_hP', 

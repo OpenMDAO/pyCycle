@@ -1,7 +1,20 @@
-AIR_FUEL_MIX = {'O':1, 'H':1, 'CO2':1, 'N':1, 'Ar':1}
-AIR_MIX = {'N2': 78.084, 'O2': 20.9476, 'Ar': .9365, 'CO2': .0319} 
-WET_AIR_MIX = {'N2':78.084, 'O2':20.9476, 'Ar':.9365, 'CO2':.0319, 'H2O':1}
-CO2_CO_O2_MIX = {'CO':0, 'CO2':1, 'O2':0}
+import warnings
+
+def __getattr__(name):
+    if name == 'AIR_FUEL_MIX':
+        warnings.warn("Deprecation warning: `AIR_FUEL_MIX` will be replaced by `AIR_FUEL_ELEMENTS` in pyCycle 4.0", DeprecationWarning)
+        return AIR_FUEL_ELEMENTS
+    if name == 'AIR_MIX': 
+        warnings.warn("Deprecation warning: `AIR_MIX` will be replaced by `AIR_ELEMENTS` in pyCycle 4.0", DeprecationWarning)
+        return AIR_ELEMENTS
+    if name == 'WET_AIR_MIX': 
+        warnings.warn("Deprecation warning: `WET_AIR_MIX` will be replaced by `WET_AIR_ELEMENTS` in pyCycle 4.0", DeprecationWarning)
+        return WET_AIR_ELEMENTS
+    if name == 'CO2_CO_O2_MIX':
+        warnings.warn("Deprecation warning: `CO2_CO_O2_MIX` will be replaced by `CO2_CO_O2_ELEMENTS` in pyCycle 4.0", DeprecationWarning)
+        return CO2_CO_O2_ELEMENTS
+
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 # these elemental ratios matter! 
