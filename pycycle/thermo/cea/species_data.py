@@ -26,7 +26,6 @@ class Properties(object):
         self.temp_ranges = None
         self.valid_temp_range = None
         self.wt_mole = None # array of mole weights
-        # self.init_prod_amounts = None # concentrations (sum to 1)
         self.thermo_data_module = thermo_data_module
         self.prod_data = self.thermo_data_module.products
         self.init_elements = init_elements
@@ -55,56 +54,6 @@ class Properties(object):
         
         else:
                 raise ValueError('You have not provided `init_elements`. In order to set thermodynamic data it must be provided.')
-
-
-        self.set_data()
-        
-
-    def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return (-a_T[0]/Tt**2 + a_T[1]/Tt*log(Tt) + a_T[2] + a_T[3]*Tt/2. + a_T[4]*Tt**2/3. + a_T[5]*Tt**3/4. + a_T[6]*Tt**4/5.+a_T[7]/Tt)
-
-    def S0(self, Tt): # standard-state molar entropy for species j at temp T
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return (-a_T[0]/(2*Tt**2) - a_T[1]/Tt + a_T[2]*log(Tt) + a_T[3]*Tt + a_T[4]*Tt**2/2. + a_T[5]*Tt**3/3. + a_T[6]*Tt**4/4.+a_T[8])
-
-    def Cp0(self, Tt): #molar heat capacity at constant pressure for
-                    #standard state for species or reactant j, J/(kg-mole)_j(K)
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return a_T[0]/Tt**2 + a_T[1]/Tt + a_T[2] + a_T[3]*Tt + a_T[4]*Tt**2 + a_T[5]*Tt**3 + a_T[6]*Tt**4
-
-    def H0_applyJ(self, Tt, vec):
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return vec*(2*a_T[0]/Tt**3 + a_T[1]*(1-log(Tt))/Tt**2 + a_T[3]/2. + 2*a_T[4]/3.*Tt + 3*a_T[5]/4.*Tt**2 + 4*a_T[6]/5.*Tt**3 - a_T[7]/Tt**2)
-
-    def S0_applyJ(self, Tt, vec):
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return vec*(a_T[0]/(Tt**3) + a_T[1]/Tt**2 + a_T[2]/Tt + a_T[3] + a_T[4]*Tt + a_T[5]*Tt**2 + 4*a_T[6]/4.*Tt**3)
-
-    def Cp0_applyJ(self, Tt, vec):
-        Tt = Tt[0]
-        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
-            self.build_coeff_table(Tt)
-        a_T = self.a_T
-        return vec*(-2*a_T[0]/Tt**3 - a_T[1]/Tt**2 + a_T[3] + 2.*a_T[4]*Tt + 3.*a_T[5]*Tt**2 + 4.*a_T[6]*Tt**3)
-
-    def set_data(self):
-        """computes the relevant quantities, given the reactant data"""
 
         ### setting up object attributes ###
         element_list = sorted(self.elements)
@@ -156,7 +105,50 @@ class Properties(object):
         self.b0 = self.b0/self.element_wt
 
         self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
+        
 
+    def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return (-a_T[0]/Tt**2 + a_T[1]/Tt*log(Tt) + a_T[2] + a_T[3]*Tt/2. + a_T[4]*Tt**2/3. + a_T[5]*Tt**3/4. + a_T[6]*Tt**4/5.+a_T[7]/Tt)
+
+    def S0(self, Tt): # standard-state molar entropy for species j at temp T
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return (-a_T[0]/(2*Tt**2) - a_T[1]/Tt + a_T[2]*log(Tt) + a_T[3]*Tt + a_T[4]*Tt**2/2. + a_T[5]*Tt**3/3. + a_T[6]*Tt**4/4.+a_T[8])
+
+    def Cp0(self, Tt): #molar heat capacity at constant pressure for
+                    #standard state for species or reactant j, J/(kg-mole)_j(K)
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return a_T[0]/Tt**2 + a_T[1]/Tt + a_T[2] + a_T[3]*Tt + a_T[4]*Tt**2 + a_T[5]*Tt**3 + a_T[6]*Tt**4
+
+    def H0_applyJ(self, Tt, vec):
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return vec*(2*a_T[0]/Tt**3 + a_T[1]*(1-log(Tt))/Tt**2 + a_T[3]/2. + 2*a_T[4]/3.*Tt + 3*a_T[5]/4.*Tt**2 + 4*a_T[6]/5.*Tt**3 - a_T[7]/Tt**2)
+
+    def S0_applyJ(self, Tt, vec):
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return vec*(a_T[0]/(Tt**3) + a_T[1]/Tt**2 + a_T[2]/Tt + a_T[3] + a_T[4]*Tt + a_T[5]*Tt**2 + 4*a_T[6]/4.*Tt**3)
+
+    def Cp0_applyJ(self, Tt, vec):
+        Tt = Tt[0]
+        if Tt < self.valid_temp_range[0] or Tt > self.valid_temp_range[1]: # runs if temperature is outside range of current coefficients
+            self.build_coeff_table(Tt)
+        a_T = self.a_T
+        return vec*(-2*a_T[0]/Tt**3 - a_T[1]/Tt**2 + a_T[3] + 2.*a_T[4]*Tt + 3.*a_T[5]*Tt**2 + 4.*a_T[6]*Tt**3)
 
     def build_coeff_table(self, Tt):
         """Build the temperature specific coeff array and find the highest-low value and
