@@ -13,6 +13,7 @@ from pycycle.passthrough import PassThrough
 # from pycycle.components.compressor import Power
 
 from pycycle.elements.turbine_map import TurbineMap
+from pycycle.elements.mix_ratio import MixRatio
 from pycycle.maps.lpt2269 import LPT2269
 
 
@@ -163,198 +164,68 @@ class EnthalpyDrop(om.ExplicitComponent):
         J['ht_out', 'eff'] = -inputs['ht_in'] + inputs['ht_out_ideal']
 
 
-class Bleeds(om.ExplicitComponent):
+class BleedPressure(om.ExplicitComponent):
     """Computes bleed flow parameters"""
 
     def initialize(self):
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('main_flow_elements',
-                              desc='set of elements present in the flow')
-        self.options.declare('bld_flow_elements',
-                              desc='set of elements present in the flow')
-        self.options.declare('bleed_names', types=Iterable, desc='list of names for the bleed ports',
+        self.options.declare('bleed_names', types=Iterable, 
+                              desc='list of names for the bleed ports',
                               default=[])
 
     def setup(self):
 
         bleeds = self.options['bleed_names']
 
-        self.main_flow_elements = self.options['main_flow_elements']
-        thermo_data = self.options['thermo_data']
-        self.mixed_elements = self.main_flow_elements.copy()
-        self.mixed_elements.update(self.options['bld_flow_elements'])
-
-        main_flow_thermo = species_data.Properties(
-            thermo_data, init_elements=self.mixed_elements)
-        self.main_flow_prods = main_flow_thermo.products
-        self.main_flow_wt_mole = main_flow_thermo.wt_mole
-        self.n_main_flow_prods = len(self.main_flow_prods)
-
-        bld_flow_thermo = species_data.Properties(
-            thermo_data, init_elements=self.options['bld_flow_elements'])
-        self.bld_flow_prods = bld_flow_thermo.products
-        self.bld_flow_wt_mole = bld_flow_thermo.wt_mole
-        self.n_bld_flow_prods = len(self.bld_flow_prods)
-        self.bld_aij = bld_flow_thermo.aij
-
-        self.aij = main_flow_thermo.aij
 
         # primary inputs and outputs
         self.add_input('Pt_in', val=0.0, units='psi',
                        desc='turbine entrance pressure')
         self.add_input('Pt_out', val=0.0, units='psi',
                        desc='turbine exit pressure')
-        self.add_input('W_in', val=0.0, units='lbm/s',
-                       desc='turbine entrance mass flow rate')
-        self.add_input('n_in', val=np.zeros(self.n_main_flow_prods),
-                       desc='turbine entrance flow composition')
-
-        self.add_output('W_out', shape=1, units='lbm/s',
-                        desc='turbine exit mass flow rate')
-        self.add_output('b0_out', val=main_flow_thermo.b0)
-
+        # self.add_input('W_in', val=0.0, units='lbm/s',
+        #                desc='turbine entrance mass flow rate')
+        
         # bleed inputs and outputs
         for BN in bleeds:
             self.add_input(BN + ':frac_P', val=0.0,
                            desc='fraction of pressure drop where bleed flow introduced')
             self.add_input(BN + ':W', val=0.0, units='lbm/s',
                            desc='bleed mass flow rate')
-            self.add_input(
-                BN + ':n', val=np.zeros(self.n_bld_flow_prods), desc='bleed flow composition')
-
+         
             self.add_output(BN + ':Pt', shape=1, units='psi',
                             desc='pressure of incomming bleed flow', lower=1e-3)
 
             self.declare_partials(BN+':Pt', ['Pt_in', 'Pt_out', BN+':frac_P'])
-            self.declare_partials('W_out', BN+':W', val=1.0)
-            self.declare_partials('b0_out', [BN+':W', BN+':n'])
-
-        # create mapping for main and bleed flow
-        self.main_flow_idx_map = {prod: i for i, prod in enumerate(self.main_flow_prods)}
-        self.bld_flow_idx_map = {prod: i for i, prod in enumerate(self.bld_flow_prods)}
-
-        n_main = len(self.main_flow_prods)
-        n_bld = len(self.bld_flow_prods)
-        self.mix_mat = np.zeros((n_main, n_bld), dtype=int)
-
-        for j, prod in enumerate(self.bld_flow_prods):
-            i = self.main_flow_idx_map[prod]
-            self.mix_mat[i,j] = 1
-
-        self.declare_partials('W_out', 'W_in', val=1.0)
-        self.declare_partials('b0_out', ['W_in', 'n_in'])
 
     def compute(self, inputs, outputs):
 
         # calculate W_out and composition based on primary flow
-        W_in = inputs['W_in']
-        W_out = copy(W_in)
+       
         Pt_out = inputs['Pt_out']
         delta_Pt = inputs['Pt_in'] - Pt_out
-
-        n_mass = inputs['n_in'] * self.main_flow_wt_mole # converts to kg
-
-        flow_mass = n_mass / np.sum(n_mass) * W_in # normalized then scaled to main flow mass
-
-        # calculate W_out, bleed total pressure and composition based on
-        # primary flow
-        W_bld = 0.0
-        n_bld_tot = np.zeros(self.n_bld_flow_prods, dtype=inputs._data.dtype)
 
         bleeds = self.options['bleed_names']
         for BN in bleeds:
             outputs[BN + ':Pt'] = Pt_out + inputs[BN+':frac_P'] * delta_Pt
-            W_bld += inputs[BN + ':W'] 
-            n_bld_tot += inputs[BN + ':n']
-
-        print('bleed input b0', np.sum(self.bld_aij*n_bld_tot, axis=1))
-
-        W_out += W_bld
-
-        if len(bleeds) > 0:
-            n_bld_mass = n_bld_tot * self.bld_flow_wt_mole # converts to KG 
-            bld_mass = n_bld_mass / np.sum(n_bld_mass) * W_bld # normalizes to 1 then scales to W_bld
-
-            flow_mass += self.mix_mat.dot(bld_mass) #re-maps to the output flow product size and adds it to the main flow
-
-        # determine the exit composition
-        flow_mass_norm = flow_mass / W_out
-        n_out = flow_mass_norm / self.main_flow_wt_mole
-        outputs['W_out'] = W_out
-        outputs['b0_out'] = np.sum(self.aij*n_out, axis=1)
 
     def compute_partials(self, inputs, J):
 
         bleeds = self.options['bleed_names']
 
-        n_in = inputs['n_in']
         Pt_in = inputs['Pt_in']
         Pt_out = inputs['Pt_out']
-        W_in = inputs['W_in']
-        n_len = self.n_main_flow_prods
-
-        mfwm = self.main_flow_wt_mole
-        bfwm = self.bld_flow_wt_mole
-
-        n_mass = n_in * mfwm
-        n_mass_sum = np.sum(n_mass)
-        flow_mass = n_mass / n_mass_sum * W_in
-        exit_total_mass = 0.0
-        exit_total_mass += W_in
-        W_bld = 0.0
-        n_bld_tot = np.zeros(self.n_bld_flow_prods, dtype=inputs._data.dtype)
-
-        for BN in bleeds:
-            W_bld += inputs[BN + ':W']
-            n_bld_tot += inputs[BN + ':n']
-
-        if len(bleeds) > 0:
-            n_bld_mass = n_bld_tot * bfwm # converts to KG 
-            bld_mass_sum = np.sum(n_bld_mass) 
-            bld_mass = n_bld_mass / bld_mass_sum * W_bld # normalizes to 1 then scales to W_bld
-            bld_mass_flw = self.mix_mat.dot(bld_mass) #re-maps to the output flow product size
-
-            flow_mass += bld_mass_flw
-
-        exit_total_mass += W_bld
-
-        # Jacobian elements without bleed flows
-        d_n_out__d_w_in = (n_mass/n_mass_sum - flow_mass/exit_total_mass)/(exit_total_mass*mfwm)
-
-        A = (np.diag(mfwm) - np.outer(n_mass, mfwm)/n_mass_sum)
-        d_n_out__d_n_in = (A.T * W_in/(exit_total_mass*n_mass_sum*mfwm)).T
-
-        J['b0_out', 'W_in'] = np.matmul(self.aij,d_n_out__d_w_in)
-        J['b0_out', 'n_in'] = np.matmul(self.aij,d_n_out__d_n_in)
-
+       
         # Jacobian elements and modifications due to bleed flows
         for BN in bleeds:
             # J['W_out', BN + ':W'] = 1.0
-            BN_W = BN + ':W'
-            BN_n = BN + ':n'
             BN_pt = BN + ':Pt'
             BN_frac_P = BN + ':frac_P'
 
-            W = inputs[BN_W]
-            n = inputs[BN_n]
             frac_P = inputs[BN_frac_P]
 
             J[BN_pt, 'Pt_in'] = frac_P
             J[BN_pt, 'Pt_out'] = 1.0 - frac_P
             J[BN_pt, BN_frac_P] = Pt_in - Pt_out
-
-            n_bld_mass = n * bfwm
-            bld_mass_i = n_bld_mass / np.sum(n_bld_mass)
-
-            bld_mass_new = self.mix_mat.dot(bld_mass_i)
-            d_n_out_dBN_W = (-flow_mass/exit_total_mass + bld_mass_new)/(exit_total_mass*mfwm)
-
-            A = self.mix_mat*bfwm*W_bld - np.outer(bld_mass_flw, bfwm)
-            d_n_out_dBN_n = (A.T / (exit_total_mass*bld_mass_sum*mfwm)).T
-
-            J['b0_out', BN_W] = np.matmul(self.aij,d_n_out_dBN_W)
-            J['b0_out', BN_n] = np.matmul(self.aij,d_n_out_dBN_n)
 
 class EnthalpyAndPower(om.ExplicitComponent):
     """Calculates exit enthalpy and shaft power for the turbine"""
@@ -638,21 +509,35 @@ class Turbine(om.Group):
         for BN in bleeds:
             bld_flow = FlowIn(fl_name=BN, num_prods=self.num_bld_prod, num_elements=num_bld_element)
             self.add_subsystem(BN, bld_flow, promotes_inputs=[
-                               '{}:*'.format(BN)])
-            self.set_input_defaults('{}:tot:b0'.format(BN), bld_thermo.b0)
+                               f'{BN}:*'])
+            self.set_input_defaults(f'{BN}:tot:b0', bld_thermo.b0)
 
-        # Calculate bleed parameters
-        blds = Bleeds(bleed_names=bleeds, thermo_data = thermo_data, 
-                main_flow_elements=elements, bld_flow_elements = bleed_elements)
-        self.add_subsystem('blds', blds,
-                           promotes_inputs=[('W_in', 'Fl_I:stat:W'),
-                                            ('Pt_in', 'Fl_I:tot:P'), ('n_in', 'Fl_I:tot:n')] +
-                           ['{}:frac_P'.format(BN) for BN in bleeds] +
-                           [('{}:W'.format(BN), '{}:stat:W'.format(BN)) for BN in bleeds] +
-                           [('{}:n'.format(BN), '{}:tot:n'.format(BN))
-                            for BN in bleeds],
-                           promotes_outputs=['W_out'])
+        # # Calculate bleed parameters
+        # blds = Bleeds(bleed_names=bleeds, thermo_data = thermo_data, 
+        #         main_flow_elements=elements, bld_flow_elements = bleed_elements)
+        # self.add_subsystem('blds', blds,
+        #                    promotes_inputs=[('W_in', 'Fl_I:stat:W'),
+        #                                     ('Pt_in', 'Fl_I:tot:P'), ('n_in', 'Fl_I:tot:n')] +
+        #                    ['{}:frac_P'.format(BN) for BN in bleeds] +
+        #                    [('{}:W'.format(BN), '{}:stat:W'.format(BN)) for BN in bleeds] +
+        #                    [('{}:n'.format(BN), '{}:tot:n'.format(BN))
+        #                     for BN in bleeds],
+        #                    promotes_outputs=['W_out'])
+        blds = BleedPressure(bleed_names=bleeds)
+        self.add_subsystem('blds', blds, 
+                           promotes_inputs=[('Pt_in', 'Fl_I:tot:P'),] + [f'{BN}:frac_P' for BN in bleeds]
+                           )
         self.connect('press_drop.Pt_out', 'blds.Pt_out')
+
+        bleed_element_list = [bleed_elements for name in bleeds]
+        bld_mix = MixRatio(mix_thermo_data=thermo_data, inflow_elements=elements, 
+                           mix_elements=bleed_element_list, mix_names=bleeds)
+        self.add_subsystem('bld_mix', bld_mix, 
+                           promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:b0'] + 
+                                           [(f'{BN}:W', f'{BN}:stat:W') for BN in bleeds] + 
+                                           [(f'{BN}:b0', f'{BN}:stat:b0') for BN in bleeds], 
+                           promotes_outputs=[('Wout', 'W_out')]
+                           )
 
         bleed_names2 = []
         for BN in bleeds:
@@ -668,18 +553,18 @@ class Turbine(om.Group):
                                            'spec':thermo_data})
             self.add_subsystem(BN + '_inflow', inflow,
                                promotes_inputs=[('b0', BN + ":tot:b0"), ('h', BN + ':tot:h')])
-            self.connect('blds.' + BN + ':Pt', BN + "_inflow.P")
+            self.connect( f'blds.{BN}:Pt', f'{BN}_inflow.P')
 
             # Ideally expand bleeds to exit pressure
-            bleed_names2.append(BN + '_ideal')
+            bleed_names2.append(f'{BN}_ideal')
             ideal = Thermo(mode='total_SP', 
                            method='CEA', 
                            thermo_kwargs={'elements':bleed_elements, 
                                           'spec':thermo_data})
-            self.add_subsystem(BN + '_ideal', ideal,
+            self.add_subsystem(f'{BN}_ideal', ideal,
                                promotes_inputs=[('b0', BN + ":tot:b0")])
-            self.connect(BN + "_inflow.flow:S", BN + "_ideal.S")
-            self.connect("press_drop.Pt_out", BN + "_ideal.P")
+            self.connect(f"{BN}_inflow.flow:S", f"{BN}_ideal.S")
+            self.connect("press_drop.Pt_out", f"{BN}_ideal.P")
 
         # Calculate shaft power and exit enthalpy with cooling flows production
         self.add_subsystem('pwr_turb', EnthalpyAndPower(bleed_names=bleeds),
@@ -716,7 +601,7 @@ class Turbine(om.Group):
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("pwr_turb.ht_out", "real_flow.h")
         self.connect("press_drop.Pt_out", "real_flow.P")
-        self.connect("blds.b0_out", "real_flow.b0")
+        self.connect("bld_mix.b0_out", "real_flow.b0")
 
         self.add_subsystem('FAR_passthru', PassThrough(
             'Fl_I:FAR', 'Fl_O:FAR', 1.0), promotes=['*'])
@@ -732,7 +617,7 @@ class Turbine(om.Group):
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
-                self.connect('blds.b0_out', 'out_stat.b0')
+                self.connect('bld_mix.b0_out', 'out_stat.b0')
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('W_out', 'out_stat.W')
@@ -748,21 +633,21 @@ class Turbine(om.Group):
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['area'],
                                    promotes_outputs=['Fl_O:stat:*'])
-                self.connect('blds.b0_out', 'out_stat.b0')
+                self.connect('bld_mix.b0_out', 'out_stat.b0')
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('W_out', 'out_stat.W')
                 self.connect('Fl_O:tot:P', 'out_stat.guess:Pt')
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
-            self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
+            # self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
+            #                ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough(
                 'W_out', 'Fl_O:stat:W', 1.0, units="lbm/s"), promotes=['*'])
-            self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
+            # self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
+            #                ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
 
         self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
