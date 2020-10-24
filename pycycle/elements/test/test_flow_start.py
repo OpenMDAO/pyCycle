@@ -205,6 +205,30 @@ class WARTestCase(unittest.TestCase):
         assert_near_equal(prob['b0_out'][3], 5.39103820e-02, tol)
         assert_near_equal(prob['b0_out'][4], 1.44901169e-02, tol)
 
+    def test_fs_with_water(self): 
+
+        prob = Problem()
+        prob.model.set_input_defaults('fl_start.P', 17., units='psi')
+        prob.model.set_input_defaults('fl_start.T', 500., units='degR')
+        prob.model.set_input_defaults('fl_start.MN', 0.5)
+        prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
+        prob.model.set_input_defaults('fl_start.WAR', .01)
+
+        prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
+                                                       elements=WET_AIR_ELEMENTS, use_WAR=True))
+
+        prob.set_solver_print(level=-1)
+        prob.setup(check=False)
+
+        prob.run_model()
+
+        tol = 1e-5
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][0], 3.18139345e-04, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][1], 1.08367806e-05, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][2], 1.77859e-03, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][3], 5.305198e-02, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][4], 1.51432e-02, tol)
+
     
 if __name__ == "__main__":
     unittest.main()
