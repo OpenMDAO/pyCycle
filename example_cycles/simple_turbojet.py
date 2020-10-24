@@ -146,6 +146,15 @@ def viewer(prob, pt, file=sys.stdout):
     shaft_full_names = [f'{pt}.{s}' for s in shaft_names]
     pyc.print_shaft(prob, shaft_full_names, file=file)
 
+def map_plots(prob, pt):
+    comp_names = ['comp']
+    comp_full_names = [f'{pt}.{c}' for c in comp_names]
+    pyc.plot_compressor_maps(prob, comp_full_names)
+
+    turb_names = ['turb']
+    turb_full_names = [f'{pt}.{c}' for c in turb_names]
+    pyc.plot_turbine_maps(prob, turb_full_names)
+
 
 class MPTurbojet(pyc.MPCycle):
 
@@ -226,6 +235,8 @@ if __name__ == "__main__":
 
     for pt in ['DESIGN']+mp_turbojet.od_pts:
         viewer(prob, pt)
+
+    map_plots(prob,'DESIGN')
 
     print()
     print("time", time.time() - st)
