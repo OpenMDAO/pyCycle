@@ -192,26 +192,7 @@ class MPSingleSpool(pyc.MPCycle):
             self.set_input_defaults(pt+'.LP_Nmech', self.od_nmechs[i], units='rpm')
             self.set_input_defaults(pt+'.balance.pwr_target', self.od_pwrs[i], units='hp')
 
-        self.pyc_connect_des_od('comp.s_PR', 'comp.s_PR')
-        self.pyc_connect_des_od('comp.s_Wc', 'comp.s_Wc')
-        self.pyc_connect_des_od('comp.s_eff', 'comp.s_eff')
-        self.pyc_connect_des_od('comp.s_Nc', 'comp.s_Nc')
-
-        self.pyc_connect_des_od('turb.s_PR', 'turb.s_PR')
-        self.pyc_connect_des_od('turb.s_Wp', 'turb.s_Wp')
-        self.pyc_connect_des_od('turb.s_eff', 'turb.s_eff')
-        self.pyc_connect_des_od('turb.s_Np', 'turb.s_Np')
-
-        self.pyc_connect_des_od('pt.s_PR', 'pt.s_PR')
-        self.pyc_connect_des_od('pt.s_Wp', 'pt.s_Wp')
-        self.pyc_connect_des_od('pt.s_eff', 'pt.s_eff')
-        self.pyc_connect_des_od('pt.s_Np', 'pt.s_Np')
-
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('comp.Fl_O:stat:area', 'comp.area')
-        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
-        self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
-        self.pyc_connect_des_od('pt.Fl_O:stat:area', 'pt.area')
+        self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
@@ -256,7 +237,7 @@ if __name__ == "__main__":
         prob[pt+'.fc.balance.Pt'] = 15.703
         prob[pt+'.fc.balance.Tt'] = 558.31
         prob[pt+'.turb.PR'] = 3.8768
-        prob[pt+'.pt.PR'] = 2.8148
+        prob[pt+'.pt.PR'] = 2.0
 
     st = time.time()
 

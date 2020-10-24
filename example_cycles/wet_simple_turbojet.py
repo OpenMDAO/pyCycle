@@ -194,20 +194,7 @@ class MPWetTurbojet(pyc.MPCycle):
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft'),
             self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_pwrs[i], units='lbf')
 
-        self.pyc_connect_des_od('comp.s_PR', 'comp.s_PR')
-        self.pyc_connect_des_od('comp.s_Wc', 'comp.s_Wc')
-        self.pyc_connect_des_od('comp.s_eff', 'comp.s_eff')
-        self.pyc_connect_des_od('comp.s_Nc', 'comp.s_Nc')
-
-        self.pyc_connect_des_od('turb.s_PR', 'turb.s_PR')
-        self.pyc_connect_des_od('turb.s_Wp', 'turb.s_Wp')
-        self.pyc_connect_des_od('turb.s_eff', 'turb.s_eff')
-        self.pyc_connect_des_od('turb.s_Np', 'turb.s_Np')
-
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('comp.Fl_O:stat:area', 'comp.area')
-        self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
-        self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
+        self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 

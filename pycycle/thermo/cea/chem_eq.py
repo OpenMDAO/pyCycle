@@ -122,6 +122,7 @@ class ChemEq(om.ImplicitComponent):
                         val=self.n_init,
                         desc="mole fractions of the mixture",
                         lower=MIN_VALID_CONCENTRATION,
+                        upper=1e2, 
                         res_ref=10000.
                         )
 
