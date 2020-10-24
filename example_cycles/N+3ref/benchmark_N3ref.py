@@ -73,7 +73,7 @@ class N3MDPVerifTestCase(unittest.TestCase):
 
         prob.run_model()
 
-        tol = 1e-3
+        tol = 5e-4
 
         assert_near_equal(prob['TOC.inlet.Fl_O:stat:W'], 820.44097898, tol)#
         assert_near_equal(prob['TOC.inlet.Fl_O:tot:P'], 5.26210728, tol)#
