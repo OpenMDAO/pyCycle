@@ -1,7 +1,5 @@
 import openmdao.api as om
 
-from pycycle.constants import AIR_MIX
-
 from pycycle.thermo.static_ps_calc import PsCalc
 from pycycle.thermo.static_ps_resid import PsResid
 from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps

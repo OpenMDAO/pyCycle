@@ -19,11 +19,11 @@ class WetTurbojet(pyc.Cycle):
 
         # Add engine elements
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec, use_WAR=True,
-                                    elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                    elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
         self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
-                                    elements=pyc.WET_AIR_MIX))
+                                    elements=pyc.WET_AIR_ELEMENTS))
         self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=wet_thermo_spec, elements=pyc.WET_AIR_MIX,),
+                                    thermo_data=wet_thermo_spec, elements=pyc.WET_AIR_ELEMENTS,),
                                     promotes_inputs=['Nmech'])
 
         ###Note###
@@ -37,14 +37,14 @@ class WetTurbojet(pyc.Cycle):
         #a difficult time converging the trace amount of hydrocarbons "present" in the original flow.
 
         self.pyc_add_element('burner', pyc.Combustor(design=design,inflow_thermo_data=wet_thermo_spec,
-                                    thermo_data=janaf_thermo_spec, inflow_elements=pyc.WET_AIR_MIX,
-                                    air_fuel_elements=pyc.AIR_FUEL_MIX,
+                                    thermo_data=janaf_thermo_spec, inflow_elements=pyc.WET_AIR_ELEMENTS,
+                                    air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
                                     fuel_type='JP-7'))
         self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_MIX,),
+                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,),
                                     promotes_inputs=['Nmech'])
         self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_MIX))
+                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
         self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 

@@ -7,7 +7,6 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flight_conditions import FlightConditions
-from pycycle.constants import AIR_MIX
 
 from pycycle.elements.test.util import check_element_partials
 

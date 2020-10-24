@@ -8,7 +8,7 @@ from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
-from pycycle.constants import AIR_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
+from pycycle.constants import AIR_ELEMENTS, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
 from pycycle.elements.compressor_map import CompressorMap
 from pycycle.maps.ncp01 import NCP01
 
@@ -389,7 +389,7 @@ class Compressor(om.Group):
                               desc='data container for raw compressor map data')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
@@ -414,7 +414,7 @@ class Compressor(om.Group):
 
 
     def setup(self):
-        #(self, mapclass=NCP01map(), design=True, thermo_data=species_data.janaf, elements=AIR_MIX, bleeds=[],statics=True):
+        #(self, mapclass=NCP01map(), design=True, thermo_data=species_data.janaf, elements=AIR_ELEMENTS, bleeds=[],statics=True):
 
         map_data = self.options['map_data']
         interp_method = self.options['map_interp_method']
