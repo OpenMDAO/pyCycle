@@ -426,7 +426,7 @@ class SetTotalTP(om.Group):
 
     def initialize(self): 
 
-        self.options.declare('spec')
+        self.options.declare('spec', recordable=False)
         self.options.declare('elements')
 
 

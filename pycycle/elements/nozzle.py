@@ -348,7 +348,7 @@ class Nozzle(om.Group):
         throat_total = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                               method='CEA', 
                               thermo_kwargs={'elements':elements, 
-                                                 'spec':thermo_data})
+                                             'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
                    ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('throat_total', throat_total, promotes_inputs=prom_in,

@@ -29,7 +29,7 @@ class Thermo(om.Group):
         # The user should define one or more of these dictionaries at the top of their model
         # then pass them into the individual componenents
         self.options.declare('thermo_kwargs', default={},
-                             desc='Defines the thermodynamic data to be used in computations')
+                             desc='Defines the thermodynamic data to be used in computations', recordable=False)
 
     def setup(self):
         method = self.options['method']

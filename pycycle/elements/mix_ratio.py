@@ -163,6 +163,7 @@ class MixRatio(om.ExplicitComponent):
         W_out = W.copy()
 
 
+
         mix_mode = self.options['mix_mode']
         if mix_mode == 'reactant': 
             for name, reactant in zip(self.mix_names, self.mix_elements): 
@@ -177,7 +178,7 @@ class MixRatio(om.ExplicitComponent):
         else: # inflow mixing
             for name in self.mix_names: 
                 W_mix = inputs[f'{name}:W']
-                mix_stuff = inputs[f'{name}:b0']
+                mix_stuff = inputs[f'{name}:b0'].copy()
                 mix_stuff *= self.mix_wt_mole[name]
                 mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
                 mix_stuff *= W_mix# scale to actual mass flow of that mix stream
@@ -191,6 +192,7 @@ class MixRatio(om.ExplicitComponent):
         mass_avg_h /= W_out
         outputs['mass_avg_h'] = mass_avg_h
         outputs['Wout'] = W_out
+
 
         self.fuel_ht = 0  # makes ht happy
 

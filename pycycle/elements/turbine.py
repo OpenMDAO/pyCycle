@@ -626,14 +626,14 @@ class Turbine(om.Group):
                 self.connect('Fl_O:tot:P', 'out_stat.guess:Pt')
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
-            # self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
-            #                ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
+            self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough(
                 'W_out', 'Fl_O:stat:W', 1.0, units="lbm/s"), promotes=['*'])
-            # self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['blds'] + bleed_names2 +
-            #                ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
+            self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
 
         self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
