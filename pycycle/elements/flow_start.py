@@ -36,10 +36,12 @@ class FlowStart(Group):
 
         # inputs
         if use_WAR == True:
+
+
             mix = MixRatio(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
                            inflow_elements=elements, mix_elements='Water')
             self.add_subsystem('WAR', mix, 
-                                promotes_inputs=('Fl_I:tot:b0', 'Fl_I:stat:W', ('mix:ratio', 'WAR')), 
+                                promotes_inputs=('Fl_I:tot:b0', ('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
                                 promotes_outputs=( ('b0_out', 'b0'), ))
         
 
@@ -48,9 +50,9 @@ class FlowStart(Group):
                         thermo_kwargs={'elements':elements, 
                                        'spec':thermo_data})
 
-        params = ('T','P', 'b0')
+        in_vars = ('T','P', 'b0')
 
-        self.add_subsystem('totals', set_TP, promotes_inputs=params,
+        self.add_subsystem('totals', set_TP, promotes_inputs=in_vars,
                            promotes_outputs=('Fl_O:tot:*',))
 
         set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 

@@ -14,12 +14,12 @@ class WetPropulsor(pyc.Cycle):
         design = self.options['design']
 
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
-                                                  elements=pyc.WET_AIR_MIX))#WET_AIR_MIX contains standard dry air compounds as well as H2O
+                                                  elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_MIX))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
@@ -118,12 +118,7 @@ class MPWetPropulsor(pyc.MPCycle):
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
             self.set_input_defaults(pt+'.fc.WAR', self.od_WARs[i])
 
-        self.pyc_connect_des_od('inlet.Fl_O:stat:area', 'inlet.area')
-        self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
-        self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
-        self.pyc_connect_des_od('fan.s_eff', 'fan.s_eff')
-        self.pyc_connect_des_od('fan.s_Nc', 'fan.s_Nc')
-        self.pyc_connect_des_od('fan.Fl_O:stat:area', 'fan.area')
+        self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
@@ -172,6 +167,7 @@ if __name__ == "__main__":
     prob.model.off_design.nonlinear_solver.options['maxiter'] = 10
 
     prob.run_model()
+
     run_time = time.time() - st
 
     print("design")
