@@ -11,6 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from pycycle.elements.mix_ratio import MixRatio
 
 class MixRatioTestCase(unittest.TestCase):
+    
     def test_mix_1fuel(self): 
 
         thermo_spec = species_data.janaf
@@ -43,8 +44,8 @@ class MixRatioTestCase(unittest.TestCase):
         assert_near_equal(p['fuel:W'], p['Fl_I:stat:W']*p['fuel:ratio'], tolerance=tol)
         assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
-        data = p.check_partials(out_stream=None, method='cs')
-        # data = p.check_partials(method='cs')
+        # data = p.check_partials(out_stream=None, method='cs')
+        data = p.check_partials(method='cs')
         assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
 
     def test_mix_2fuel(self): 
