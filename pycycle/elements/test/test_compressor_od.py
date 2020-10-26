@@ -7,7 +7,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
 
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
 
@@ -25,9 +25,9 @@ class CompressorODTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
         self.prob.model.add_subsystem('compressor', Compressor(
-                map_data=AXI5, design=False, elements=AIR_MIX, map_extrap=False))
+                map_data=AXI5, design=False, elements=AIR_ELEMENTS, map_extrap=False))
 
         self.prob.model.set_input_defaults('compressor.s_PR', val=1.)
         self.prob.model.set_input_defaults('compressor.s_eff', val=1.)

@@ -16,22 +16,22 @@ class ABTurbojet(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.pyc_add_element('duct1', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX,
+        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('duct1', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
         self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_MIX,
-                                        air_fuel_elements=pyc.AIR_FUEL_MIX,
+                                        inflow_elements=pyc.AIR_ELEMENTS,
+                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
                                         fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX,
+        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
         self.pyc_add_element('ab', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_FUEL_MIX,
-                                        air_fuel_elements=pyc.AIR_FUEL_MIX,
+                                        inflow_elements=pyc.AIR_FUEL_ELEMENTS,
+                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
                                         fuel_type='JP-7'))
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX, internal_solver=True))
+        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, internal_solver=True))
         self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=2))
 

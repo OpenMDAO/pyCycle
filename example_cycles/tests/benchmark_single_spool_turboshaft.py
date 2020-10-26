@@ -59,77 +59,78 @@ class SingleSpoolTestCase(unittest.TestCase):
         tol = 1e-5
         print()
 
-        reg_data = 27.265342457866705
+        reg_data = 27.265344349
         ans = prob['DESIGN.inlet.Fl_O:stat:W'][0]
-        print('W:', reg_data, ans)
+        print('W:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
         reg_data = 13.5
         ans = prob['DESIGN.perf.OPR'][0]
-        print('OPR:', reg_data, ans)
+        print('OPR:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.01755077946196377
+        reg_data = 0.01755865988
         ans = prob['DESIGN.balance.FAR'][0]
-        print('Main FAR:', reg_data, ans)
+        print('Main FAR:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 3.876811443569159
+        reg_data = 3.876811443516
         ans = prob['DESIGN.balance.turb_PR'][0]
-        print('HPT PR:', reg_data, ans)
+        print('HPT PR:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 800.8503668285215
+        reg_data = 800.85349568
         ans = prob['DESIGN.perf.Fg'][0]
-        print('Fg:', reg_data, ans)
+        print('Fg:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 2.151092078410839
+        reg_data = 2.15204967
         ans = prob['DESIGN.perf.TSFC'][0]
-        print('TSFC:', reg_data, ans)
+        print('TSFC:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 1190.1777648503974
+        reg_data = 1190.1777648
         ans = prob['DESIGN.comp.Fl_O:tot:T'][0]
-        print('Tt3:', reg_data, ans)
+        print('Tt3:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 25.897231212494944
+        print('#'*10)
+        print('# OD')
+        print('#'*10)
+        reg_data = 25.8972423
         ans = prob['OD.inlet.Fl_O:stat:W'][0]
-        print('W:', reg_data, ans)
+        print('W:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 12.42972778706185
+        reg_data = 12.4297249
         ans = prob['OD.perf.OPR'][0]
-        print('OPR:', reg_data, ans)
+        print('OPR:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.016304387482120156
+        reg_data = 0.0163117040
         ans = prob['OD.balance.FAR'][0]
-        print('Main FAR:', reg_data, ans)
+        print('Main FAR:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 7853.753342243985
+        reg_data = 7853.754354
         ans = prob['OD.balance.HP_Nmech'][0]
-        print('HP Nmech:', reg_data, ans)
+        print('HP Nmech:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 696.618372248896
+        reg_data = 696.62110739
         ans = prob['OD.perf.Fg'][0]
-        print('Fg:', reg_data, ans)
+        print('Fg:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 2.5052545862974696
+        reg_data = 2.5063687
         ans = prob['OD.perf.TSFC'][0]
-        print('TSFC:', reg_data, ans)
+        print('TSFC:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 1158.5197002795887
+        reg_data = 1158.519646
         ans = prob['OD.comp.Fl_O:tot:T'][0]
-        print('Tt3:', reg_data, ans)
+        print('Tt3:', ans, reg_data)
         assert_near_equal(ans, reg_data, tol)
-
-        print()
 
 
 if __name__ == "__main__":

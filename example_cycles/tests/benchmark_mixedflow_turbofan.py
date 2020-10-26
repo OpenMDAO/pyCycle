@@ -76,21 +76,21 @@ class MixedFlowTurbofanTestCase(unittest.TestCase):
 
         tol = 1e-5
 
-        reg_data = 53.83467876114857
+        reg_data = 53.5485818
         pyc = self.prob['DESIGN.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
         pyc = self.prob['OD.inlet.Fl_O:stat:W'][0]
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.0311108
+        reg_data = 0.0311248
         pyc = self.prob['DESIGN.balance.FAR_core'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
         pyc = self.prob['OD.balance.FAR_core'][0]
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.038716210473225536
+        reg_data =  0.03972700
         pyc = self.prob['DESIGN.balance.FAR_ab'][0]
         print('Main FAR:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)
@@ -111,7 +111,7 @@ class MixedFlowTurbofanTestCase(unittest.TestCase):
         pyc = self.prob['OD.lpt.PR'][0]
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 6802.813118292415
+        reg_data = 6795.889700
         pyc = self.prob['DESIGN.mixed_nozz.Fg'][0]
         print('Fg:', reg_data, pyc)
         assert_near_equal(pyc, reg_data, tol)

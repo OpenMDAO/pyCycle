@@ -2,7 +2,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
@@ -85,7 +85,7 @@ class Splitter(om.Group):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
@@ -99,7 +99,7 @@ class Splitter(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        thermo = species_data.Properties(thermo_data, init_elements=elements)
         num_prod = thermo.num_prod
         num_element = thermo.num_element
 

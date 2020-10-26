@@ -65,94 +65,97 @@ class MultiSpoolTestCase(unittest.TestCase):
         tol = 1e-5
         print()
 
-        reg_data = 10.774724882117566
+        reg_data = 10.774726815
         pyc = self.prob['DESIGN.inlet.Fl_O:stat:W'][0]
-        print('W:', reg_data, pyc)
+        print('W:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
         reg_data = 40.419000000000004
         pyc = self.prob['DESIGN.perf.OPR'][0]
-        print('OPR:', reg_data, pyc)
+        print('OPR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02134959825350931
+        reg_data = 0.0213592428
         pyc = self.prob['DESIGN.balance.FAR'][0]
-        print('FAR:', reg_data, pyc)
+        print('FAR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4.232538682590173
+        reg_data = 4.23253914
         pyc = self.prob['DESIGN.balance.hpt_PR'][0]
-        print('HPT PR:', reg_data, pyc)
+        print('HPT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 1.9789297977771194
+        reg_data = 1.978929924
         pyc = self.prob['DESIGN.balance.lpt_PR'][0]
-        print('LPT PR:', reg_data, pyc)
+        print('LPT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 4.919002749500358
+        reg_data = 4.919002289
         pyc = self.prob['DESIGN.balance.pt_PR'][0]
-        print('PT PR:', reg_data, pyc)
+        print('PT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.3758160137092085
+        reg_data = 0.37581601
         pyc = self.prob['DESIGN.nozzle.Fl_O:stat:MN'][0]
-        print('Nozz MN:', reg_data, pyc)
+        print('Nozz MN:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.31342321408515655
+        reg_data = 0.313564855
         pyc = self.prob['DESIGN.perf.PSFC'][0]
-        print('PSFC:', reg_data, pyc)
+        print('PSFC:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 1377.801279809447
+        reg_data = 1377.8012797
         pyc = self.prob['DESIGN.duct6.Fl_O:tot:T'][0]
-        print('Tt3:', reg_data, pyc)
+        print('Tt3:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 10.235110462561895
+        print('#'*10)
+        print('# OD')
+        print('#'*10)
+        reg_data = 10.23511401
         pyc = self.prob['OD.inlet.Fl_O:stat:W'][0]
-        print('W:', reg_data, pyc)
+        print('W:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 37.71144625180437
+        reg_data = 37.71143287
         pyc = self.prob['OD.perf.OPR'][0]
-        print('OPR:', reg_data, pyc)
+        print('OPR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.02023001639532163
+        reg_data = 0.0202391534
         pyc = self.prob['OD.balance.FAR'][0]
-        print('FAR:', reg_data, pyc)
+        print('FAR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 10.235110462561895
+        reg_data = 10.235114018
         pyc = self.prob['OD.balance.W'][0]
-        print('HPT PR:', reg_data, pyc)
+        print('HPT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 11557.416759696476
+        reg_data = 11557.417714
         pyc = self.prob['OD.balance.IP_Nmech'][0]
-        print('LPT PR:', reg_data, pyc)
+        print('LPT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 14620.264041047138
+        reg_data = 14620.2646120
         pyc = self.prob['OD.balance.HP_Nmech'][0]
-        print('PT PR:', reg_data, pyc)
+        print('PT PR:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.35259414871729844
+        reg_data = 0.3525941
         pyc = self.prob['OD.nozzle.Fl_O:stat:MN'][0]
-        print('Nozz MN:', reg_data, pyc)
+        print('Nozz MN:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 0.31737780542673877
+        reg_data = 0.3175212620
         pyc = self.prob['OD.perf.PSFC'][0]
-        print('PSFC:', reg_data, pyc)
+        print('PSFC:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
-        reg_data = 1345.9669308556815
+        reg_data = 1345.9668282
         pyc = self.prob['OD.duct6.Fl_O:tot:T'][0]
-        print('Tt3:', reg_data, pyc)
+        print('Tt3:', pyc, reg_data)
         assert_near_equal(pyc, reg_data, tol)
 
         print()

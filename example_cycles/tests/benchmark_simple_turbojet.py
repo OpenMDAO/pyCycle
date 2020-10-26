@@ -66,7 +66,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('OPR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.01755078
+        reg_data = 0.01755865
         ans = prob['DESIGN.balance.FAR'][0]
         print('Main FAR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -81,7 +81,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('Fg:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.79006909
+        reg_data = 0.7904208
         ans = prob['DESIGN.perf.TSFC'][0]
         print('TSFC:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -101,7 +101,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('OPR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.01665102
+        reg_data = 0.01665849
         ans = prob['OD0.balance.FAR'][0]
         print('Main FAR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -116,7 +116,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('Fg:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.77759879
+        reg_data = 0.77794514
         ans = prob['OD0.perf.TSFC'][0]
         print('TSFC:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)

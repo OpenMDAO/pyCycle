@@ -10,7 +10,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
 
@@ -24,9 +24,9 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
         self.prob.model.add_subsystem('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
-                                                       thermo_data=janaf, elements=AIR_MIX,
+                                                       thermo_data=janaf, elements=AIR_ELEMENTS,
                                                        internal_solver=True))
 
 

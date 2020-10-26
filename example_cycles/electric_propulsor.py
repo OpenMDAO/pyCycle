@@ -14,12 +14,12 @@ class Propulsor(pyc.Cycle):
         design = self.options['design']
 
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.AIR_MIX))
+                                                  elements=pyc.AIR_ELEMENTS))
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_MIX,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_MIX))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 

@@ -14,7 +14,7 @@ from numpy import log
 class Properties(object):
     """Compute H, S, Cp given a species and temperature"""
     
-    def __init__(self, thermo_data_module, init_reacts=None, init_elements=None):
+    def __init__(self, thermo_data_module, init_elements=None):
 
         self.a = None
         self.a_T = None
@@ -26,16 +26,16 @@ class Properties(object):
         self.temp_ranges = None
         self.valid_temp_range = None
         self.wt_mole = None # array of mole weights
-        # self.init_prod_amounts = None # concentrations (sum to 1)
         self.thermo_data_module = thermo_data_module
         self.prod_data = self.thermo_data_module.products
-        self.init_reacts = init_reacts
         self.init_elements = init_elements
         self.temp_base = None # array of lowest end of lowest temperature range
 
-        if init_elements is not None and init_reacts is None:
+        if init_elements is not None :
 
-            self.elements = set(init_elements.keys())
+            elem_set = set(init_elements.keys())
+            self.elements = sorted(elem_set)
+
 
             valid_elements = set()
 
@@ -50,21 +50,62 @@ class Properties(object):
                         raise ValueError(f'The provided element `{element}` is not used in any products in your thermo data.')
 
             self.products = [name for name, prod_data in self.prod_data.items()
-                         if self.elements.issuperset(prod_data['elements'])]
-        
-        elif init_elements is None and init_reacts is not None:
-            self.get_elements() #sets self.elements
-
-            self.products = [name for name, prod_data in self.prod_data.items()
-                         if self.elements.issuperset(prod_data['elements'])]
-        
-        elif init_elements is None and init_reacts is None:
-                raise ValueError('You have not provided elements or initial reactants (init_reacts). In order to set thermodynamic data, one of the two must be provided.')
+                         if elem_set.issuperset(prod_data['elements'])]
         
         else:
-            raise ValueError('You have provided both elements and initial reactants (init_reacts). In order to set thermodynamic data, you must only provide one or the other.')       
+                raise ValueError('You have not provided `init_elements`. In order to set thermodynamic data it must be provided.')
+
+        ### setting up object attributes ###
+        element_list = sorted(self.elements)
+
+        self.num_element = len(element_list)
+        self.num_prod = len(self.products)
+
+        self.a = np.zeros((self.num_prod, 10))
+        self.a_T = self.a.T
+
+        element_wt = []
+        aij = []
+
+        for e in element_list:
+            element_wt.append(self.thermo_data_module.element_wts[e])
+
+            row = [self.prod_data[r]['elements'].get(e,0) for r in self.products]
+            aij.append(row)
+
+        self.element_wt = np.array(element_wt)
+        self.aij = np.array(aij)
+
+        self.wt_mole = np.empty(self.num_prod)
+        for i,r in enumerate(self.products):
+            self.wt_mole[i] = self.prod_data[r]['wt']
+
+        #### pre-computed constants used in calculations ###
+        aij_prod = np.empty((self.num_element,self.num_element, self.num_prod))
+        for i in range(self.num_element):
+            for j in range(self.num_element):
+                aij_prod[i][j] = self.aij[i]*self.aij[j]
+
+        self.aij_prod = aij_prod
+
+        self.aij_prod_deriv = np.zeros((self.num_element**2,self.num_prod))
+        for k in range(self.num_element**2):
+            for l in range(self.num_prod):
+                i = k//self.num_element
+                j = np.mod(k,self.num_element)
+                self.aij_prod_deriv[k][l] = self.aij_prod[i][j][l]
+
+        #### Computing b0 values ###
+        self.b0 = np.zeros(self.num_element)
+        for i,e in enumerate(element_list): 
+            self.b0[i] = self.init_elements[e]
+
+        self.b0 = self.b0*self.element_wt
+        self.b0 = self.b0/np.sum(self.b0)
+        self.b0 = self.b0/self.element_wt
+
+        self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
         
-        self.set_data(init_reacts)
 
     def H0(self, Tt): # standard-state molar enthalpy for species j at temp T
         Tt = Tt[0]
@@ -109,106 +150,6 @@ class Properties(object):
         a_T = self.a_T
         return vec*(-2*a_T[0]/Tt**3 - a_T[1]/Tt**2 + a_T[3] + 2.*a_T[4]*Tt + 3.*a_T[5]*Tt**2 + 4.*a_T[6]*Tt**3)
 
-    def set_data(self, init_reacts):
-        """computes the relevant quantities, given the reactant data"""
-
-        ### setting up object attributes ###
-        element_list = sorted(self.elements)
-
-        self.num_element = len(element_list)
-        self.num_prod = len(self.products)
-
-        self.a = np.zeros((self.num_prod, 10))
-        self.a_T = self.a.T
-
-        element_wt = []
-        aij = []
-
-        for e in element_list:
-            element_wt.append(self.thermo_data_module.element_wts[e])
-
-            row = [self.prod_data[r]['elements'].get(e,0) for r in self.products]
-            aij.append(row)
-
-        self.element_wt = np.array(element_wt)
-        self.aij = np.array(aij)
-
-        self.wt_mole = np.empty(self.num_prod)
-        for i,r in enumerate(self.products):
-            self.wt_mole[i] = self.prod_data[r]['wt']
-
-        #### pre-computed constants used in calculations ###
-        aij_prod = np.empty((self.num_element,self.num_element, self.num_prod))
-        for i in range(self.num_element):
-            for j in range(self.num_element):
-                aij_prod[i][j] = self.aij[i]*self.aij[j]
-
-        self.aij_prod = aij_prod
-
-        self.aij_prod_deriv = np.zeros((self.num_element**2,self.num_prod))
-        for k in range(self.num_element**2):
-            for l in range(self.num_prod):
-                i = k//self.num_element
-                j = np.mod(k,self.num_element)
-                self.aij_prod_deriv[k][l] = self.aij_prod[i][j][l]
-
-        #### Computing b0 values ###
-
-        if init_reacts is not None:
-
-            self.b0 = self.get_b0()
-            self.b0 = self.b0*self.element_wt
-            self.b0 = self.b0/np.sum(self.b0)
-            self.b0 = self.b0/self.element_wt  #moles of each element per kg of mixture 
-
-        else:
-
-            self.b0 = list(self.init_elements.values())
-
-            self.b0 = self.b0*self.element_wt
-            self.b0 = self.b0/np.sum(self.b0)
-            self.b0 = self.b0/self.element_wt
-
-        self.build_coeff_table(999) # just pick arbitrary default temperature so there is something there right away
-
-    def get_elements(self):#note, reactants is assumed to be a dictionary
-
-        self.elements = set()
-
-        for name in self.init_reacts: # figure out which elements are present
-            if self.init_reacts[name] > 0:
-                self.elements.update(self.prod_data[name]['elements'])
-
-        return
-
-    def get_b0(self):#note, reactants is assumed to be a dictionary
-
-        element_list = sorted(self.elements)
-        complex_check = False
-
-        aij = []
-
-        b_values = np.zeros((len(element_list))) #moles of each element based on provided reactant abundances
-        init_reacts = np.fromiter(self.init_reacts.values(), dtype=float) 
-
-        for e in element_list:
-            row = []
-            for react in self.init_reacts:
-                row.append(self.prod_data[react]['elements'].get(e,0))
-
-                if isinstance(self.init_reacts[react], np.ndarray): ## <- fix...?
-                    if isinstance(self.init_reacts[react][0], complex):
-                        init_reacts = np.fromiter(self.init_reacts.values(), dtype=complex)
-                        b_values = b_values.astype(np.complex)
-
-            aij.append(row) 
-
-        for i, element in enumerate(element_list):
-            for j, reactant in enumerate(init_reacts):
-                b_values[i] += aij[i][j]*reactant
-
-        return(b_values)
-
     def build_coeff_table(self, Tt):
         """Build the temperature specific coeff array and find the highest-low value and
         the lowest-high value of temperatures from all the reactants to give the
@@ -243,27 +184,3 @@ class Properties(object):
 
         self.valid_temp_range = (max_low, min_high)
 
-if __name__ == "__main__":
-
-    # thermo = Thermo(co2_co_o2, init_reacts=constants.CO2_CO_O2_MIX)
-    # thermo = Thermo(janaf, init_reacts=constants.AIR_MIX)
-    # thermo = Thermo(janaf, init_reacts=constants.AIR_FUEL_MIX)
-    thermo = Thermo(wet_air, init_reacts=constants.WET_AIR_MIX)
-
-    T = np.ones(len(thermo.products))*800
-    H0 = thermo.H0(T)
-    S0 = thermo.S0(T)
-    Cp0 = thermo.Cp0(T)
-
-    HJ = thermo.H0_applyJ(T, 1.)
-    SJ = thermo.S0_applyJ(T, 1)
-    CpJ = thermo.Cp0_applyJ(T, 1)
-    b0 = thermo.b0
-    print('\nT', T)
-    print('\nH0', H0)
-    print('\nS0', S0)
-    print('\nCp0', Cp0)
-    print('\nHJ', HJ)
-    print('\nSJ', SJ)
-    print('\nCpJ', CpJ)
-    print('\nb0', b0, '\n')
