@@ -13,7 +13,7 @@ from pycycle import constants
 class ChemEqTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.thermo = species_data.Properties(species_data.janaf, init_reacts=constants.AIR_MIX)
+        self.thermo = species_data.Properties(species_data.janaf, init_elements=constants.AIR_ELEMENTS)
         p = self.p = Problem(model=Group())
         p.model.suppress_solver_output = True
         p.model.set_input_defaults('P', 1.034210, units="bar")

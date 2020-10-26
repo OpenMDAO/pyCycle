@@ -1,7 +1,5 @@
 import openmdao.api as om
 
-from pycycle.constants import AIR_MIX
-
 from pycycle.thermo.static_ps_calc import PsCalc
 from pycycle.thermo.static_ps_resid import PsResid
 from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
@@ -29,7 +27,7 @@ class Thermo(om.Group):
         # The user should define one or more of these dictionaries at the top of their model
         # then pass them into the individual componenents
         self.options.declare('thermo_kwargs', default={},
-                             desc='Defines the thermodynamic data to be used in computations')
+                             desc='Defines the thermodynamic data to be used in computations', recordable=False)
 
     def setup(self):
         method = self.options['method']
@@ -152,6 +150,7 @@ class Thermo(om.Group):
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['maxiter'] = 100
+        # newton.options['max_sub_solves'] = 100
         newton.options['atol'] = 1e-10
         newton.options['rtol'] = 1e-10
         newton.options['stall_limit'] = 4

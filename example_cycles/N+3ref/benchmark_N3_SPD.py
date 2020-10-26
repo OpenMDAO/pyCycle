@@ -73,7 +73,7 @@ class N3MDPOptTestCase(unittest.TestCase):
 
         prob.run_model()
 
-        tol = 1e-4
+        tol = 5e-4
 
         assert_near_equal(prob['TOC.inlet.Fl_O:tot:P'], 5.26210728, tol)#
         assert_near_equal(prob['TOC.hpc.Fl_O:tot:P'], 275.21039426, tol)#

@@ -9,7 +9,7 @@ from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.combustor import Combustor
 from pycycle.connect_flow import connect_flow
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
 
@@ -78,17 +78,17 @@ class TurbineODTestCase(unittest.TestCase):
 
         self.prob = Problem()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
         self.prob.model.add_subsystem('burner', Combustor(thermo_data=janaf,
-                                                          inflow_elements=AIR_MIX,
-                                                          air_fuel_elements=AIR_FUEL_MIX,
+                                                          inflow_elements=AIR_ELEMENTS,
+                                                          air_fuel_elements=AIR_FUEL_ELEMENTS,
                                                           fuel_type="JP-7"))
         self.prob.model.add_subsystem(
             'turbine',
             Turbine(
                 map_data=LPT2269,
                 design=False,
-                elements=AIR_FUEL_MIX))
+                elements=AIR_FUEL_ELEMENTS))
 
 
         self.prob.model.set_input_defaults('burner.MN', .01, units=None)

@@ -5,11 +5,13 @@ import os
 
 import numpy as np
 
+import openmdao.api as om
+
 from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_MIX, AIR_FUEL_MIX
+from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
@@ -32,7 +34,7 @@ class MixerTestcase(unittest.TestCase):
         p.model.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
         p.model.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
 
-        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
+        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
         connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
@@ -60,7 +62,7 @@ class MixerTestcase(unittest.TestCase):
         p.model.add_subsystem('start1', FlowStart(), promotes=['MN', 'T', 'W'])
         p.model.add_subsystem('start2', FlowStart(), promotes=['MN', 'T', 'W'])
 
-        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_MIX, Fl_I2_elements=AIR_MIX))
+        p.model.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
         connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
         connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
@@ -71,7 +73,7 @@ class MixerTestcase(unittest.TestCase):
         p.run_model()
         tol = 2e-7
         assert_near_equal(p['mixer.Fl_O:stat:area'], 653.26524074, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.94216616, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.7943609, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
 
     def _build_problem(self, designed_stream=1, complex=False):
@@ -88,11 +90,11 @@ class MixerTestcase(unittest.TestCase):
             p.model.set_input_defaults('start2.MN', 0.4463)
             p.model.set_input_defaults('start2.W', 158., units='lbm/s')
 
-            p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_MIX))
-            p.model.add_subsystem('start2', FlowStart(elements=AIR_MIX))
+            p.model.add_subsystem('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
+            p.model.add_subsystem('start2', FlowStart(elements=AIR_ELEMENTS))
 
             p.model.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream,
-                                                 Fl_I1_elements=AIR_FUEL_MIX, Fl_I2_elements=AIR_MIX))
+                                                 Fl_I1_elements=AIR_FUEL_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
 
             connect_flow(p.model, 'start1.Fl_O', 'mixer.Fl_I1')
             connect_flow(p.model, 'start2.Fl_O', 'mixer.Fl_I2')
@@ -106,24 +108,26 @@ class MixerTestcase(unittest.TestCase):
     def test_mix_air_with_airfuel(self):
 
         p = self._build_problem(designed_stream=1)
+        # p.model.mixer.impulse_converge.nonlinear_solver.options['maxiter'] = 10
+
         p.run_model()
 
         tol = 5e-7
-        assert_near_equal(p['mixer.Fl_O:stat:area'], 2636.54161119, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8823286, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:stat:area'], 2786.86877031, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8881475, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
-        p = self._build_problem(designed_stream=2)
+        # p = self._build_problem(designed_stream=2)
 
-        p.model.mixer.impulse_converge.nonlinear_solver.options['maxiter'] = 10
+        # p.model.mixer.impulse_converge.nonlinear_solver.options['maxiter'] = 10
 
-        p.run_model()
+        # p.run_model()
 
     def test_mixer_partials(self):
 
         p = self._build_problem(designed_stream=1, complex=True)
         p.run_model()
-        partials = p.check_partials(includes=['mixer.area_calc*', 'mixer.mix_flow*', 'mixer.imp_out*'], out_stream=None)
+        partials = p.check_partials(includes=['mixer.area_calc*', 'mixer.mix_flow*', 'mixer.imp_out*'], out_stream=None, method='cs')
         assert_check_partials(partials, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":

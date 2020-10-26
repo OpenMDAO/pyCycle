@@ -6,7 +6,11 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
+from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea import species_data
 from pycycle.elements.combustor import Combustor
 
 from pycycle.elements.test.util import check_element_partials
@@ -28,7 +32,7 @@ class BurnerTestCase(unittest.TestCase):
     def test_case1(self):
 
         prob = Problem()
-        model = prob.model = Group()
+        model = prob.model 
 
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
@@ -40,7 +44,8 @@ class BurnerTestCase(unittest.TestCase):
         model.set_input_defaults('Fl_I:stat:W', 100.0, units='lbm/s')
         model.set_input_defaults('Fl_I:FAR', 0.0)
         model.set_input_defaults('MN', 0.5)
-        model.set_input_defaults('Fl_I:tot:n', n_init)
+        model.set_input_defaults('Fl_I:tot:b0', val=[3.23319235e-04, 1.10132233e-05, 
+                                                     5.39157698e-02, 1.44860137e-02])
 
         prob.set_solver_print(level=2)
         prob.setup(check=False)
@@ -56,6 +61,14 @@ class BurnerTestCase(unittest.TestCase):
             prob['MN'] = data[h_map['Fl_O.MN']]
 
             prob.run_model()
+
+            prob.model.combustor.mix_fuel.list_inputs(print_arrays=True)
+            prob.model.combustor.mix_fuel.list_outputs(print_arrays=True)
+            # print(prob['Fl_I:tot:b0'])
+            # print(prob['Fl_I:tot:n'])
+            # print(prob['Fl_I:tot:h'])
+            # print(prob['Fl_I:tot:P'])
+            # exit()
 
             # check outputs
             tol = 1.0e-2

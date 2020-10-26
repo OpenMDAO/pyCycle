@@ -11,7 +11,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.inlet import Inlet
 from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 
 from pycycle.elements.test.util import check_element_partials
 
@@ -59,8 +59,8 @@ class InletTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('inlet.Fl_I:stat:V', 1., units='ft/s')
         self.prob.model.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
-        self.prob.model.add_subsystem('inlet', Inlet(elements=AIR_MIX))
+        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        self.prob.model.add_subsystem('inlet', Inlet(elements=AIR_ELEMENTS))
 
         # total and static
         fl_src = "flow_start.Fl_O"

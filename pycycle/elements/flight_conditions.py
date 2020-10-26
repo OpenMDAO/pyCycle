@@ -1,7 +1,7 @@
 import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
 
@@ -12,7 +12,7 @@ class FlightConditions(om.Group):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')

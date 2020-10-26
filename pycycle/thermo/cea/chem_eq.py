@@ -10,7 +10,7 @@ from pycycle.thermo.cea.props_calcs import PropsCalcs
 
 
 
-class Properties(om.Group):
+class ThermoCalcs(om.Group):
 
     def initialize(self):
         self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
@@ -74,11 +74,11 @@ class ChemEq(om.ImplicitComponent):
         self.options['assembled_jac_type'] = 'dense'
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
-        # ln_bt = newton.linesearch = om.BoundsEnforceLS()
-        ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
-        ln_bt.options['maxiter'] = 2
-        ln_bt.options['bound_enforcement'] = 'scalar'
+        ln_bt = newton.linesearch = om.BoundsEnforceLS()
+        # ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
+        # ln_bt.options['maxiter'] = 2
         ln_bt.options['iprint'] = -1
+        # ln_bt.options['print_bound_enforce'] = True
 
         # Once the concentration of a species reaches its minimum, we
         # can essentially remove it from the problem. This switch controls
@@ -122,6 +122,7 @@ class ChemEq(om.ImplicitComponent):
                         val=self.n_init,
                         desc="mole fractions of the mixture",
                         lower=MIN_VALID_CONCENTRATION,
+                        upper=1e2, 
                         res_ref=10000.
                         )
 
@@ -425,13 +426,14 @@ class SetTotalTP(om.Group):
 
     def initialize(self): 
 
-        self.options.declare('spec')
+        self.options.declare('spec', recordable=False)
         self.options.declare('elements')
 
 
     def setup(self):
 
-        self.thermo = species_data.Properties(self.options['spec'], self.options['elements'])
+        self.thermo = species_data.Properties(self.options['spec'], 
+                                              init_elements=self.options['elements'])
         
         # these have to be part of the API for the unit_comps to use
         self.b0 = self.thermo.b0
@@ -439,46 +441,8 @@ class SetTotalTP(om.Group):
         
         self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
 
-        self.add_subsystem('props', Properties(thermo=self.thermo), promotes=['*'])
+        self.add_subsystem('props', ThermoCalcs(thermo=self.thermo), promotes=['*'])
 
 
 
 
-if __name__ == "__main__":
-    import time
-
-
-    from pycycle.cea import species_data
-
-    # thermo = species_data.Properties(species_data.co2_co_o2)
-    thermo = species_data.Properties(species_data.janaf)
-
-    prob = om.Problem()
-    prob.model = om.Group()
-    prob.model.nonlinear_solver = om.NewtonSolver(solve_subsystems=True)
-    prob.model.linear_solver = om.LinearRunOnce()
-
-    des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
-    des_vars.add_output('P', 1.034210, units='psi')
-    des_vars.add_output('h', -24.26682261, units='cal/g')
-
-    chemeq = prob.model.add_subsystem('chemeq', ChemEq(thermo=thermo, mode="h"), promotes=["*"])
-
-    # prob.model.suppress_solver_output = True
-    prob.setup(force_alloc_complex=True)
-
-    st = time.time()
-    prob.run_model()
-    print("time: ", time.time()-st)
-    print('n', prob['n'])
-    print('T', prob['T'])
-    print('b0', prob['b0'])
-    print('n_moles', prob['n_moles'])
-    print('pi', prob['pi'])
-
-    # print(prob['T'], prob.model._residuals['T'])
-    # print(prob['n'], prob.model._residuals['n'])
-    # print(prob['pi'], prob.model._residuals['pi'])
-
-
-    prob.check_partials(method='cs', compact_print=True)

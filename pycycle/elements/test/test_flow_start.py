@@ -6,8 +6,9 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea import species_data
-from pycycle.elements.flow_start import FlowStart, SetWAR
-from pycycle.constants import AIR_MIX, WET_AIR_MIX
+from pycycle.elements.flow_start import FlowStart
+from pycycle.elements.mix_ratio import MixRatio
+from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -44,7 +45,7 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
         self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
-        self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -152,66 +153,82 @@ class FlowStartTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             p = Problem()
-            p.model = FlowStart(elements=AIR_MIX, use_WAR=True, thermo_data=species_data.janaf)
+            p.model = FlowStart(elements=AIR_ELEMENTS, use_WAR=True, thermo_data=species_data.janaf)
             p.model.set_input_defaults('WAR', .01)
             p.setup()
 
-        self.assertEqual(str(cm.exception), "The provided elements to FlightConditions do not contain H2O. In order to specify a nonzero WAR the elements must contain H2O.")
+        self.assertEqual(str(cm.exception), 'The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
 
-        with self.assertRaises(ValueError) as cm:
+        # with self.assertRaises(ValueError) as cm:
 
-            prob = Problem()
-            prob.model = FlowStart(elements=WET_AIR_MIX, use_WAR=False, thermo_data=species_data.janaf)
-            prob.setup()
+        #     prob = Problem()
+        #     prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
+        #     prob.setup()
 
-        self.assertEqual(str(cm.exception), "In order to provide elements containing H2O, a nonzero water to air ratio (WAR) must be specified. Please set the option use_WAR to True.")
+        # self.assertEqual(str(cm.exception), 'In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
 
 class WARTestCase(unittest.TestCase):
 
     def test_war_vals(self):
+        """
+        verifies that the MixRatio component gives the right answers when adding water to dry air
+        """
 
         prob = Problem()
 
-        prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
+        thermo_spec = species_data.wet_air
+
+        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+
+        prob.model.add_subsystem('war', MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+                                                 inflow_elements=AIR_ELEMENTS, mix_elements='Water'), 
+                                 promotes=['*'])
         
-        prob.model.set_input_defaults('WAR', .0001)
+
 
         prob.setup(force_alloc_complex=True)
+
+        # p['Fl_I:stat:P'] = 158.428
+        prob['Fl_I:stat:W'] = 38.8
+        prob['mix:ratio'] = .0001 # WAR
+        prob['Fl_I:tot:h'] = 181.381769
+        prob['Fl_I:tot:b0'] = air_thermo.b0
 
         prob.run_model()
 
         tol = 1e-5
-        assert_near_equal(prob['b0'][0], 3.23286926e-04, tol)
-        assert_near_equal(prob['b0'][1], 1.10121227e-05, tol)
-        assert_near_equal(prob['b0'][2], 1.11016903e-05, tol)
-        assert_near_equal(prob['b0'][3], 5.39103820e-02, tol)
-        assert_near_equal(prob['b0'][4], 1.44901169e-02, tol)
 
-    def test_war_errors(self):
+        assert_near_equal(prob['b0_out'][0], 3.23286926e-04, tol)
+        assert_near_equal(prob['b0_out'][1], 1.10121227e-05, tol)
+        assert_near_equal(prob['b0_out'][2], 1.11005769e-05, tol)
+        assert_near_equal(prob['b0_out'][3], 5.39103820e-02, tol)
+        assert_near_equal(prob['b0_out'][4], 1.44901169e-02, tol)
 
-        with self.assertRaises(ValueError) as cm:
+    def test_fs_with_water(self): 
 
-            prob = Problem()
-            prob.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
-            prob.model.set_input_defaults('WAR', 0.0)
-            
-            prob.setup()
-            prob.run_model()
+        prob = Problem()
+        prob.model.set_input_defaults('fl_start.P', 17., units='psi')
+        prob.model.set_input_defaults('fl_start.T', 500., units='degR')
+        prob.model.set_input_defaults('fl_start.MN', 0.5)
+        prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
+        prob.model.set_input_defaults('fl_start.WAR', .01)
 
-        self.assertEqual(str(cm.exception), "'war' <class SetWAR>: Error calling compute(), You have turned on the use_WAR option in FlightConditions but you have set WAR to be zero.")
+        prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
+                                                       elements=WET_AIR_ELEMENTS, use_WAR=True))
 
+        prob.set_solver_print(level=-1)
+        prob.setup(check=False)
 
-        with self.assertRaises(ValueError) as cm:
+        prob.run_model()
 
-            p = Problem()
-            p.model.add_subsystem('war', SetWAR(thermo_data=species_data.wet_air, elements=WET_AIR_MIX), promotes=['*'])
-            p.model.set_input_defaults('WAR', 1.0)
-            
-            p.setup()
-            p.run_model()
+        tol = 1e-5
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][0], 3.18139345e-04, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][1], 1.08367806e-05, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][2], 1.77859e-03, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][3], 5.305198e-02, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][4], 1.51432e-02, tol)
 
-        self.assertEqual(str(cm.exception), "'war' <class SetWAR>: Error calling compute(), Cannot specify WAR to have a value of 1. This is a physical impossibility and creates a singularity.")
-
+    
 if __name__ == "__main__":
     unittest.main()

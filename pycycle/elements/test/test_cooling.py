@@ -107,9 +107,9 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
-from pycycle.elements import cooling, combustor, flow_start
+from pycycle.elements import cooling, mix_ratio, flow_start
 from pycycle.thermo.cea import species_data
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX
+from pycycle.constants import AIR_FUEL_ELEMENTS
 
 
 class Tests(unittest.TestCase):
@@ -120,24 +120,25 @@ class Tests(unittest.TestCase):
 
         # values needed for the flow initialization from the burner exit
         p.model.set_input_defaults('mix_fuel.Fl_I:stat:W', val=60.32, units="lbm/s")
-        p.model.set_input_defaults('mix_fuel.Fl_I:FAR', val=0.0304)
+        p.model.set_input_defaults('mix_fuel.mix:ratio', val=0.0304)
         p.model.set_input_defaults('mix_fuel.Fl_I:tot:h', val=298.48, units='Btu/lbm')
 
         n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
                            1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
                            1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
+        # p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
         p.model.set_input_defaults('burner_flow.P', val=616.736, units='psi')
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
         # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', combustor.MixFuel(thermo_data=species_data.janaf))
+        p.model.add_subsystem('mix_fuel', mix_ratio.MixRatio(mix_thermo_data=species_data.janaf))
+
 
         p.model.add_subsystem(
             'burner_flow',
             flow_start.FlowStart(
                 thermo_data=species_data.janaf,
-                elements=AIR_FUEL_MIX))
+                elements=AIR_FUEL_ELEMENTS))
         p.model.connect('mix_fuel.b0_out', 'burner_flow.b0')
 
         self.prob = p
@@ -174,10 +175,12 @@ class Tests(unittest.TestCase):
         """test the flow mixing calculations for a single row"""
         p = self.prob
 
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('row.n_cool', val=n_init)  # product ratios for clean air
+        # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
+        #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
+        #                    1.00000000e-10, 7.23198770e-03])
+        # p.model.set_input_defaults('row.n_cool', val=n_init)  # product ratios for clean air
+        b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p.model.set_input_defaults('row.cool:b0', val=b0_air)
         p.model.set_input_defaults('Pt_in', val=616.736, units='psi')
         p.model.set_input_defaults('Pt_out', val=149.113, units='psi')
         p.model.set_input_defaults('row.x_factor', val=.9)
@@ -200,7 +203,7 @@ class Tests(unittest.TestCase):
 
         p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
 
-        p.model.connect('mix_fuel.init_prod_amounts', 'row.n_primary')
+        p.model.connect('burner_flow.Fl_O:tot:b0', 'row.b0_primary')
 
         p.setup()
 
@@ -218,10 +221,11 @@ class Tests(unittest.TestCase):
         """test the flow calculations and final temperatures for multiple rows"""
         p = self.prob
 
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
-        p.model.set_input_defaults('turb_cool.Fl_cool:tot:n', val=n_init)  # product ratios for clean air
+        # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
+        #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
+        #                    1.00000000e-10, 7.23198770e-03])
+        b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p.model.set_input_defaults('turb_cool.Fl_cool:tot:b0', val=b0_air)  # product ratios for clean air
         p.model.set_input_defaults('turb_cool.turb_pwr', val=24193.5, units='hp')
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:P', val=616.736, units='psi')
         p.model.set_input_defaults('turb_cool.Fl_turb_O:tot:P', val=149.113, units='psi')
@@ -239,7 +243,7 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.init_prod_amounts', 'turb_cool.Fl_turb_I:tot:n')
+        p.model.connect('mix_fuel.b0_out', 'turb_cool.Fl_turb_I:tot:b0')
 
         p.setup()
         p.set_solver_print(0)
@@ -248,7 +252,7 @@ class Tests(unittest.TestCase):
 
         p.run_model()
 
-        tol = 3e-4
+        tol = 4e-4
 
         assert_near_equal(p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
         assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2846.45, tol)
@@ -256,9 +260,9 @@ class Tests(unittest.TestCase):
         assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2412.12, tol)
 
         assert_near_equal(p['turb_cool.row_0.W_cool'], 4.44635, tol)
-        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.3002, tol)
-        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.71, tol)
-        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91966, tol)
+        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.2981, tol)
+        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.7079, tol)
+        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91799, tol)
 
         np.set_printoptions(precision=5)
         check = p.check_partials(includes=['turb_cool.row_0.cooling_calcs',

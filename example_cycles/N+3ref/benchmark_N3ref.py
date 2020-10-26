@@ -73,12 +73,12 @@ class N3MDPVerifTestCase(unittest.TestCase):
 
         prob.run_model()
 
-        tol = 1e-4
+        tol = 5e-4
 
         assert_near_equal(prob['TOC.inlet.Fl_O:stat:W'], 820.44097898, tol)#
         assert_near_equal(prob['TOC.inlet.Fl_O:tot:P'], 5.26210728, tol)#
         assert_near_equal(prob['TOC.hpc.Fl_O:tot:P'], 275.21039426, tol)#
-        assert_near_equal(prob['TOC.burner.Wfuel'], 0.74668441, tol)#
+        assert_near_equal(prob['TOC.burner.Wfuel'], 0.74702036, tol)#
         assert_near_equal(prob['TOC.inlet.F_ram'], 19854.88340967, tol)#
         assert_near_equal(prob['TOC.core_nozz.Fg'], 1547.13847348, tol)#
         assert_near_equal(prob['TOC.byp_nozz.Fg'], 24430.7872167, tol)#

@@ -10,7 +10,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
@@ -52,9 +52,9 @@ class TurbineTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Group()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_MIX))
+        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
         self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True,
-                                                         elements=AIR_MIX))
+                                                         elements=AIR_ELEMENTS))
 
         self.prob.model.set_input_defaults('turbine.Nmech', 1000.0, units='rpm')
         self.prob.model.set_input_defaults('flow_start.MN', 0.0)

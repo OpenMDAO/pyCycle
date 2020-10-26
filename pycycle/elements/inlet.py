@@ -2,7 +2,7 @@
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_FUEL_MIX, AIR_MIX, g_c
+from pycycle.constants import AIR_ELEMENTS, g_c
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
@@ -80,7 +80,7 @@ class Inlet(om.Group):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
@@ -99,7 +99,7 @@ class Inlet(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
         gas_prods = gas_thermo.products
         num_prod = gas_thermo.num_prod
         num_element = gas_thermo.num_element
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     p = om.Problem()
     p.model = Inlet()
 
-    thermo = species_data.Properties(species_data.janaf, constants.AIR_MIX)
+    thermo = species_data.Properties(species_data.janaf, constants.AIR_ELEMENTS)
     p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
     p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
     p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep

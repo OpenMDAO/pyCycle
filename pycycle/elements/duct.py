@@ -6,7 +6,7 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.constants import AIR_MIX
+from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 
@@ -149,7 +149,7 @@ class Duct(om.Group):
     def initialize(self):
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_MIX,
+        self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
@@ -172,7 +172,7 @@ class Duct(om.Group):
         design = self.options['design']
         expMN = self.options['expMN']
 
-        gas_thermo = species_data.Properties(thermo_data, init_reacts=elements)
+        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
         gas_prods = gas_thermo.products
         num_prod = gas_thermo.num_prod
         num_element = gas_thermo.num_element
