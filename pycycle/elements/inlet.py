@@ -59,13 +59,13 @@ class RamRecovery(om.ExplicitComponent):
         MS = self.options['MilSpec']
         
         if not MS:
-            J['P_recovery', 'etaBase'] = 1
+            J['P_recovery', 'ram_recovery'] = 1
             J['P_recovery', 'MN_in'] = 0
         
         if MS:
             
             if MN_in < 1.0:
-                J['P_recovery', 'etaBase'] = 1
+                J['P_recovery', 'ram_recovery'] = 1
                 J['P_recovery', 'MN_in'] = 0
             
             elif MN_in >= 1.0 and MN_in < 5.0:
