@@ -35,7 +35,6 @@ from pycycle.maps.HPT_map import HPTMap
 from pycycle.maps.LPT_map import LPTMap
 from pycycle.maps.ncp01 import NCP01
 
-
 from pycycle.connect_flow import connect_flow
 
 from pycycle.viewers import print_bleed, print_burner, print_compressor, print_flow_station, \

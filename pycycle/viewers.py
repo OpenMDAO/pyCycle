@@ -205,7 +205,6 @@ def print_shaft(prob, element_names, file=sys.stdout):
     print("-"*len_header, file=file, flush=True)
 
     line_tmpl = '{:<20}|  '+'{:>20}'*5
-
     print(line_tmpl.format('Shaft', 'Nmech', 'trqin', 'trqout', 'pwrin', 'pwrout'), file=file)
 
     line_tmpl = '{:<20}|  '+'{:20.3f}'*5
