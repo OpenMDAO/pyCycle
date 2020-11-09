@@ -559,8 +559,8 @@ class Compressor(om.Group):
 
             self.set_order(['flow_in', 'corrinputs', 'map',
                             'press_rise','ideal_flow', 'enth_rise',
-                            'real_flow','eff_poly_calc' ,'blds_pwr',
-                            'FAR_passthru'] + bleed_names + ['out_stat'])
+                            'real_flow','eff_poly_calc' ,'blds_pwr',] 
+                            + bleed_names + ['out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough('W_out',
@@ -570,8 +570,8 @@ class Compressor(om.Group):
                                promotes=['*'])
             self.set_order(['flow_in', 'corrinputs', 'map',
                             'press_rise','ideal_flow', 'enth_rise',
-                            'real_flow','eff_poly_calc' , 'blds_pwr',
-                            'FAR_passthru'] + bleed_names + ['W_passthru'])
+                            'real_flow','eff_poly_calc' , 'blds_pwr'] 
+                            + bleed_names + ['W_passthru'])
 
 
         # define the group level defaults

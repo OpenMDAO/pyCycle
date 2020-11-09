@@ -5,8 +5,9 @@ import os
 from openmdao.api import Problem
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+
 from pycycle.constants import AIR_ELEMENTS
-from pycycle.connect_flow import connect_flow
+from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
@@ -48,18 +49,19 @@ class CompressorTestCase(unittest.TestCase):
     def setUp(self):
 
         self.prob = Problem()
+        cycle = self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('compressor', Compressor(design=True, elements=AIR_ELEMENTS))
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.add_subsystem('compressor', Compressor(design=True, elements=AIR_ELEMENTS))
 
-        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
-        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
-        self.prob.model.set_input_defaults('compressor.MN', 0.5)
-        self.prob.model.set_input_defaults('flow_start.W', 10., units='lbm/s')
-        self.prob.model.set_input_defaults('compressor.PR', 6.)
-        self.prob.model.set_input_defaults('compressor.eff', 0.9)
+        cycle.set_input_defaults('flow_start.P', 17., units='psi')
+        cycle.set_input_defaults('flow_start.T', 500., units='degR')
+        cycle.set_input_defaults('compressor.MN', 0.5)
+        cycle.set_input_defaults('flow_start.W', 10., units='lbm/s')
+        cycle.set_input_defaults('compressor.PR', 6.)
+        cycle.set_input_defaults('compressor.eff', 0.9)
 
-        connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
+        cycle.pyc_connect_flow("flow_start.Fl_O", "compressor.Fl_I")
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False, force_alloc_complex=True)
