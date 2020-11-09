@@ -3,7 +3,7 @@ import unittest
 import os
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.elements.shaft import Shaft
 
@@ -26,38 +26,36 @@ header = [
     'pwrNet']
 h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 
-from pycycle.elements.test.util import check_element_partials
-
 
 class ShaftTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.top = Problem()
-        self.top.model = Group()
-        self.top.model.add_subsystem("shaft", Shaft(num_ports=3), promotes=["*"])
+        self.prob = Problem()
+        self.prob.model = Group()
+        self.prob.model.add_subsystem("shaft", Shaft(num_ports=3), promotes=["*"])
 
-        self.top.model.set_input_defaults('trq_0', 17., units='ft*lbf')
-        self.top.model.set_input_defaults('trq_1', 17., units='ft*lbf')
-        self.top.model.set_input_defaults('trq_2', 17., units='ft*lbf')
-        self.top.model.set_input_defaults('Nmech', 17., units='rpm')
-        self.top.model.set_input_defaults('HPX', 17., units='hp')
-        self.top.model.set_input_defaults('fracLoss', 17.)
+        self.prob.model.set_input_defaults('trq_0', 17., units='ft*lbf')
+        self.prob.model.set_input_defaults('trq_1', 17., units='ft*lbf')
+        self.prob.model.set_input_defaults('trq_2', 17., units='ft*lbf')
+        self.prob.model.set_input_defaults('Nmech', 17., units='rpm')
+        self.prob.model.set_input_defaults('HPX', 17., units='hp')
+        self.prob.model.set_input_defaults('fracLoss', 17.)
 
-        self.top.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
     def test_case1(self):
         # 6 cases to check against
         for i, data in enumerate(ref_data):
             # input torques
-            self.top['trq_0'] = data[h_map['trqLoad1']]
-            self.top['trq_1'] = data[h_map['trqLoad2']]
-            self.top['trq_2'] = data[h_map['trqLoad3']]
+            self.prob['trq_0'] = data[h_map['trqLoad1']]
+            self.prob['trq_1'] = data[h_map['trqLoad2']]
+            self.prob['trq_2'] = data[h_map['trqLoad3']]
 
             # shaft inputs
-            self.top['Nmech'] = data[h_map['Nmech']]
-            self.top['HPX'] = data[h_map['HPX']]
-            self.top['fracLoss'] = data[h_map['fracLoss']]
-            self.top.run_model()
+            self.prob['Nmech'] = data[h_map['Nmech']]
+            self.prob['HPX'] = data[h_map['HPX']]
+            self.prob['fracLoss'] = data[h_map['fracLoss']]
+            self.prob.run_model()
 
             # check outputs
             trqIn, trqOut, trqNet = data[
@@ -68,12 +66,12 @@ class ShaftTestCase(unittest.TestCase):
                 h_map['pwrIn']], data[
                 h_map['pwrOut']], data[
                 h_map['pwrNet']]
-            trqIn_comp = self.top['trq_in']
-            trqOut_comp = self.top['trq_out']
-            trqNet_comp = self.top['trq_net']
-            pwrIn_comp = self.top['pwr_in']
-            pwrOut_comp = self.top['pwr_out']
-            pwrNet_comp = self.top['pwr_net']
+            trqIn_comp = self.prob['trq_in']
+            trqOut_comp = self.prob['trq_out']
+            trqNet_comp = self.prob['trq_net']
+            pwrIn_comp = self.prob['pwr_in']
+            pwrOut_comp = self.prob['pwr_out']
+            pwrNet_comp = self.prob['pwr_net']
 
             tol = 1.0e-4
             assert_near_equal(trqIn_comp, trqIn, tol)
@@ -83,7 +81,8 @@ class ShaftTestCase(unittest.TestCase):
             assert_near_equal(pwrOut_comp, pwrOut, tol)
             assert_near_equal(pwrNet_comp, pwrNet, tol)
 
-            check_element_partials(self, self.top)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs')
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()

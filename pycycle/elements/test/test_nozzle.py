@@ -6,14 +6,13 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
 from pycycle.constants import AIR_ELEMENTS
-
-from pycycle.elements.test.util import check_element_partials
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/nozzle.csv", delimiter=",", skiprows=1)
@@ -29,32 +28,21 @@ class NozzleTestCase(unittest.TestCase):
     def test_case1(self):
 
         self.prob = Problem()
-        self.prob.model = Group()
+        cycle = self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_ELEMENTS, lossCoef='Cfg', internal_solver=True))
+        cycle.add_subsystem('nozzle', Nozzle(elements=AIR_ELEMENTS, lossCoef='Cfg', internal_solver=True))
 
-        self.prob.model.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
-        self.prob.model.set_input_defaults('flow_start.MN', 0.0)
-        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
-        self.prob.model.set_input_defaults('flow_start.P', 17.0, units='psi')
-        self.prob.model.set_input_defaults('flow_start.W', 100.0, units='lbm/s')
+        cycle.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
+        cycle.set_input_defaults('flow_start.MN', 0.0)
+        cycle.set_input_defaults('flow_start.T', 500.0, units='degR')
+        cycle.set_input_defaults('flow_start.P', 17.0, units='psi')
+        cycle.set_input_defaults('flow_start.W', 100.0, units='lbm/s')
 
-        fl_src = "flow_start.Fl_O"
-        fl_target = "nozzle.Fl_I"
-        for v_name in ('h', 'T', 'P', 'S', 'rho', 'gamma', 'Cp', 'Cv', 'n'):
-            self.prob.model.connect('%s:tot:%s' % (
-                fl_src, v_name), '%s:tot:%s' % (fl_target, v_name))
+        cycle.pyc_connect_flow("flow_start.Fl_O", "nozzle.Fl_I")
 
-        # no prefix
-        for v_name in ('W', ): 
-            self.prob.model.connect(
-                '%s:stat:%s' %
-                (fl_src, v_name), '%s:stat:%s' %
-                (fl_target, v_name))
-
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
         # 4 cases to check against
         for i, data in enumerate(ref_data):
@@ -95,7 +83,9 @@ class NozzleTestCase(unittest.TestCase):
             assert_near_equal(PR_computed, PR, tol)
             assert_near_equal(Ath_computed, Ath, tol)
 
-            check_element_partials(self, self.prob)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['nozzle.*'], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()

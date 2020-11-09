@@ -15,7 +15,6 @@ from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
 from pycycle.connect_flow import connect_flow
-from pycycle.elements.test.util import check_element_partials
 from pycycle.thermo.cea.species_data import janaf
 
 

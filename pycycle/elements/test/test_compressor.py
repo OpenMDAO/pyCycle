@@ -3,7 +3,7 @@ import unittest
 import os
 
 from openmdao.api import Problem
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.connect_flow import connect_flow
@@ -11,8 +11,6 @@ from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
 from pycycle import constants
-
-from pycycle.elements.test.util import check_element_partials
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/compressor.csv",
@@ -64,7 +62,7 @@ class CompressorTestCase(unittest.TestCase):
         connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
 
         self.prob.set_solver_print(level=-1)
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
     def test_case1(self):
         np.seterr(divide='raise')
@@ -128,7 +126,9 @@ class CompressorTestCase(unittest.TestCase):
             assert_near_equal(pyc, npss, tol)
             print("")
 
-            check_element_partials(self, self.prob,tol = 5e-5)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['compressor.*'], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()

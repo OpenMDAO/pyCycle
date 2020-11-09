@@ -13,8 +13,6 @@ from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea import species_data
 from pycycle.elements.combustor import Combustor
 
-from pycycle.elements.test.util import check_element_partials
-
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/combustorJP7.csv",
@@ -48,7 +46,7 @@ class BurnerTestCase(unittest.TestCase):
                                                      5.39157698e-02, 1.44860137e-02])
 
         prob.set_solver_print(level=2)
-        prob.setup(check=False)
+        prob.setup(check=False, force_alloc_complex=True)
 
         # 6 cases to check against
         for i, data in enumerate(ref_data):
@@ -111,7 +109,10 @@ class BurnerTestCase(unittest.TestCase):
 
             print('')
 
-            check_element_partials(self, prob, tol=1e-4)
+            partial_data = prob.check_partials(out_stream=None, method='cs', 
+                                               includes=['combustor.*',], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+
 
 if __name__ == "__main__":
     unittest.main()
