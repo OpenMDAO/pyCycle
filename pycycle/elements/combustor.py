@@ -162,10 +162,6 @@ class Combustor(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Wout', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
-        self.add_subsystem('FAR_pass_thru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0),
-                           promotes=['*'])
-        self.set_input_defaults('Fl_I:tot:n', units=None)
-
 
 if __name__ == "__main__":
 

@@ -182,10 +182,6 @@ class BleedOut(om.Group):
             self.add_subsystem('W_passthru', PassThrough('W_out', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
-        self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
-
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
-
 
 if __name__ == "__main__":
 
