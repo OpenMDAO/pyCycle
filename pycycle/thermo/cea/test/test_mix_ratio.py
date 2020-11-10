@@ -32,7 +32,7 @@ class MixRatioTestCase(unittest.TestCase):
         # p['Fl_I:stat:P'] = 158.428
         p['Fl_I:stat:W'] = 38.8
         p['Fl_I:tot:h'] = 181.381769
-        p['Fl_I:tot:b0'] = air_thermo.b0
+        p['Fl_I:tot:composition'] = air_thermo.b0
 
         p['fuel:ratio'] = 0.02673
 
@@ -68,7 +68,7 @@ class MixRatioTestCase(unittest.TestCase):
         # p['Fl_I:stat:P'] = 158.428
         p['Fl_I:stat:W'] = 38.8
         p['Fl_I:tot:h'] = 181.381769
-        p['Fl_I:tot:b0'] = air_thermo.b0
+        p['Fl_I:tot:composition'] = air_thermo.b0
 
         # half the ratio from the 1 fuel test
         ratio = 0.02673/2.
@@ -102,10 +102,10 @@ class MixRatioTestCase(unittest.TestCase):
         p.setup(force_alloc_complex=True)
 
         p['Fl_I:stat:W'] = 62.15
-        p['Fl_I:tot:b0'] = [0.000313780313538, 0.0021127831122, 0.004208814234964, 0.052325087161902, 0.014058631311261]
+        p['Fl_I:tot:composition'] = [0.000313780313538, 0.0021127831122, 0.004208814234964, 0.052325087161902, 0.014058631311261]
 
         p['mix:W'] = 4.44635
-        p['mix:b0'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p['mix:composition'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
 
         p.run_model()
 
@@ -128,13 +128,13 @@ class MixRatioTestCase(unittest.TestCase):
 
         p['Fl_I:stat:W'] = 62.15
         # p['Fl_I:tot:h'] = 181.381769
-        p['Fl_I:tot:b0'] = [0.000313780313538, 0.0021127831122, 0.004208814234964, 0.052325087161902, 0.014058631311261]
+        p['Fl_I:tot:composition'] = [0.000313780313538, 0.0021127831122, 0.004208814234964, 0.052325087161902, 0.014058631311261]
 
         p['mix1:W'] = 4.44635/2
-        p['mix1:b0'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p['mix1:composition'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
 
         p['mix2:W'] = 4.44635/2
-        p['mix2:b0'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
+        p['mix2:composition'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
 
         p.run_model()
 
