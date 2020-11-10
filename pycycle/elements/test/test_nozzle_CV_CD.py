@@ -6,15 +6,15 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
 
-from pycycle.elements.test.util import check_element_partials
 
 
 class NozzleTestCase(unittest.TestCase):
@@ -22,29 +22,29 @@ class NozzleTestCase(unittest.TestCase):
     def setup_helper(self, NozzType, LossType):
 
         self.prob = Problem()
-        self.prob.model = Group()
+        cycle = self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.add_subsystem('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
                                                        thermo_data=janaf, elements=AIR_ELEMENTS,
                                                        internal_solver=True))
 
 
-        self.prob.model.set_input_defaults('flow_start.P', 17.0, units='psi')
-        self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
-        self.prob.model.set_input_defaults('flow_start.MN', 0.2)
-        self.prob.model.set_input_defaults('nozzle.Ps_exhaust', 17.0, units='psi')
-        self.prob.model.set_input_defaults('flow_start.W', 0.0, units='lbm/s')
+        cycle.set_input_defaults('flow_start.P', 17.0, units='psi')
+        cycle.set_input_defaults('flow_start.T', 500.0, units='degR')
+        cycle.set_input_defaults('flow_start.MN', 0.2)
+        cycle.set_input_defaults('nozzle.Ps_exhaust', 17.0, units='psi')
+        cycle.set_input_defaults('flow_start.W', 0.0, units='lbm/s')
 
-        connect_flow(self.prob.model, "flow_start.Fl_O", "nozzle.Fl_I")
+        cycle.pyc_connect_flow("flow_start.Fl_O", "nozzle.Fl_I")
 
         if LossType == 'Cv':
             self.prob.model.set_input_defaults('nozzle.Cv', 0.99)
         elif LossType == 'Cfg':
             self.prob.model.set_input_defaults('nozzle.Cfg', 0.99)
 
-        self.prob.set_solver_print(level=2)
-        self.prob.setup(check=False)
+        self.prob.set_solver_print(level=-1)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
         header = [
             'Cfg',
@@ -133,7 +133,9 @@ class NozzleTestCase(unittest.TestCase):
         self.setup_helper(NozzType='CD', LossType='Cv')
         self.ref_data = np.loadtxt(self.fpath + "/reg_data/nozzleCD.csv", delimiter=",", skiprows=1)
         self.run_helper(LossType='Cv')
-        check_element_partials(self, self.prob)
+        partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['nozzle.*'], excludes=['*.base_thermo.*',])
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
     def test_CD_CVnozzle(self):
 
@@ -145,7 +147,9 @@ class NozzleTestCase(unittest.TestCase):
             delimiter=",",
             skiprows=1)
         self.run_helper(LossType='Cv')
-        check_element_partials(self, self.prob)
+        partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['nozzle.*'], excludes=['*.base_thermo.*',])
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
     def test_CVnozzle_Cfg(self):
 
@@ -179,7 +183,10 @@ class NozzleTestCase(unittest.TestCase):
             delimiter=",",
             skiprows=1)
         self.run_helper(LossType='Cfg')
-        check_element_partials(self, self.prob)
+        
+        partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['nozzle.*'], excludes=['*.base_thermo.*',])
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()

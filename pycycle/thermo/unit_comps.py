@@ -61,8 +61,8 @@ class EngUnitProps(UnitCompBase):
         self.add_input('Cp', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant pressure")
         self.add_input('Cv', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant volume")
         self.add_input('rho', val=1., units="lbm/ft**3", desc="density")
-        self.add_input('n', val=np.ones(num_n))
-        self.add_input('n_moles', val=1.)
+        # self.add_input('n', val=np.ones(num_n))
+        # self.add_input('n_moles', val=1.)
         self.add_input('R', val=1.0, units="Btu/(lbm*degR)", desc='Total specific gas constant')
         self.add_input('b0', val=b0, desc='moles of atoms present for each element')
 

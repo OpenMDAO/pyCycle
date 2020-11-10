@@ -111,10 +111,10 @@ class Thermo(om.Group):
         # not a big deal right now though
         # Compute English units and promote outputs to the station name
 
-        in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'b0', 'R')
+        in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'b0', 'R')
         if 'static' in mode: 
         # need to redefine this so that P gets promoted as P. 
-            in_vars = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R')
+            in_vars = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R')
 
         fl_name = self.options['fl_name']
         # TODO: remove need for thermo specific data in the flow components

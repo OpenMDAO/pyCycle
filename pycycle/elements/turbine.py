@@ -589,9 +589,6 @@ class Turbine(om.Group):
         self.connect("press_drop.Pt_out", "real_flow.P")
         self.connect("bld_mix.b0_out", "real_flow.b0")
 
-        self.add_subsystem('FAR_passthru', PassThrough(
-            'Fl_I:FAR', 'Fl_O:FAR', 1.0), promotes=['*'])
-
        # Calculate static properties
         if statics:
             if designFlag:
@@ -627,17 +624,15 @@ class Turbine(om.Group):
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
             self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough(
                 'W_out', 'Fl_O:stat:W', 1.0, units="lbm/s"), promotes=['*'])
             self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'W_passthru'])
 
-        self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
         # if not designFlag: 
         #     self.set_input_defaults('area', val=1, units='in**2')
 

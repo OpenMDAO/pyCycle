@@ -3,15 +3,15 @@ import unittest
 import os
 
 from openmdao.api import Problem
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+
+from pycycle.mp_cycle import Cycle
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import janaf
 
 from pycycle.elements.splitter import Splitter
 from pycycle.elements.flow_start import FlowStart
-
-from pycycle.elements.test.util import check_element_partials
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -62,33 +62,21 @@ class splitterTestCase(unittest.TestCase):
     def setUp(self):
 
         self.prob = Problem()
+        cycle = self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('splitter', Splitter(elements=AIR_ELEMENTS))
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.add_subsystem('splitter', Splitter(elements=AIR_ELEMENTS))
 
-        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
-        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
-        self.prob.model.set_input_defaults('splitter.MN1', 0.5)
-        self.prob.model.set_input_defaults('splitter.MN2', 0.5)
-        self.prob.model.set_input_defaults('flow_start.W', 10., units='lbm/s')
+        cycle.set_input_defaults('flow_start.P', 17., units='psi')
+        cycle.set_input_defaults('flow_start.T', 500., units='degR')
+        cycle.set_input_defaults('splitter.MN1', 0.5)
+        cycle.set_input_defaults('splitter.MN2', 0.5)
+        cycle.set_input_defaults('flow_start.W', 10., units='lbm/s')
 
-        #total and static
-        fl_src = "flow_start.Fl_O"
-        fl_target = "splitter.Fl_I"
-        for v_name in ('h', 'T', 'P', 'S', 'rho', 'gamma', 'Cp', 'Cv', 'n'):
-            self.prob.model.connect(
-                '%s:tot:%s' %
-                (fl_src, v_name), '%s:tot:%s' %
-                (fl_target, v_name))
-        # no prefix
-        for v_name in ('W', ):  
-            self.prob.model.connect(
-                '%s:stat:%s' %
-                (fl_src, v_name), '%s:stat:%s' %
-                (fl_target, v_name))
+        cycle.pyc_connect_flow('flow_start.Fl_O', 'splitter.Fl_I')
 
         self.prob.set_solver_print(level=-1)
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
     def test_case1(self):
         # 4 cases to check against
@@ -137,7 +125,9 @@ class splitterTestCase(unittest.TestCase):
             assert_near_equal(ps2_computed, ps2, tol)
             assert_near_equal(ts2_computed, ts2, tol)
 
-            check_element_partials(self, self.prob)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['splitter.*'], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()
