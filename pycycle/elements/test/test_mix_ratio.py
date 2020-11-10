@@ -8,7 +8,7 @@ from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.elements.mix_ratio import MixRatio
+from pycycle.thermo.cea.mix_ratio import MixRatio
 
 class MixRatioTestCase(unittest.TestCase):
     

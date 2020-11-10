@@ -107,8 +107,9 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
-from pycycle.elements import cooling, mix_ratio, flow_start
+from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
+from pycycle.thermo.cea import mix_ratio
 from pycycle.constants import AIR_FUEL_ELEMENTS
 
 

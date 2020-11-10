@@ -5,9 +5,9 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
+from pycycle.thermo.cea.mix_ratio import MixRatio
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
-from pycycle.elements.mix_ratio import MixRatio
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 
 
