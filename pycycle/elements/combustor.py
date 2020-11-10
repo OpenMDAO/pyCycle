@@ -7,10 +7,12 @@ import openmdao.api as om
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
+
 from pycycle.thermo.cea.species_data import Properties, janaf
 
 from pycycle.elements.duct import PressureLoss
-from pycycle.elements.mix_ratio import MixRatio
+
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 
@@ -104,7 +106,7 @@ class Combustor(om.Group):
         self.add_subsystem('mix_fuel',
                            MixRatio(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
                                     inflow_elements=inflow_elements, mix_elements=fuel_type),
-                           promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:b0', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
+                           promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 
         # Pressure loss
         prom_in = [('Pt_in', 'Fl_I:tot:P'),'dPqP']
@@ -117,7 +119,7 @@ class Combustor(om.Group):
                                          'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
         self.connect("mix_fuel.mass_avg_h", "vitiated_flow.h")
-        self.connect("mix_fuel.b0_out", "vitiated_flow.b0")
+        self.connect("mix_fuel.composition_out", "vitiated_flow.composition")
         self.connect("p_loss.Pt_out","vitiated_flow.P")
 
         if statics:
@@ -133,7 +135,7 @@ class Combustor(om.Group):
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
                                    promotes_outputs=prom_out)
 
-                self.connect("mix_fuel.b0_out", "out_stat.b0")
+                self.connect("mix_fuel.composition_out", "out_stat.composition")
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('Fl_O:tot:P', 'out_stat.guess:Pt')
@@ -150,7 +152,7 @@ class Combustor(om.Group):
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
                                    promotes_outputs=prom_out)
-                self.connect("mix_fuel.b0_out", "out_stat.b0")
+                self.connect("mix_fuel.composition_out", "out_stat.composition")
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')

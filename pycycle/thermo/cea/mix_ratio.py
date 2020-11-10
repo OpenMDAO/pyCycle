@@ -105,7 +105,7 @@ class MixRatio(om.ExplicitComponent):
         # inputs
         self.add_input('Fl_I:stat:W', val=0.0, desc='weight flow', units='lbm/s')
         self.add_input('Fl_I:tot:h', val=0.0, desc='total enthalpy', units='Btu/lbm')
-        self.add_input('Fl_I:tot:b0', val=inflow_thermo.b0, desc='incoming flow composition')
+        self.add_input('Fl_I:tot:composition', val=inflow_thermo.b0, desc='incoming flow composition')
         
         for name in mix_names: 
             self.add_input(f'{name}:h', val=0.0, units='Btu/lbm', desc="reactant enthalpy")
@@ -115,7 +115,7 @@ class MixRatio(om.ExplicitComponent):
                 self.add_output(f'{name}:W', shape=1, units="lbm/s", desc="mix input massflow")
 
             else: 
-                self.add_input(f'{name}:b0', val=mix_b0[name], desc='mix flow composition' )
+                self.add_input(f'{name}:composition', val=mix_b0[name], desc='mix flow composition' )
                 self.add_input(f'{name}:W', shape=1, units="lbm/s", desc="mix input massflow")
 
 
@@ -123,7 +123,7 @@ class MixRatio(om.ExplicitComponent):
         self.add_output('mass_avg_h', shape=1, units='Btu/lbm',
                         desc="mass flow rate averaged specific enthalpy")
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
-        self.add_output('b0_out', val=mixed_thermo.b0)
+        self.add_output('composition_out', val=mixed_thermo.b0)
 
        
         # create a mapping between the composition indices of the inflow and outflow arrays
@@ -140,7 +140,7 @@ class MixRatio(om.ExplicitComponent):
     
         # self.declare_partials('mass_avg_h', 'Fl_I:tot:h')
         # self.declare_partials('Wout', 'Fl_I:stat:W')
-        # self.declare_partials('b0_out', 'Fl_I:tot:b0')
+        # self.declare_partials('composition_out', 'Fl_I:tot:composition')
         
         # for name in mix_names: 
         #     if self.options['mix_mode'] == 'reactant': 
@@ -151,14 +151,14 @@ class MixRatio(om.ExplicitComponent):
         #         self.declare_partials('mass_avg_h', f'{name}:h')
         #         self.declare_partials('Wout', ratio_name)
         #         # self.declare_partials('f'{name}:W'', ratio_name)
-        #         self.declare_partials('b0_out', ratio_name)
+        #         self.declare_partials('composition_out', ratio_name)
 
         #     else: 
         #         pass
 
     def compute(self, inputs, outputs):
         W = inputs['Fl_I:stat:W']
-        Fl_I_tot_b0 = inputs['Fl_I:tot:b0']
+        Fl_I_tot_b0 = inputs['Fl_I:tot:composition']
 
         # copy the incoming flow into a correctly sized array for the outflow composition
         b0_out = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
@@ -186,7 +186,7 @@ class MixRatio(om.ExplicitComponent):
         else: # inflow mixing
             for name in self.mix_names: 
                 W_mix = inputs[f'{name}:W']
-                mix_stuff = inputs[f'{name}:b0'].copy()
+                mix_stuff = inputs[f'{name}:composition'].copy()
                 mix_stuff *= self.mix_wt_mole[name]
                 mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
                 mix_stuff *= W_mix# scale to actual mass flow of that mix stream
@@ -195,7 +195,7 @@ class MixRatio(om.ExplicitComponent):
                 W_out += W_mix
 
         b0_out /= np.sum(b0_out) # scale back to 1 kg
-        outputs['b0_out'] = b0_out/self.mixed_wt_mole
+        outputs['composition_out'] = b0_out/self.mixed_wt_mole
 
         mass_avg_h /= W_out
         outputs['mass_avg_h'] = mass_avg_h
@@ -204,7 +204,7 @@ class MixRatio(om.ExplicitComponent):
     # def compute_partials(self, inputs, J):
     #     # FAR = inputs['mix_ratio']
     #     W = inputs['Fl_I:stat:W']
-    #     Fl_I_tot_b0 = inputs['Fl_I:tot:b0']
+    #     Fl_I_tot_b0 = inputs['Fl_I:tot:composition']
 
     #     # copy the incoming flow into a correctly sized array for the outflow composition
     #     b0_out = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
@@ -258,7 +258,7 @@ class MixRatio(om.ExplicitComponent):
     #     else: # inflow mixing
     #         for name in self.mix_names: 
     #             W_mix = inputs[f'{name}:W']
-    #             mix_stuff = inputs[f'{name}:b0'].copy()
+    #             mix_stuff = inputs[f'{name}:composition'].copy()
     #             mix_stuff *= self.mix_wt_mole[name]
     #             mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
     #             mix_stuff *= W_mix# scale to actual mass flow of that mix stream
@@ -285,5 +285,5 @@ class MixRatio(om.ExplicitComponent):
     #     for i in range(self.num_inflow_elements): 
     #         d_b0_out__d_b0_in[:,i] = (d_b0_out__d_b0_in[:,i]/sum_b0_out 
     #                                     - b0_out[:]/sum_b0_out**2*np.sum(d_b0_out__d_b0_in[:,i])) / self.mixed_wt_mole[i]
-    #     J['b0_out', 'Fl_I:tot:b0'] = d_b0_out__d_b0_in
+    #     J['composition_out', 'Fl_I:tot:composition'] = d_b0_out__d_b0_in
 

@@ -2,9 +2,10 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
+
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 # from pycycle.elements.turbine import Bleeds
-from pycycle.elements.mix_ratio import MixRatio
 from pycycle.flow_in import FlowIn
 
 
@@ -215,7 +216,7 @@ class Row(om.Group):
                                              mix_elements=AIR_ELEMENTS, 
                                              mix_names='cool'),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
-                                            ('Fl_I:tot:b0', 'b0_primary'), 'cool:b0'], 
+                                            ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
                            promotes_outputs=[('Wout','W_out'),]
                            )
 
@@ -238,7 +239,7 @@ class Row(om.Group):
 
         # self.connect('consts.bld_frac_P', 'mix_n.cool:frac_P')
 
-        self.connect('mix_n.b0_out', 'mixed_flow.b0')
+        self.connect('mix_n.composition_out', 'mixed_flow.composition')
         self.connect('cooling_calcs.ht_out', 'mixed_flow.h')
         self.connect('cooling_calcs.Pt_stage', 'mixed_flow.P')
 
@@ -282,12 +283,12 @@ class TurbineCooling(om.Group):
 
         # these are the inputs to the component
         p_inputs_all = ['x_factor', ('Pt_in', 'Fl_turb_I:tot:P'), ('Pt_out', 'Fl_turb_O:tot:P'),
-                        ('Tt_cool','Fl_cool:tot:T'), ('ht_cool','Fl_cool:tot:h'), ('cool:b0','Fl_cool:tot:b0'), 'turb_pwr']
+                        ('Tt_cool','Fl_cool:tot:T'), ('ht_cool','Fl_cool:tot:h'), ('cool:composition','Fl_cool:tot:composition'), 'turb_pwr']
 
         p_row_inputs = [('W_primary',  'Fl_turb_I:stat:W'),
                         ('Tt_primary', 'Fl_turb_I:tot:T'),
                         ('ht_primary', 'Fl_turb_I:tot:h'),
-                        ('b0_primary',  'Fl_turb_I:tot:b0')]
+                        ('composition_primary',  'Fl_turb_I:tot:composition')]
         self.add_subsystem('row_0', Row(n_stages=n_stages, i_row=0,
                                         T_safety=self.options['T_safety'], T_metal=self.options['T_metal'],
                                         thermo_data=thermo_data),
@@ -306,7 +307,7 @@ class TurbineCooling(om.Group):
             self.connect('{}.W_out'.format(prev_row), '{}.W_primary'.format(curr_row))
             self.connect('{}.Fl_O:tot:T'.format(prev_row), '{}.Tt_primary'.format(curr_row))
             self.connect('{}.Fl_O:tot:h'.format(prev_row), '{}.ht_primary'.format(curr_row))
-            self.connect('{}.Fl_O:tot:b0'.format(prev_row), '{}.b0_primary'.format(curr_row))
+            self.connect('{}.Fl_O:tot:composition'.format(prev_row), '{}.composition_primary'.format(curr_row))
 
 if __name__ == "__main__":
 
