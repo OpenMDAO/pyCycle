@@ -2,9 +2,10 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
+
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 # from pycycle.elements.turbine import Bleeds
-from pycycle.elements.mix_ratio import MixRatio
 from pycycle.flow_in import FlowIn
 
 

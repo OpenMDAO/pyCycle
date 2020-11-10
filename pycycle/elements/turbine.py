@@ -7,13 +7,13 @@ import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
 from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 # from pycycle.components.compressor import Power
 
 from pycycle.elements.turbine_map import TurbineMap
-from pycycle.elements.mix_ratio import MixRatio
 from pycycle.maps.lpt2269 import LPT2269
 
 

@@ -7,10 +7,12 @@ import openmdao.api as om
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
+
 from pycycle.thermo.cea.species_data import Properties, janaf
 
 from pycycle.elements.duct import PressureLoss
-from pycycle.elements.mix_ratio import MixRatio
+
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 

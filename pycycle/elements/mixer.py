@@ -2,10 +2,11 @@ import numpy as np
 import openmdao.api as om
 
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.mix_ratio import MixRatio
+
 from pycycle.thermo.cea.species_data import Properties, janaf
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
-from pycycle.elements.mix_ratio import MixRatio
 
 
 class MixImpulse(om.ExplicitComponent):
