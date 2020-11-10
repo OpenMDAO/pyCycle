@@ -120,7 +120,7 @@ class Inlet(om.Group):
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
-                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('b0', 'Fl_I:tot:b0')],
+                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('composition', 'Fl_I:tot:composition')],
                            promotes_outputs=['Fl_O:*'])
 
 
@@ -135,7 +135,7 @@ class Inlet(om.Group):
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
-                                   promotes_inputs=[('b0', 'Fl_I:tot:b0'), ('W', 'Fl_I:stat:W'), 'MN'],
+                                   promotes_inputs=[('composition', 'Fl_I:tot:composition'), ('W', 'Fl_I:stat:W'), 'MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
@@ -149,7 +149,7 @@ class Inlet(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']

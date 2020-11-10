@@ -193,17 +193,17 @@ class WARTestCase(unittest.TestCase):
         prob['Fl_I:stat:W'] = 38.8
         prob['mix:ratio'] = .0001 # WAR
         prob['Fl_I:tot:h'] = 181.381769
-        prob['Fl_I:tot:b0'] = air_thermo.b0
+        prob['Fl_I:tot:composition'] = air_thermo.b0
 
         prob.run_model()
 
         tol = 1e-5
 
-        assert_near_equal(prob['b0_out'][0], 3.23286926e-04, tol)
-        assert_near_equal(prob['b0_out'][1], 1.10121227e-05, tol)
-        assert_near_equal(prob['b0_out'][2], 1.11005769e-05, tol)
-        assert_near_equal(prob['b0_out'][3], 5.39103820e-02, tol)
-        assert_near_equal(prob['b0_out'][4], 1.44901169e-02, tol)
+        assert_near_equal(prob['composition_out'][0], 3.23286926e-04, tol)
+        assert_near_equal(prob['composition_out'][1], 1.10121227e-05, tol)
+        assert_near_equal(prob['composition_out'][2], 1.11005769e-05, tol)
+        assert_near_equal(prob['composition_out'][3], 5.39103820e-02, tol)
+        assert_near_equal(prob['composition_out'][4], 1.44901169e-02, tol)
 
     def test_fs_with_water(self): 
 
@@ -223,11 +223,11 @@ class WARTestCase(unittest.TestCase):
         prob.run_model()
 
         tol = 1e-5
-        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][0], 3.18139345e-04, tol)
-        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][1], 1.08367806e-05, tol)
-        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][2], 1.77859e-03, tol)
-        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][3], 5.305198e-02, tol)
-        assert_near_equal(prob['fl_start.Fl_O:tot:b0'][4], 1.51432e-02, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:composition'][0], 3.18139345e-04, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:composition'][1], 1.08367806e-05, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:composition'][2], 1.77859e-03, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:composition'][3], 5.305198e-02, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:composition'][4], 1.51432e-02, tol)
 
     
 if __name__ == "__main__":

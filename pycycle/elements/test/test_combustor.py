@@ -42,7 +42,7 @@ class BurnerTestCase(unittest.TestCase):
         model.set_input_defaults('Fl_I:stat:W', 100.0, units='lbm/s')
         model.set_input_defaults('Fl_I:FAR', 0.0)
         model.set_input_defaults('MN', 0.5)
-        model.set_input_defaults('Fl_I:tot:b0', val=[3.23319235e-04, 1.10132233e-05, 
+        model.set_input_defaults('Fl_I:tot:composition', val=[3.23319235e-04, 1.10132233e-05, 
                                                      5.39157698e-02, 1.44860137e-02])
 
         prob.set_solver_print(level=2)
@@ -62,7 +62,7 @@ class BurnerTestCase(unittest.TestCase):
 
             prob.model.combustor.mix_fuel.list_inputs(print_arrays=True)
             prob.model.combustor.mix_fuel.list_outputs(print_arrays=True)
-            # print(prob['Fl_I:tot:b0'])
+            # print(prob['Fl_I:tot:composition'])
             # print(prob['Fl_I:tot:n'])
             # print(prob['Fl_I:tot:h'])
             # print(prob['Fl_I:tot:P'])

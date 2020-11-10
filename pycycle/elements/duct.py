@@ -204,7 +204,7 @@ class Duct(om.Group):
                            method='CEA', 
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
-        prom_in = [('b0', 'Fl_I:tot:b0')]
+        prom_in = [('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect("q_calc.ht_out", "real_flow.h")
@@ -217,7 +217,7 @@ class Duct(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
@@ -235,7 +235,7 @@ class Duct(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']

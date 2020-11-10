@@ -130,7 +130,7 @@ class BleedOut(om.Group):
                                 thermo_kwargs={'elements':elements, 
                                                'spec':thermo_data})
             self.add_subsystem(BN+'_flow', bleed_flow,
-                               promotes_inputs=[('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
+                               promotes_inputs=[('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
 
         # Total Calc
@@ -138,7 +138,7 @@ class BleedOut(om.Group):
                            method='CEA', 
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
-        prom_in = [('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
+        prom_in = [('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
 
@@ -149,7 +149,7 @@ class BleedOut(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -167,7 +167,7 @@ class BleedOut(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,

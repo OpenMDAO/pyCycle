@@ -123,7 +123,7 @@ class MixRatio(om.ExplicitComponent):
         self.add_output('mass_avg_h', shape=1, units='Btu/lbm',
                         desc="mass flow rate averaged specific enthalpy")
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
-        self.add_output('b0_out', val=mixed_thermo.b0)
+        self.add_output('composition_out', val=mixed_thermo.b0)
 
        
         # create a mapping between the composition indices of the inflow and outflow arrays
@@ -140,7 +140,7 @@ class MixRatio(om.ExplicitComponent):
     
         # self.declare_partials('mass_avg_h', 'Fl_I:tot:h')
         # self.declare_partials('Wout', 'Fl_I:stat:W')
-        # self.declare_partials('b0_out', 'Fl_I:tot:composition')
+        # self.declare_partials('composition_out', 'Fl_I:tot:composition')
         
         # for name in mix_names: 
         #     if self.options['mix_mode'] == 'reactant': 
@@ -151,7 +151,7 @@ class MixRatio(om.ExplicitComponent):
         #         self.declare_partials('mass_avg_h', f'{name}:h')
         #         self.declare_partials('Wout', ratio_name)
         #         # self.declare_partials('f'{name}:W'', ratio_name)
-        #         self.declare_partials('b0_out', ratio_name)
+        #         self.declare_partials('composition_out', ratio_name)
 
         #     else: 
         #         pass
@@ -195,7 +195,7 @@ class MixRatio(om.ExplicitComponent):
                 W_out += W_mix
 
         b0_out /= np.sum(b0_out) # scale back to 1 kg
-        outputs['b0_out'] = b0_out/self.mixed_wt_mole
+        outputs['composition_out'] = b0_out/self.mixed_wt_mole
 
         mass_avg_h /= W_out
         outputs['mass_avg_h'] = mass_avg_h
@@ -285,5 +285,5 @@ class MixRatio(om.ExplicitComponent):
     #     for i in range(self.num_inflow_elements): 
     #         d_b0_out__d_b0_in[:,i] = (d_b0_out__d_b0_in[:,i]/sum_b0_out 
     #                                     - b0_out[:]/sum_b0_out**2*np.sum(d_b0_out__d_b0_in[:,i])) / self.mixed_wt_mole[i]
-    #     J['b0_out', 'Fl_I:tot:composition'] = d_b0_out__d_b0_in
+    #     J['composition_out', 'Fl_I:tot:composition'] = d_b0_out__d_b0_in
 

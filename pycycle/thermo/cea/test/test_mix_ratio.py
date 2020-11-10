@@ -43,7 +43,7 @@ class MixRatioTestCase(unittest.TestCase):
         assert_near_equal(p['mass_avg_h'], 176.65965638, tolerance=tol)
         assert_near_equal(p['Wout'], 39.837124, tolerance=tol)
         assert_near_equal(p['fuel:W'], p['Fl_I:stat:W']*p['fuel:ratio'], tolerance=tol)
-        assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
+        assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
         # data = p.check_partials(out_stream=None, method='cs')
         data = p.check_partials(method='cs')
@@ -83,7 +83,7 @@ class MixRatioTestCase(unittest.TestCase):
         assert_near_equal(p['Wout'], 39.837124, tolerance=tol)
         assert_near_equal(p['fuel1:W'], p['Fl_I:stat:W']*ratio, tolerance=tol)
         assert_near_equal(p['fuel2:W'], p['Fl_I:stat:W']*ratio, tolerance=tol)
-        assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
+        assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
         data = p.check_partials(out_stream=None, method='cs')
         # data = p.check_partials(method='cs')
@@ -111,8 +111,8 @@ class MixRatioTestCase(unittest.TestCase):
 
         tol = 5e-7
         assert_near_equal(p['Wout'], 62.15+4.44635, tolerance=tol)
-        # assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
-        assert_near_equal(p['b0_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
+        # assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
+        assert_near_equal(p['composition_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
 
     def test_mix_2flow(self): 
 
@@ -140,8 +140,8 @@ class MixRatioTestCase(unittest.TestCase):
 
         tol = 5e-7
         assert_near_equal(p['Wout'], 62.15+4.44635, tolerance=tol)
-        # assert_near_equal(p['b0_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
-        assert_near_equal(p['b0_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
+        # assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
+        assert_near_equal(p['composition_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
 
 
 
