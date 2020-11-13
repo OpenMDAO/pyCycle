@@ -29,11 +29,6 @@ class FlowStart(Group):
             if 'H' not in elements or 'O' not in elements:
                 raise ValueError('The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
 
-    
-        thermo = species_data.Properties(thermo_data, init_elements=elements)
-        self.air_prods = thermo.products
-        self.num_prod = len(self.air_prods)
-
         # inputs
         if use_WAR == True:
 
@@ -41,8 +36,8 @@ class FlowStart(Group):
             mix = ThermoAdd(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
                            inflow_elements=elements, mix_elements='Water')
             self.add_subsystem('WAR', mix, 
-                                promotes_inputs=('Fl_I:tot:composition', ('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
-                                promotes_outputs=( ('composition_out', 'composition'), ))
+                                promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
+                                promotes_outputs=(('composition_out', 'composition'), ))
         
 
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 

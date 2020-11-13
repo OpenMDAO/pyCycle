@@ -88,18 +88,10 @@ class Combustor(om.Group):
         statics = self.options['statics']
         fuel_type = self.options['fuel_type']
 
-        air_fuel_thermo = Properties(thermo_data, init_elements=air_fuel_elements)
-        self.air_fuel_prods = air_fuel_thermo.products
-
-        air_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
-        self.air_prods = air_thermo.products
-
-        self.num_air_fuel_prod = len(self.air_fuel_prods)
-        self.num_air_prod = air_thermo.num_prod
-        num_air_element = air_thermo.num_element
+        num_air_element = len(inflow_elements)
 
         # Create combustor flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_air_prod, num_elements=num_air_element)
+        in_flow = FlowIn(fl_name='Fl_I', num_elements=num_air_element)
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform combustor engineering calculations

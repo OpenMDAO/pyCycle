@@ -103,7 +103,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, Group
+from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
@@ -225,8 +225,13 @@ class Tests(unittest.TestCase):
         # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
         #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
         #                    1.00000000e-10, 7.23198770e-03])
+
+
+        # need ivc here, because b0 is shape_by_conn
         b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
-        p.model.set_input_defaults('turb_cool.Fl_cool:tot:composition', val=b0_air)  # product ratios for clean air
+        p.model.add_subsystem('ivc', IndepVarComp('air_composition', b0_air))
+
+        # p.model.set_input_defaults('turb_cool.Fl_cool:tot:composition', val=b0_air)  # product ratios for clean air
         p.model.set_input_defaults('turb_cool.turb_pwr', val=24193.5, units='hp')
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:P', val=616.736, units='psi')
         p.model.set_input_defaults('turb_cool.Fl_turb_O:tot:P', val=149.113, units='psi')
@@ -244,7 +249,11 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.composition_out', 'turb_cool.Fl_turb_I:tot:composition')
+        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_I:tot:composition', 
+                                                     'turb_cool.Fl_turb_I:stat:composition' ])
+        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_O:tot:composition', 
+                                                     'turb_cool.Fl_turb_O:stat:composition'])
+        p.model.connect('ivc.air_composition', ['turb_cool.Fl_cool:tot:composition', 'turb_cool.Fl_cool:stat:composition'])
 
         p.setup()
         p.set_solver_print(0)

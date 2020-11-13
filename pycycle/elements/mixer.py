@@ -4,7 +4,7 @@ import openmdao.api as om
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea.thermo_add import ThermoAdd
 
-from pycycle.thermo.cea.species_data import Properties, janaf
+from pycycle.thermo.cea.species_data import janaf
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 
@@ -158,15 +158,11 @@ class Mixer(om.Group):
         thermo_data = self.options['thermo_data']
 
         flow1_elements = self.options['Fl_I1_elements']
-        flow1_thermo = Properties(thermo_data, init_elements=flow1_elements)
-        n_flow1_prods = flow1_thermo.num_prod
-        in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods, num_elements=flow1_thermo.num_element)
+        in_flow = FlowIn(fl_name='Fl_I1', num_elements=len(flow1_elements))
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
         flow2_elements = self.options['Fl_I2_elements']
-        flow2_thermo = Properties(thermo_data, init_elements=flow2_elements)
-        n_flow2_prods = flow2_thermo.num_prod
-        in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods, num_elements=flow2_thermo.num_element)
+        in_flow = FlowIn(fl_name='Fl_I2', num_elements=len(flow2_elements))
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
 

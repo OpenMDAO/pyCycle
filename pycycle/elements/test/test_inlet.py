@@ -65,7 +65,7 @@ class InletTestCase(unittest.TestCase):
         # total and static
         fl_src = "flow_start.Fl_O"
         fl_target = "inlet.Fl_I"
-        cycle.pyc_connect_flow("flow_start.Fl_O", "inlet.Fl_I", connect_stat=False)
+        cycle.pyc_connect_flow("flow_start.Fl_O", "inlet.Fl_I")
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False, force_alloc_complex=True)
@@ -79,6 +79,7 @@ class InletTestCase(unittest.TestCase):
             self.prob['flow_start.P'] = data[h_map['Fl_I.Pt']]
             self.prob['flow_start.T'] = data[h_map['Fl_I.Tt']]
             self.prob['inlet.MN'] = data[h_map['Fl_O.MN']]
+            self.prob['flow_start.MN'] = data[h_map['Fl_I.MN']]
             self.prob['flow_start.W'] = data[h_map['Fl_I.W']]
             self.prob['inlet.Fl_I:stat:V'] = data[h_map['Fl_I.V']]
 

@@ -457,19 +457,11 @@ class Turbine(om.Group):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        self.gas_prods = gas_thermo.products
-        self.num_prod = len(self.gas_prods)
-        num_element = gas_thermo.num_element
-
-        bld_thermo = species_data.Properties(
-            thermo_data, init_elements=bleed_elements)
-        self.bld_prods = bld_thermo.products
-        self.num_bld_prod = len(self.bld_prods)
-        num_bld_element = bld_thermo.num_element
+        num_element = len(elements)
+        num_bld_element = len(bleed_elements)
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_prod, num_elements=num_element)
+        in_flow = FlowIn(fl_name='Fl_I', num_elements=num_element)
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -507,7 +499,7 @@ class Turbine(om.Group):
         # self.connect("ideal_flow.h", "enth_drop.ht_out_ideal")
 
         for BN in bleeds:
-            bld_flow = FlowIn(fl_name=BN, num_prods=self.num_bld_prod, num_elements=num_bld_element)
+            bld_flow = FlowIn(fl_name=BN, num_elements=num_bld_element)
             self.add_subsystem(BN, bld_flow, promotes_inputs=[
                                f'{BN}:*'])
 

@@ -5,7 +5,6 @@ from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea.thermo_add import ThermoAdd
 
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
-# from pycycle.elements.turbine import Bleeds
 from pycycle.flow_in import FlowIn
 
 
@@ -268,16 +267,16 @@ class TurbineCooling(om.Group):
             indeps = self.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
             indeps.add_output('x_factor', val=1.0)
 
-        primary_thermo = species_data.Properties(thermo_data, init_elements=self.options['primary_elements'])
+        primary_num_element = len(self.options['primary_elements'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_I', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
+        in_flow = FlowIn(fl_name='Fl_turb_I', num_elements=primary_num_element)
         self.add_subsystem('turb_in_flow', in_flow, promotes_inputs=['Fl_turb_I:tot:*', 'Fl_turb_I:stat:*'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_O', num_prods=primary_thermo.num_prod, num_elements=primary_thermo.num_element)
+        in_flow = FlowIn(fl_name='Fl_turb_O', num_elements=primary_num_element)
         self.add_subsystem('turb_out_flow', in_flow, promotes_inputs=['Fl_turb_O:tot:*', 'Fl_turb_O:stat:*'])
 
-        cool_thermo = species_data.Properties(thermo_data, init_elements=self.options['cool_elements'])
-        in_flow = FlowIn(fl_name='Fl_cool', num_prods=cool_thermo.num_prod, num_elements=cool_thermo.num_element)
+        cool_num_elements = len(self.options['cool_elements'])
+        in_flow = FlowIn(fl_name='Fl_cool', num_elements=cool_num_elements)
         self.add_subsystem('cool_in_flow', in_flow, promotes_inputs=['Fl_cool:tot:*', 'Fl_cool:stat:*'])
 
 

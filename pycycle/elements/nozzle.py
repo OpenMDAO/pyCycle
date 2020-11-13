@@ -318,16 +318,12 @@ class Nozzle(om.Group):
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        self.gas_prods = gas_thermo.products
-
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name="Fl_I", num_prods=num_prod, num_elements=num_element)
+        in_flow = FlowIn(fl_name="Fl_I", num_elements=num_element)
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         # PR_bal = self.add_subsystem('PR_bal', BalanceComp())
