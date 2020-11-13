@@ -91,7 +91,7 @@ class Combustor(om.Group):
         num_air_element = len(inflow_elements)
 
         # Create combustor flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_elements=num_air_element)
+        in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform combustor engineering calculations

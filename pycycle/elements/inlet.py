@@ -102,7 +102,7 @@ class Inlet(om.Group):
         num_element = len(elements)
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform inlet engineering calculations

@@ -461,7 +461,7 @@ class Turbine(om.Group):
         num_bld_element = len(bleed_elements)
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_elements=num_element)
+        in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -499,7 +499,7 @@ class Turbine(om.Group):
         # self.connect("ideal_flow.h", "enth_drop.ht_out_ideal")
 
         for BN in bleeds:
-            bld_flow = FlowIn(fl_name=BN, num_elements=num_bld_element)
+            bld_flow = FlowIn(fl_name=BN)
             self.add_subsystem(BN, bld_flow, promotes_inputs=[
                                f'{BN}:*'])
 

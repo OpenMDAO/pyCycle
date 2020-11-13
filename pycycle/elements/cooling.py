@@ -269,14 +269,14 @@ class TurbineCooling(om.Group):
 
         primary_num_element = len(self.options['primary_elements'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_I', num_elements=primary_num_element)
+        in_flow = FlowIn(fl_name='Fl_turb_I')
         self.add_subsystem('turb_in_flow', in_flow, promotes_inputs=['Fl_turb_I:tot:*', 'Fl_turb_I:stat:*'])
 
-        in_flow = FlowIn(fl_name='Fl_turb_O', num_elements=primary_num_element)
+        in_flow = FlowIn(fl_name='Fl_turb_O')
         self.add_subsystem('turb_out_flow', in_flow, promotes_inputs=['Fl_turb_O:tot:*', 'Fl_turb_O:stat:*'])
 
         cool_num_elements = len(self.options['cool_elements'])
-        in_flow = FlowIn(fl_name='Fl_cool', num_elements=cool_num_elements)
+        in_flow = FlowIn(fl_name='Fl_cool')
         self.add_subsystem('cool_in_flow', in_flow, promotes_inputs=['Fl_cool:tot:*', 'Fl_cool:stat:*'])
 
 

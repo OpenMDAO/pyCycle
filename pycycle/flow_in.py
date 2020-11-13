@@ -14,12 +14,9 @@ class FlowIn(om.ExplicitComponent):
     def initialize(self):
         self.options.declare('fl_name', default='flow',
                               desc='thermodynamic data set')
-        self.options.declare('num_elements', default=0,
-                              desc='number of elements in the flow')
 
     def setup(self):
         fl_name = self.options['fl_name']
-        num_elements = self.options['num_elements']
 
         self.add_output('foo', val=1.,
             desc="dummy output that is NOT used for anything other than to keep the framework happy. ")

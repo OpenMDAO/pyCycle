@@ -323,7 +323,7 @@ class Nozzle(om.Group):
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name="Fl_I", num_elements=num_element)
+        in_flow = FlowIn(fl_name="Fl_I")
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         # PR_bal = self.add_subsystem('PR_bal', BalanceComp())
