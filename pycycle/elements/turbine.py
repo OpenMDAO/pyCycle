@@ -7,7 +7,7 @@ import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
@@ -519,7 +519,7 @@ class Turbine(om.Group):
         self.connect('press_drop.Pt_out', 'blds.Pt_out')
 
         bleed_element_list = [bleed_elements for name in bleeds]
-        bld_mix = MixRatio(mix_thermo_data=thermo_data, inflow_elements=elements, 
+        bld_mix = ThermoAdd(mix_thermo_data=thermo_data, inflow_elements=elements, 
                            mix_elements=bleed_element_list, mix_names=bleeds, mix_mode='flow')
         self.add_subsystem('bld_mix', bld_mix, 
                            promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:composition'] + 

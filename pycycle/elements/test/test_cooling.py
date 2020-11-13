@@ -109,7 +109,7 @@ from openmdao.utils.assert_utils import assert_check_partials
 
 from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
-from pycycle.thermo.cea import mix_ratio
+from pycycle.thermo.cea import thermo_add
 from pycycle.constants import AIR_FUEL_ELEMENTS
 
 
@@ -132,7 +132,7 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
         # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', mix_ratio.MixRatio(mix_thermo_data=species_data.janaf))
+        p.model.add_subsystem('mix_fuel', thermo_add.ThermoAdd(mix_thermo_data=species_data.janaf))
 
 
         p.model.add_subsystem(

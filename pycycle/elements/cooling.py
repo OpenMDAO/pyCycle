@@ -2,7 +2,7 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 # from pycycle.elements.turbine import Bleeds
@@ -210,7 +210,7 @@ class Row(om.Group):
         #                   promotes_inputs=['Pt_in', 'Pt_out', ('W_in','W_primary'), ('n_in', 'n_primary'), ('cool:n', 'n_cool')],
         #                   promotes_outputs=['W_out'])
 
-        self.add_subsystem('mix_n', MixRatio(mix_thermo_data=self.options['thermo_data'], 
+        self.add_subsystem('mix_n', ThermoAdd(mix_thermo_data=self.options['thermo_data'], 
                                              inflow_elements=AIR_FUEL_ELEMENTS, 
                                              mix_mode='flow',
                                              mix_elements=AIR_ELEMENTS, 

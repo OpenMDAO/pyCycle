@@ -4,7 +4,7 @@ from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 
 
@@ -38,7 +38,7 @@ class FlowStart(Group):
         if use_WAR == True:
 
 
-            mix = MixRatio(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
+            mix = ThermoAdd(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
                            inflow_elements=elements, mix_elements='Water')
             self.add_subsystem('WAR', mix, 
                                 promotes_inputs=('Fl_I:tot:composition', ('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 

@@ -7,7 +7,7 @@ import openmdao.api as om
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
 from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 
 from pycycle.thermo.cea.species_data import Properties, janaf
 
@@ -104,7 +104,7 @@ class Combustor(om.Group):
 
         # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
-                           MixRatio(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
+                           ThermoAdd(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
                                     inflow_elements=inflow_elements, mix_elements=fuel_type),
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 

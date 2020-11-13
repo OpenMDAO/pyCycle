@@ -437,7 +437,6 @@ class SetTotalTP(om.Group):
         
         # these have to be part of the API for the unit_comps to use
         self.composition = self.thermo.b0
-        self.num_n = self.thermo.num_prod
         
         self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
 
