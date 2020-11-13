@@ -204,18 +204,16 @@ class HBTF(pyc.Cycle):
         #Specify solver settings:
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-8
-
-        # set this very small, so it never activates and we rely on atol
-        newton.options['rtol'] = 1e-99 
+        newton.options['rtol'] = 1e-8
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 50
         newton.options['solve_subsystems'] = True
-        newton.options['max_sub_solves'] = 1000
+        newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
         # ls = newton.linesearch = BoundsEnforceLS()
         ls = newton.linesearch = om.ArmijoGoldsteinLS()
         ls.options['maxiter'] = 3
-        ls.options['rho'] = 0.75
+        ls.options['bound_enforcement'] = 'scalar'
         # ls.options['print_bound_enforce'] = True
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
@@ -263,7 +261,7 @@ def viewer(prob, pt, file=sys.stdout):
     comp_full_names = [f'{pt}.{c}' for c in comp_names]
     pyc.print_compressor(prob, comp_full_names, file=file)
 
-    pyc.print_burner(prob, [f'{pt}.burner'], file=file)
+    pyc.print_burner(prob, [f'{pt}.burner'])
 
     turb_names = ['hpt', 'lpt']
     turb_full_names = [f'{pt}.{t}' for t in turb_names]
@@ -375,6 +373,7 @@ if __name__ == "__main__":
 
     prob.setup()
 
+    #Define the design point
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
 
@@ -424,45 +423,10 @@ if __name__ == "__main__":
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
+    prob.run_model()
 
-    flight_env = [(0.8, 35000), (0.7, 35000), (0.4, 35000), (0.2, 35000), (0.001, 35000),]
-                  # (.001, 20000), (0.2, 20000), (0.4, 20000), (0.6, 20000), (0.8, 20000), 
-                  # (0.8, 10000), (0.6, 10000), (0.4, 10000), (0.2, 10000), (0.001, 10000),
-                  # (.001, 1000), (0.2, 1000), (0.4, 1000), (0.6, 1000), (0.8, 1000),
-                  # (0.8, 0), (0.6, 0), (0.4, 0), (0.2, 0), (0.001, 0)]
-
-    viewer_file = open('hbtf_view.out', 'w')
-    first_pass = True
-    for MN, alt in flight_env: 
-
-        # NOTE: You never change the MN,alt for the 
-        # design point because that is a fixed reference condition.
-
-        print('***'*10)
-        print(f'* MN: {MN}, alt: {alt}')
-        print('***'*10)
-        prob['OD_full_pwr.fc.MN'] = MN
-        prob['OD_full_pwr.fc.alt'] = alt
-        
-        prob['OD_part_pwr.fc.MN'] = MN
-        prob['OD_part_pwr.fc.alt'] = alt
-
-        for PC in [1, 0.9, 0.8, .7]: 
-            print(f'## PC = {PC}')
-            prob['OD_part_pwr.PC'] = PC
-            prob.run_model()
-
-            if first_pass: 
-                viewer(prob, 'DESIGN', file=viewer_file)
-                first_pass = False 
-            viewer(prob, 'OD_part_pwr', file=viewer_file)
-
-        # run throttle back up to full power
-        for PC in [1, 0.85]: 
-            prob['OD_part_pwr.PC'] = PC
-            prob.run_model()
-
-    
+    for pt in ['DESIGN', 'OD_full_pwr', 'OD_part_pwr']:
+        viewer(prob, pt)
 
     print()
     print("Run time", time.time() - st)
