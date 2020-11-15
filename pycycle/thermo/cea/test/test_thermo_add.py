@@ -22,9 +22,9 @@ class ThermoAddTestCase(unittest.TestCase):
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
-                           inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
-                           mix_elements=fuel, mix_names='fuel')
+        p.model = ThermoAdd(thermo_data=thermo_spec,
+                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
+                            mix_elements=fuel, mix_names='fuel')
 
 
         p.setup(force_alloc_complex=True)
@@ -58,9 +58,9 @@ class ThermoAddTestCase(unittest.TestCase):
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
-                           inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
-                           mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
+        p.model = ThermoAdd(thermo_data=thermo_spec,
+                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
+                            mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
 
 
         p.setup(force_alloc_complex=True)
@@ -95,9 +95,9 @@ class ThermoAddTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
-                           inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
-                           mix_elements=AIR_ELEMENTS, mix_names='mix')
+        p.model = ThermoAdd(thermo_data=thermo_spec,
+                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
+                            mix_elements=AIR_ELEMENTS, mix_names='mix')
 
         p.setup(force_alloc_complex=True)
 
@@ -120,9 +120,9 @@ class ThermoAddTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
-                           inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
-                           mix_elements=[AIR_ELEMENTS, AIR_ELEMENTS], mix_names=['mix1', 'mix2'])
+        p.model = ThermoAdd(thermo_data=thermo_spec,
+                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
+                            mix_elements=[AIR_ELEMENTS, AIR_ELEMENTS], mix_names=['mix1', 'mix2'])
 
         p.setup(force_alloc_complex=True)
 
@@ -143,6 +143,41 @@ class ThermoAddTestCase(unittest.TestCase):
         # assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
         assert_near_equal(p['composition_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
 
+
+    def test_war_vals(self):
+        """
+        verifies that the ThermoAdd component gives the right answers when adding water to dry air
+        """
+
+        prob = om.Problem()
+
+        thermo_spec = species_data.wet_air
+
+        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+
+        prob.model.add_subsystem('war', ThermoAdd(thermo_data=thermo_spec,
+                                                 inflow_elements=AIR_ELEMENTS, mix_elements='Water'), 
+                                 promotes=['*'])
+        
+
+
+        prob.setup(force_alloc_complex=True)
+
+        # p['Fl_I:stat:P'] = 158.428
+        prob['Fl_I:stat:W'] = 38.8
+        prob['mix:ratio'] = .0001 # WAR
+        prob['Fl_I:tot:h'] = 181.381769
+        prob['Fl_I:tot:composition'] = air_thermo.b0
+
+        prob.run_model()
+
+        tol = 1e-5
+
+        assert_near_equal(prob['composition_out'][0], 3.23286926e-04, tol)
+        assert_near_equal(prob['composition_out'][1], 1.10121227e-05, tol)
+        assert_near_equal(prob['composition_out'][2], 1.11005769e-05, tol)
+        assert_near_equal(prob['composition_out'][3], 5.39103820e-02, tol)
+        assert_near_equal(prob['composition_out'][4], 1.44901169e-02, tol)
 
 
 

@@ -13,38 +13,27 @@ class WetTurbojet(pyc.Cycle):
 
     def setup(self):
 
-        wet_thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
-        janaf_thermo_spec = pyc.species_data.janaf #standard species library is called for use in and after burner
+        thermo_spec = pyc.species_data.wet_air
         design = self.options['design']
 
         # Add engine elements
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=wet_thermo_spec, use_WAR=True,
+        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
                                     elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=wet_thermo_spec,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
                                     elements=pyc.WET_AIR_ELEMENTS))
         self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=wet_thermo_spec, elements=pyc.WET_AIR_ELEMENTS,),
+                                    thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS,),
                                     promotes_inputs=['Nmech'])
 
-        ###Note###
-        #The Combustor element automatically assumes that the thermo data to use for both the inflowing air 
-        #and the outflowing mixed air and fuel is the data specified by the thermo_data option
-        #unless the inflow_thermo_data option is set. If the inflow_thermo_data option is set,
-        #the Combustor element will use the thermo data specified by inflow_thermo_data for the inflowing air
-        #to the burner, and it will use the thermo data specified by thermo_data for the outflowing mixed
-        #air and fuel. This is necessary to do if the airflow upstream of the burner contains both C and H
-        #within its compounds, because without the addition of the hydrocarbons from fuel, the solver has
-        #a difficult time converging the trace amount of hydrocarbons "present" in the original flow.
-
-        self.pyc_add_element('burner', pyc.Combustor(design=design,inflow_thermo_data=wet_thermo_spec,
-                                    thermo_data=janaf_thermo_spec, inflow_elements=pyc.WET_AIR_ELEMENTS,
-                                    air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                    fuel_type='JP-7'))
+        self.pyc_add_element('burner', pyc.Combustor(design=design, thermo_data=thermo_spec, 
+                                                     inflow_elements=pyc.WET_AIR_ELEMENTS,
+                                                     air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
+                                                     fuel_type='JP-7'))
         self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,),
+                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,),
                                     promotes_inputs=['Nmech'])
         self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=janaf_thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
+                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
         self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 

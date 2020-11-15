@@ -209,7 +209,7 @@ class Row(om.Group):
         #                   promotes_inputs=['Pt_in', 'Pt_out', ('W_in','W_primary'), ('n_in', 'n_primary'), ('cool:n', 'n_cool')],
         #                   promotes_outputs=['W_out'])
 
-        self.add_subsystem('mix_n', ThermoAdd(mix_thermo_data=self.options['thermo_data'], 
+        self.add_subsystem('mix_n', ThermoAdd(thermo_data=self.options['thermo_data'], 
                                              inflow_elements=AIR_FUEL_ELEMENTS, 
                                              mix_mode='flow',
                                              mix_elements=AIR_ELEMENTS, 

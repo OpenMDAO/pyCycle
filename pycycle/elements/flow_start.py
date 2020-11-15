@@ -33,7 +33,7 @@ class FlowStart(Group):
         if use_WAR == True:
 
 
-            mix = ThermoAdd(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
+            mix = ThermoAdd(thermo_data=thermo_data,
                            inflow_elements=elements, mix_elements='Water')
             self.add_subsystem('WAR', mix, 
                                 promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 

@@ -511,8 +511,8 @@ class Turbine(om.Group):
         self.connect('press_drop.Pt_out', 'blds.Pt_out')
 
         bleed_element_list = [bleed_elements for name in bleeds]
-        bld_mix = ThermoAdd(mix_thermo_data=thermo_data, inflow_elements=elements, 
-                           mix_elements=bleed_element_list, mix_names=bleeds, mix_mode='flow')
+        bld_mix = ThermoAdd(thermo_data=thermo_data, inflow_elements=elements, 
+                            mix_elements=bleed_element_list, mix_names=bleeds, mix_mode='flow')
         self.add_subsystem('bld_mix', bld_mix, 
                            promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:composition'] + 
                                            [(f'{BN}:W', f'{BN}:stat:W') for BN in bleeds] + 

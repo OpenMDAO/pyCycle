@@ -57,10 +57,8 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
-        self.options.declare('inflow_thermo_data', default=None,
-                             desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
-                             desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set, in which case it is used only for outgoing flow.', recordable=False)
+                             desc='Thermodynamic data set for the flow', recordable=False)
         self.options.declare('inflow_elements', default=AIR_ELEMENTS,
                              desc='set of elements present in the air flow')
         self.options.declare('air_fuel_elements', default=AIR_FUEL_ELEMENTS,
@@ -74,13 +72,6 @@ class Combustor(om.Group):
 
     def setup(self):
         thermo_data = self.options['thermo_data']
-        if self.options['inflow_thermo_data'] is not None:
-            # Set the inflow thermodynamic data package if it is different from the outflow one
-            inflow_thermo_data = self.options['inflow_thermo_data']
-
-        else:
-            # Set the inflow thermodynamic data package if it is the same as the outflow one
-            inflow_thermo_data = thermo_data
 
         inflow_elements = self.options['inflow_elements']
         air_fuel_elements = self.options['air_fuel_elements']
@@ -96,8 +87,8 @@ class Combustor(om.Group):
 
         # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
-                           ThermoAdd(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
-                                    inflow_elements=inflow_elements, mix_elements=fuel_type),
+                           ThermoAdd(thermo_data=thermo_data,
+                                     inflow_elements=inflow_elements, mix_elements=fuel_type),
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 
         # Pressure loss

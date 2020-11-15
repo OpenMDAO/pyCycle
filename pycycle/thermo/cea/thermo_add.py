@@ -11,11 +11,7 @@ class ThermoAdd(om.ExplicitComponent):
     """
 
     def initialize(self):
-        self.options.declare('inflow_thermo_data', default=None,
-                             desc=('Thermodynamic data set for incoming flow. This only needs to be set if different '
-                                   'thermo data is used for incoming flow and outgoing flow.'), 
-                             recordable=False)
-        self.options.declare('mix_thermo_data', default=janaf,
+        self.options.declare('thermo_data', default=janaf,
                              desc=('Thermodynamic data set for flow. This is used for incoming and '
                                    'outgoing flow unless inflow_thermo_data is set, in which case it '
                                    'is used only for outgoing flow.'), 
@@ -32,15 +28,8 @@ class ThermoAdd(om.ExplicitComponent):
 
     def setup(self):
 
-        thermo_data = self.options['mix_thermo_data']
-        if self.options['inflow_thermo_data'] is not None:
-            # Set the inflow thermodynamic data package if it is different from the outflow one
-            inflow_thermo_data = self.options['inflow_thermo_data']
-
-        else:
-            # Set the inflow thermodynamic data package if it is the same as the outflow one
-            inflow_thermo_data = thermo_data
-
+        thermo_data = self.options['thermo_data']
+        
         mix_mode = self.options['mix_mode']
 
         mix_elements = self.options['mix_elements']
@@ -64,7 +53,7 @@ class ThermoAdd(om.ExplicitComponent):
             for flow_elements in mix_elements: 
                 self.mixed_elements.update(flow_elements)
 
-        inflow_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
+        inflow_thermo = Properties(thermo_data, init_elements=inflow_elements)
         self.inflow_elements = inflow_thermo.elements
         self.inflow_wt_mole = inflow_thermo.element_wt
         self.num_inflow_elements = len(self.inflow_elements)

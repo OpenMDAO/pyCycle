@@ -132,7 +132,7 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
         # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', thermo_add.ThermoAdd(mix_thermo_data=species_data.janaf))
+        p.model.add_subsystem('mix_fuel', thermo_add.ThermoAdd(thermo_data=species_data.janaf))
 
 
         p.model.add_subsystem(
