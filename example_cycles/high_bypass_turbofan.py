@@ -14,6 +14,8 @@ class HBTF(pyc.Cycle):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
 
+        self.options.declare('throttle_mode', default='T4', values=['T4', 'percent_thrust'])
+
     def setup(self):
         #Setup the problem by including all the relavant components here - comp, burner, turbine etc
         
@@ -136,9 +138,19 @@ class HBTF(pyc.Cycle):
             #
             #           (lp_Nmech)   LP spool speed to balance shaft power on the low spool
             #           (hp_Nmech)   HP spool speed to balance shaft power on the high spool
-            balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='lbf')
-            self.connect('balance.FAR', 'burner.Fl_I:FAR')
-            self.connect('perf.Fn', 'balance.lhs:FAR')
+
+            if self.options['throttle_mode'] == 'T4': 
+                balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='degR')
+                self.connect('balance.FAR', 'burner.Fl_I:FAR')
+                self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
+                self.promotes('balance', inputs=[('rhs:FAR', 'T4_MAX')])
+
+            elif self.options['throttle_mode'] == 'percent_thrust': 
+                balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='lbf', use_mult=True)
+                self.connect('balance.FAR', 'burner.Fl_I:FAR')
+                self.connect('perf.Fn', 'balance.rhs:FAR')
+                self.promotes('balance', inputs=[('mult:FAR', 'PC'), ('lhs:FAR', 'Fn_max')])
+
 
             balance.add_balance('W', units='lbm/s', lower=10., upper=1000., eq_units='inch**2')
             self.connect('balance.W', 'fc.W')
@@ -192,16 +204,18 @@ class HBTF(pyc.Cycle):
         #Specify solver settings:
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-8
-        newton.options['rtol'] = 1e-8
+
+        # set this very small, so it never activates and we rely on atol
+        newton.options['rtol'] = 1e-99 
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 50
         newton.options['solve_subsystems'] = True
-        newton.options['max_sub_solves'] = 100
+        newton.options['max_sub_solves'] = 1000
         newton.options['reraise_child_analysiserror'] = False
         # ls = newton.linesearch = BoundsEnforceLS()
         ls = newton.linesearch = om.ArmijoGoldsteinLS()
         ls.options['maxiter'] = 3
-        ls.options['bound_enforcement'] = 'scalar'
+        ls.options['rho'] = 0.75
         # ls.options['print_bound_enforce'] = True
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
@@ -249,7 +263,7 @@ def viewer(prob, pt, file=sys.stdout):
     comp_full_names = [f'{pt}.{c}' for c in comp_names]
     pyc.print_compressor(prob, comp_full_names, file=file)
 
-    pyc.print_burner(prob, [f'{pt}.burner'])
+    pyc.print_burner(prob, [f'{pt}.burner'], file=file)
 
     turb_names = ['hpt', 'lpt']
     turb_full_names = [f'{pt}.{t}' for t in turb_names]
@@ -295,7 +309,6 @@ class MPhbtf(pyc.MPCycle):
         self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
 
         # --- Set up bleed values -----
-        self.set_input_defaults('DESIGN.hpc.cust:frac_W', 0.0445),
         
         self.pyc_add_cycle_param('inlet.ram_recovery', 0.9990)
         self.pyc_add_cycle_param('duct4.dPqP', 0.0048)
@@ -317,28 +330,33 @@ class MPhbtf(pyc.MPCycle):
         self.pyc_add_cycle_param('bld3.cool4:frac_W', 0.101256)
         self.pyc_add_cycle_param('hpc.cust:frac_P', 0.5)
         self.pyc_add_cycle_param('hpc.cust:frac_work', 0.5)
+        self.pyc_add_cycle_param('hpc.cust:frac_W', 0.0445)
         self.pyc_add_cycle_param('hpt.cool3:frac_P', 1.0)
         self.pyc_add_cycle_param('hpt.cool4:frac_P', 0.0)
         self.pyc_add_cycle_param('lpt.cool1:frac_P', 1.0)
         self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
         self.pyc_add_cycle_param('hp_shaft.HPX', 250.0, units='hp')
 
-        self.od_pts = ['OD0', 'OD1', 'OD2', 'OD3'] 
+        self.od_pts = ['OD_full_pwr', 'OD_part_pwr'] 
 
-        self.od_MNs = [0.8, 0.8, 0.25, 0.00001]
-        self.od_alts = [35000.0, 35000.0, 0.0, 0.0]
-        self.od_FARs = [5500.0, 5970.0, 22590.0, 27113.0]
-        self.od_dTs = [0.0, 0.0, 27.0, 27.0]
-        self.od_Ws = [0.0445, 0.0422, 0.0177, 0.0185]
+        self.od_MNs = [0.8, 0.8]
+        self.od_alts = [35000.0, 35000.0]
+        self.od_Fn_target = [5500.0, 5300]
+        self.od_dTs = [0.0, 0.0]
 
-        for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, HBTF(design=False))
+        self.pyc_add_pnt('OD_full_pwr', HBTF(design=False, throttle_mode='T4'))
 
-            self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
-            self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
-            self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_FARs[i], units='lbf')
-            self.set_input_defaults(pt+'.fc.dTs', self.od_dTs[i], units='degR')
-            self.set_input_defaults(pt+'.hpc.cust:frac_W', self.od_Ws[i])
+        self.set_input_defaults('OD_full_pwr.fc.MN', 0.8)
+        self.set_input_defaults('OD_full_pwr.fc.alt', 35000, units='ft')
+        self.set_input_defaults('OD_full_pwr.fc.dTs', 0., units='degR')
+
+        self.pyc_add_pnt('OD_part_pwr', HBTF(design=False, throttle_mode='percent_thrust'))
+
+        self.set_input_defaults('OD_part_pwr.fc.MN', 0.8)
+        self.set_input_defaults('OD_part_pwr.fc.alt', 35000, units='ft')
+        self.set_input_defaults('OD_part_pwr.fc.dTs', 0., units='degR')
+
+        self.connect('OD_full_pwr.perf.Fn', 'OD_part_pwr.Fn_max')
 
         self.pyc_use_default_des_od_conns()
 
@@ -357,7 +375,6 @@ if __name__ == "__main__":
 
     prob.setup()
 
-    #Define the design point
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
 
@@ -373,11 +390,13 @@ if __name__ == "__main__":
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
     
-    # prob.set_val('DESIGN.balance.rhs:FAR', 2857, units='degR')
     prob.set_val('DESIGN.T4_MAX', 2857, units='degR')
     prob.set_val('DESIGN.Fn_DES', 5900.0, units='lbf') 
-        
 
+    prob.set_val('OD_full_pwr.T4_MAX', 2857, units='degR')
+    prob.set_val('OD_part_pwr.PC', 0.8)
+
+    
     # Set initial guesses for balances
     prob['DESIGN.balance.FAR'] = 0.025
     prob['DESIGN.balance.W'] = 100.
@@ -386,12 +405,12 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Pt'] = 5.2
     prob['DESIGN.fc.balance.Tt'] = 440.0
 
-    W_guesses = [300, 300, 700, 700]
-    for i, pt in enumerate(mp_hbtf.od_pts):
+    
+    for pt in ['OD_full_pwr', 'OD_part_pwr']:
 
         # initial guesses
         prob[pt+'.balance.FAR'] = 0.02467
-        prob[pt+'.balance.W'] = W_guesses[i]
+        prob[pt+'.balance.W'] = 300
         prob[pt+'.balance.BPR'] = 5.105
         prob[pt+'.balance.lp_Nmech'] = 5000 
         prob[pt+'.balance.hp_Nmech'] = 15000 
@@ -405,10 +424,45 @@ if __name__ == "__main__":
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
-    prob.run_model()
 
-    for pt in ['DESIGN']+mp_hbtf.od_pts:
-        viewer(prob, pt)
+    flight_env = [(0.8, 35000), (0.7, 35000), (0.4, 35000),
+                  (0.4, 20000), (0.6, 20000), (0.8, 20000), 
+                  (0.8, 10000), (0.6, 10000), (0.4, 10000), (0.2, 10000), (0.001, 10000),
+                  (.001, 1000), (0.2, 1000), (0.4, 1000), (0.6, 1000),
+                  (0.6, 0), (0.4, 0), (0.2, 0), (0.001, 0)]
+
+    viewer_file = open('hbtf_view.out', 'w')
+    first_pass = True
+    for MN, alt in flight_env: 
+
+        # NOTE: You never change the MN,alt for the 
+        # design point because that is a fixed reference condition.
+
+        print('***'*10)
+        print(f'* MN: {MN}, alt: {alt}')
+        print('***'*10)
+        prob['OD_full_pwr.fc.MN'] = MN
+        prob['OD_full_pwr.fc.alt'] = alt
+        
+        prob['OD_part_pwr.fc.MN'] = MN
+        prob['OD_part_pwr.fc.alt'] = alt
+
+        for PC in [1, 0.9, 0.8, .7]: 
+            print(f'## PC = {PC}')
+            prob['OD_part_pwr.PC'] = PC
+            prob.run_model()
+
+            if first_pass: 
+                viewer(prob, 'DESIGN', file=viewer_file)
+                first_pass = False 
+            viewer(prob, 'OD_part_pwr', file=viewer_file)
+
+        # run throttle back up to full power
+        for PC in [1, 0.85]: 
+            prob['OD_part_pwr.PC'] = PC
+            prob.run_model()
+
+    
 
     print()
     print("Run time", time.time() - st)

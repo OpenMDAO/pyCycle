@@ -169,12 +169,10 @@ class Thermo(om.Group):
 
     def configure(self): 
         composition = self.base_thermo.composition
-        num_n = self.base_thermo.num_n
         mode = self.options['mode']
 
-        self.flow.setup_io(composition, num_n)
+        self.flow.setup_io(composition)
         
         if 'static' in mode: 
             self.flow_static.setup_io()
-
 

@@ -5,7 +5,7 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
@@ -172,7 +172,7 @@ class WARTestCase(unittest.TestCase):
 
     def test_war_vals(self):
         """
-        verifies that the MixRatio component gives the right answers when adding water to dry air
+        verifies that the ThermoAdd component gives the right answers when adding water to dry air
         """
 
         prob = Problem()
@@ -181,7 +181,7 @@ class WARTestCase(unittest.TestCase):
 
         air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
 
-        prob.model.add_subsystem('war', MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+        prob.model.add_subsystem('war', ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                                                  inflow_elements=AIR_ELEMENTS, mix_elements='Water'), 
                                  promotes=['*'])
         

@@ -433,12 +433,10 @@ class Compressor(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
 
-        thermo = species_data.Properties(thermo_data, init_elements=elements)
-        num_prod = thermo.num_prod
-        num_element = thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),

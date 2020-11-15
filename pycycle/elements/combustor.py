@@ -7,7 +7,7 @@ import openmdao.api as om
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
 from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 
 from pycycle.thermo.cea.species_data import Properties, janaf
 
@@ -88,23 +88,15 @@ class Combustor(om.Group):
         statics = self.options['statics']
         fuel_type = self.options['fuel_type']
 
-        air_fuel_thermo = Properties(thermo_data, init_elements=air_fuel_elements)
-        self.air_fuel_prods = air_fuel_thermo.products
-
-        air_thermo = Properties(inflow_thermo_data, init_elements=inflow_elements)
-        self.air_prods = air_thermo.products
-
-        self.num_air_fuel_prod = len(self.air_fuel_prods)
-        self.num_air_prod = air_thermo.num_prod
-        num_air_element = air_thermo.num_element
+        num_air_element = len(inflow_elements)
 
         # Create combustor flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_air_prod, num_elements=num_air_element)
+        in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
-                           MixRatio(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
+                           ThermoAdd(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
                                     inflow_elements=inflow_elements, mix_elements=fuel_type),
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 

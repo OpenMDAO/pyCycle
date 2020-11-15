@@ -9,9 +9,9 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 
-from pycycle.thermo.cea.mix_ratio import MixRatio
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 
-class MixRatioTestCase(unittest.TestCase):
+class ThermoAddTestCase(unittest.TestCase):
     
     def test_mix_1fuel(self): 
 
@@ -22,7 +22,7 @@ class MixRatioTestCase(unittest.TestCase):
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
                            mix_elements=fuel, mix_names='fuel')
 
@@ -58,7 +58,7 @@ class MixRatioTestCase(unittest.TestCase):
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
                            mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
 
@@ -95,7 +95,7 @@ class MixRatioTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
                            mix_elements=AIR_ELEMENTS, mix_names='mix')
 
@@ -120,7 +120,7 @@ class MixRatioTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = MixRatio(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
+        p.model = ThermoAdd(inflow_thermo_data=thermo_spec, mix_thermo_data=thermo_spec,
                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
                            mix_elements=[AIR_ELEMENTS, AIR_ELEMENTS], mix_names=['mix1', 'mix2'])
 

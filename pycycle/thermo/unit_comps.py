@@ -9,14 +9,7 @@ _allowed_out_args = set(_full_out_args.args[3:] + _full_out_args.kwonlyargs)
 
 class UnitCompBase(ExplicitComponent):
 
-    # def __init__(self, thermo, fl_name):
-
-    #     super(UnitCompBase, self).__init__()
-
-    #     self.fl_name = fl_name
-
     def initialize(self): 
-        # self.options.declare('thermo')
         self.options.declare('fl_name')
 
     def setup_io(self):
@@ -30,7 +23,11 @@ class UnitCompBase(ExplicitComponent):
 
             meta = rel2meta[in_name]
             new_meta = {k:v for k, v in meta.items() if k in _allowed_out_args}
-            val = meta['value'].copy()
+            meta_val = meta['value']
+            if isinstance(meta_val, float): 
+                val = meta_val
+            else: 
+                val = meta_val.copy()
             self.add_output(out_name, val=val, **new_meta)
             
         rel2meta = self._var_rel2meta
@@ -38,20 +35,23 @@ class UnitCompBase(ExplicitComponent):
         for in_name, out_name in zip(self._var_rel_names['input'], self._var_rel_names['output']):
 
             shape = rel2meta[in_name]['shape']
-            size = np.prod(shape)
-            row_col = np.arange(size, dtype=int)
+            if shape is not None: 
+                size = np.prod(shape)
+                row_col = np.arange(size, dtype=int)
 
-            self.declare_partials(of=out_name, wrt=in_name,
-                                  val=np.ones(size), rows=row_col, cols=row_col)
+                self.declare_partials(of=out_name, wrt=in_name,
+                                      val=np.ones(size), rows=row_col, cols=row_col)
+            else: 
+                self.declare_partials(of=out_name, wrt=in_name, val=1)
 
     def compute(self, inputs, outputs):
         outputs._data[:] = inputs._data
 
 
 class EngUnitProps(UnitCompBase):
-    """only job is to provide unknowns in english units"""
+    """only job is to provide flow in english units"""
 
-    def setup_io(self, b0, num_n):
+    def setup_io(self, b0):
 
         self.add_input('T', val=284., units="degR", desc="Temperature")
         self.add_input('P', val=1., units='lbf/inch**2', desc="Pressure")
@@ -61,8 +61,6 @@ class EngUnitProps(UnitCompBase):
         self.add_input('Cp', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant pressure")
         self.add_input('Cv', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant volume")
         self.add_input('rho', val=1., units="lbm/ft**3", desc="density")
-        # self.add_input('n', val=np.ones(num_n))
-        # self.add_input('n_moles', val=1.)
         self.add_input('R', val=1.0, units="Btu/(lbm*degR)", desc='Total specific gas constant')
         self.add_input('composition', val=b0, desc='moles of atoms present for each element')
 

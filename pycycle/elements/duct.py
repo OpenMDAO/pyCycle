@@ -172,13 +172,10 @@ class Duct(om.Group):
         design = self.options['design']
         expMN = self.options['expMN']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        gas_prods = gas_thermo.products
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         if expMN > 1e-10: # Calcluate pressure losses as function of Mach number

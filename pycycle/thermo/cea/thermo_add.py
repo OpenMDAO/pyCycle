@@ -5,9 +5,9 @@ import openmdao.api as om
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import Properties, janaf
 
-class MixRatio(om.ExplicitComponent):
+class ThermoAdd(om.ExplicitComponent):
     """
-    MixRatio calculates a new b0 given inflow, a reactant to add, and a mix ratio.
+    ThermoAdd calculates a new b0 given inflow, a reactant to add, and a mix ratio.
     """
 
     def initialize(self):
@@ -136,25 +136,7 @@ class MixRatio(om.ExplicitComponent):
 
         self.declare_partials('*', '*', method='cs')
         # NOTE: Due to some complexity from python vectorization, 
-        # computing partials manually is tricky and going to be much faster than pure CS
-    
-        # self.declare_partials('mass_avg_h', 'Fl_I:tot:h')
-        # self.declare_partials('Wout', 'Fl_I:stat:W')
-        # self.declare_partials('composition_out', 'Fl_I:tot:composition')
-        
-        # for name in mix_names: 
-        #     if self.options['mix_mode'] == 'reactant': 
-        #         ratio_name = f'{name}:ratio'
-        #         self.declare_partials('mass_avg_h', ratio_name)
-        #         self.declare_partials(f'{name}:W', ratio_name)
-        #         self.declare_partials(f'{name}:W', 'Fl_I:stat:W')
-        #         self.declare_partials('mass_avg_h', f'{name}:h')
-        #         self.declare_partials('Wout', ratio_name)
-        #         # self.declare_partials('f'{name}:W'', ratio_name)
-        #         self.declare_partials('composition_out', ratio_name)
-
-        #     else: 
-        #         pass
+        # computing partials manually is tricky and will not be much faster than pure CS
 
     def compute(self, inputs, outputs):
         W = inputs['Fl_I:stat:W']
@@ -200,90 +182,4 @@ class MixRatio(om.ExplicitComponent):
         mass_avg_h /= W_out
         outputs['mass_avg_h'] = mass_avg_h
         outputs['Wout'] = W_out
-
-    # def compute_partials(self, inputs, J):
-    #     # FAR = inputs['mix_ratio']
-    #     W = inputs['Fl_I:stat:W']
-    #     Fl_I_tot_b0 = inputs['Fl_I:tot:composition']
-
-    #     # copy the incoming flow into a correctly sized array for the outflow composition
-    #     b0_out = self.in_out_flow_idx_map.dot(Fl_I_tot_b0)
-
-    #     b0_out *= self.mixed_wt_mole # convert to mass units
-    #     sum_b0_out = np.sum(b0_out)
-        
-
-    #     d_b0_out__d_b0_in = self.in_out_flow_idx_map.dot(np.eye(self.num_inflow_elements))
-
-    #     for i in range(self.num_inflow_elements): 
-    #         d_b0_out__d_b0_in[:,i] = W*(d_b0_out__d_b0_in[:,i]/sum_b0_out*self.inflow_wt_mole[i] 
-    #                                     - b0_out[:]/sum_b0_out**2 * self.inflow_wt_mole[i])
-
-    #     # print('foobar', d_b0_out__d_b0_in[0,0]/sum_b0_out - b0_out[0]/sum_b0_out**2 * self.inflow_wt_mole[0])
-    #     # print('foobar', d_b0_out__d_b0_in[1,0]/sum_b0_out - b0_out[1]/sum_b0_out**2 * self.inflow_wt_mole[0])
-    #     # print('foobar', d_b0_out__d_b0_in[2,0]/sum_b0_out - b0_out[2]/sum_b0_out**2 * self.inflow_wt_mole[0])
-    #     # print('foobar', d_b0_out__d_b0_in[3,0]/sum_b0_out - b0_out[3]/sum_b0_out**2 * self.inflow_wt_mole[0])
-    #     # print('foobar', d_b0_out__d_b0_in[4,0]/sum_b0_out - b0_out[4]/sum_b0_out**2 * self.inflow_wt_mole[0])
-    #         # d_b0_out__d_b0_in[i,:] = d_b0_out__d_b0_in[i,:]/sum_b0_out - (b0_out/sum_b0_out**2).dot(d_b0_out__d_b0_in[i,:])
-
-    #     b0_out /=  sum_b0_out# scale to 1 kg
-    #     b0_out *= W  # scale to full mass flow
-
-    #     W_out = W.copy()
-    #     mass_avg_h = inputs['Fl_I:tot:h'] * W
-
-    #     J['Wout', 'Fl_I:stat:W'] = 1.
-
-    #     if self.options['mix_mode'] == 'reactant': 
-    #         for name, reactant in zip(self.mix_names, self.mix_elements): 
-    #             ratio = inputs[f'{name}:ratio']
-    #             # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
-    #             W_mix = W*ratio
-    #             b0_out += self.init_fuel_amounts_1kg[reactant]*W_mix
-
-    #             mass_avg_h += inputs[f'{name}:h'] * W_mix
-    #             W_out += W_mix
-
-    #             ratio_name = f'{name}:ratio'
-    #             J['mass_avg_h', f'{name}:h'] = W_mix
-    #             J['mass_avg_h', ratio_name] = inputs[f'{name}:h'] * W
-    #             J['Wout', ratio_name] = W
-    #             J[f'{name}:W', ratio_name] = W
-    #             J[f'{name}:W', 'Fl_I:stat:W'] = ratio
-    #             J['Wout', 'Fl_I:stat:W'] += ratio
-    #             # print('foobar', ratio, W)
-
-               
-
-    #     else: # inflow mixing
-    #         for name in self.mix_names: 
-    #             W_mix = inputs[f'{name}:W']
-    #             mix_stuff = inputs[f'{name}:composition'].copy()
-    #             mix_stuff *= self.mix_wt_mole[name]
-    #             mix_stuff /= np.sum(mix_stuff) # normalize to 1kg 
-    #             mix_stuff *= W_mix# scale to actual mass flow of that mix stream
-                
-    #             init_stuff += self.mix_out_flow_idx_maps[name].dot(mix_stuff)
-    #             W_out += W_mix
-
-    #     mass_avg_h /=W_out
-
-    #     J['mass_avg_h', 'Fl_I:tot:h'] = W/W_out
-
-    #     if self.options['mix_mode'] == 'reactant': 
-    #         for name in self.mix_names: 
-    #             J['mass_avg_h', f'{name}:h'] /= W_out
-                
-    #             J['mass_avg_h', f'{name}:ratio'] /= W_out
-    #             J['mass_avg_h', f'{name}:ratio'] -= mass_avg_h/W_out * W
-
-    #     else: # inflow mixing
-    #         for name in self.mix_names: 
-    #             pass
-
-    #     sum_b0_out = np.sum(b0_out)
-    #     for i in range(self.num_inflow_elements): 
-    #         d_b0_out__d_b0_in[:,i] = (d_b0_out__d_b0_in[:,i]/sum_b0_out 
-    #                                     - b0_out[:]/sum_b0_out**2*np.sum(d_b0_out__d_b0_in[:,i])) / self.mixed_wt_mole[i]
-    #     J['composition_out', 'Fl_I:tot:composition'] = d_b0_out__d_b0_in
 
