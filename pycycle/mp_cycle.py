@@ -7,22 +7,11 @@ import openmdao.api as om
 
 class Cycle(om.Group): 
 
-    def __init__(self, **kwargs): 
-        """
-        A custom group used to model a specific thermodynamic cycle
-        """
+    def initialize(self): 
+        self.options.declare('design', default=design_default,
+                              desc='Switch between on-design and off-design calculation.')
 
-        self._elements = set()
-
-        super().__init__(**kwargs)
-
-    #     # bit of a hack to get around weird timing in OM's option system
-    #     design_default=True
-    #     if 'design' in kwargs: 
-    #         design_default = kwargs['design']
-
-    #     self.options.declare('design', default=design_default,
-    #                           desc='Switch between on-design and off-design calculation.')
+        self.options.declare('thermo_method', values=('CEA',))
 
 
     def pyc_add_element(self, name, element,**kwargs):

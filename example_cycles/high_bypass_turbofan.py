@@ -16,6 +16,8 @@ class HBTF(pyc.Cycle):
 
         self.options.declare('throttle_mode', default='T4', values=['T4', 'percent_thrust'])
 
+        super().initialize()
+
     def setup(self):
         #Setup the problem by including all the relavant components here - comp, burner, turbine etc
         
