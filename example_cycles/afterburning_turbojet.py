@@ -7,10 +7,6 @@ import pycycle.api as pyc
 
 class ABTurbojet(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
         thermo_spec = pyc.species_data.janaf
@@ -164,7 +160,7 @@ class MPABTurbojet(pyc.MPCycle):
     def setup(self):
 
         # DESIGN CASE
-        self.pyc_add_pnt('DESIGN', ABTurbojet(design=True))
+        self.pyc_add_pnt('DESIGN', ABTurbojet(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
         self.set_input_defaults('DESIGN.inlet.MN', 0.60),
@@ -197,7 +193,7 @@ class MPABTurbojet(pyc.MPCycle):
         self.od_Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, ABTurbojet(design=False))
+            self.pyc_add_pnt(pt, ABTurbojet(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
             self.set_input_defaults(pt+'.fc.alt', val=self.od_alts[i], units='ft')

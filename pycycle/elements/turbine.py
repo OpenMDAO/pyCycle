@@ -417,6 +417,8 @@ class Turbine(om.Group):
 
     def initialize(self):
         self.options.declare('map_data', default=LPT2269)
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -447,6 +449,7 @@ class Turbine(om.Group):
 
     def setup(self):
 
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         bleed_elements = self.options['bleed_elements']
@@ -486,7 +489,7 @@ class Turbine(om.Group):
 
         # Calculate ideal flow station properties
         ideal_flow = Thermo(mode='total_SP', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':elements, 
                                            'spec':thermo_data})
         self.add_subsystem('ideal_flow', ideal_flow,
@@ -525,7 +528,7 @@ class Turbine(om.Group):
             # Determine bleed inflow properties
             bleed_names2.append(BN + '_inflow')
             inflow = Thermo(mode='total_hP', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':bleed_elements, 
                                            'spec':thermo_data})
             self.add_subsystem(BN + '_inflow', inflow,
@@ -535,7 +538,7 @@ class Turbine(om.Group):
             # Ideally expand bleeds to exit pressure
             bleed_names2.append(f'{BN}_ideal')
             ideal = Thermo(mode='total_SP', 
-                           method='CEA', 
+                           method=thermo_method, 
                            thermo_kwargs={'elements':bleed_elements, 
                                           'spec':thermo_data})
             self.add_subsystem(f'{BN}_ideal', ideal,
@@ -555,7 +558,7 @@ class Turbine(om.Group):
 
         # Calculate real flow station properties before bleed air is added
         real_flow_b4bld = Thermo(mode='total_hP', fl_name="Fl_O_b4bld:tot",
-                                 method='CEA', 
+                                 method=thermo_method, 
                                  thermo_kwargs={'elements':elements, 
                                                 'spec':thermo_data})
         self.add_subsystem('real_flow_b4bld', real_flow_b4bld,
@@ -571,7 +574,7 @@ class Turbine(om.Group):
 
         # Calculate real flow station properties
         real_flow = Thermo(mode='total_hP', fl_name="Fl_O:tot",
-                                 method='CEA', 
+                                 method=thermo_method, 
                                  thermo_kwargs={'elements':elements, 
                                                 'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
@@ -585,7 +588,7 @@ class Turbine(om.Group):
             if designFlag:
                 #   SetStaticMN
                 out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat",
-                                 method='CEA', 
+                                 method=thermo_method, 
                                  thermo_kwargs={'elements':elements, 
                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
@@ -601,7 +604,7 @@ class Turbine(om.Group):
             else:
                 #   SetStaticArea
                 out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat",
-                                 method='CEA', 
+                                 method=thermo_method, 
                                  thermo_kwargs={'elements':elements, 
                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,

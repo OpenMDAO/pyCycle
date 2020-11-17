@@ -182,6 +182,8 @@ class Row(om.Group):
         self.options.declare('T_metal', types=float, default=2460., desc='safety factor applied') # units=degR
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
 
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)
         # self.options.declare('main_flow_elements', default=AIR_FUEL_ELEMENTS,
@@ -190,6 +192,8 @@ class Row(om.Group):
         #                       desc='set of elements present in the flow')
 
     def setup(self):
+
+        thermo_method = self.options['thermo_method']
 
         self.add_subsystem('cooling_calcs', CoolingCalcs(n_stages=self.options['n_stages'],
                                                          i_row=self.options['i_row'],
@@ -221,7 +225,7 @@ class Row(om.Group):
 
 
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':AIR_FUEL_ELEMENTS, 
                                            'spec':self.options['thermo_data']})
         self.add_subsystem('mixed_flow', mixed_flow,

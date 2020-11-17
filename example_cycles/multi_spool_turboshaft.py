@@ -8,10 +8,9 @@ import pycycle.api as pyc
 class MultiSpoolTurboshaft(pyc.Cycle):
 
     def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('maxiter', default=10,
                               desc='Maximum number of Newton solver iterations.')
+        super().initialize()
 
     def setup(self):
 
@@ -201,7 +200,7 @@ class MPMultiSpool(pyc.MPCycle):
 
     def setup(self):
 
-        self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft())
+        self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.4),
         self.set_input_defaults('DESIGN.duct1.MN', 0.4),
@@ -249,7 +248,7 @@ class MPMultiSpool(pyc.MPCycle):
         self.od_MNs = [.5,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, maxiter=10))
+            self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, thermo_method='CEA', maxiter=10))
 
             self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_pwrs[i], units='hp')
             self.set_input_defaults(pt+'.LP_Nmech', self.od_Nmechs[i], units='rpm')

@@ -5,9 +5,6 @@ import pycycle.api as pyc
 
 class WetPropulsor(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', types=bool, default=True)
-
     def setup(self):
 
         thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
@@ -97,7 +94,7 @@ class MPWetPropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        design = self.pyc_add_pnt('design', WetPropulsor(design=True))
+        design = self.pyc_add_pnt('design', WetPropulsor(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('design.fc.alt', 10000., units="m")
         self.set_input_defaults('design.fc.MN', .72)
@@ -112,7 +109,7 @@ class MPWetPropulsor(pyc.MPCycle):
         self.od_WARs = [.001,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt('off_design', WetPropulsor(design=False))
+            self.pyc_add_pnt('off_design', WetPropulsor(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='m')
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])

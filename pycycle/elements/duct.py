@@ -147,6 +147,8 @@ class Duct(om.Group):
     """
 
     def initialize(self):
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -166,6 +168,7 @@ class Duct(om.Group):
 
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         statics = self.options['statics']
@@ -198,7 +201,7 @@ class Duct(om.Group):
 
         # Total Calc
         real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                           method='CEA', 
+                           method=thermo_method, 
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         prom_in = [('composition', 'Fl_I:tot:composition')]
@@ -211,7 +214,7 @@ class Duct(om.Group):
             if design:
             #   Calculate static properties
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
@@ -229,7 +232,7 @@ class Duct(om.Group):
             else:
                 # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),

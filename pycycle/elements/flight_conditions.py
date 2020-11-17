@@ -10,6 +10,8 @@ class FlightConditions(om.Group):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -18,6 +20,7 @@ class FlightConditions(om.Group):
                               desc='If True, includes WAR calculation')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         use_WAR = self.options['use_WAR']
@@ -29,7 +32,8 @@ class FlightConditions(om.Group):
             proms = ['Fl_O:*', 'MN', 'W', 'WAR']
         else:
             proms = ['Fl_O:*', 'MN', 'W']
-        conv.add_subsystem('fs', FlowStart(thermo_data=thermo_data, 
+        conv.add_subsystem('fs', FlowStart(thermo_method=thermo_method,
+                                           thermo_data=thermo_data, 
                                            elements=elements, 
                                            use_WAR=use_WAR), 
                            promotes=proms)

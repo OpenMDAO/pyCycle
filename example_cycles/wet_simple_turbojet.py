@@ -7,10 +7,6 @@ import pycycle.api as pyc
 
 class WetTurbojet(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
         wet_thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
@@ -166,7 +162,7 @@ class MPWetTurbojet(pyc.MPCycle):
     def setup(self):
 
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', WetTurbojet())
+        self.pyc_add_pnt('DESIGN', WetTurbojet(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.fc.alt', 0.0, units='ft'),
         self.set_input_defaults('DESIGN.fc.MN', 0.000001),
@@ -188,7 +184,7 @@ class MPWetTurbojet(pyc.MPCycle):
         self.od_pwrs = [11000.0,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, WetTurbojet(design=False))
+            self.pyc_add_pnt(pt, WetTurbojet(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i]),
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft'),

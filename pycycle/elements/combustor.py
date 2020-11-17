@@ -57,6 +57,8 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('inflow_thermo_data', default=None,
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
@@ -73,6 +75,7 @@ class Combustor(om.Group):
                              desc='Type of fuel.')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         if self.options['inflow_thermo_data'] is not None:
             # Set the inflow thermodynamic data package if it is different from the outflow one
@@ -106,7 +109,7 @@ class Combustor(om.Group):
 
         # Calculate vitiated flow station properties
         vit_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                          method='CEA', 
+                          method=thermo_method, 
                           thermo_kwargs={'elements':air_fuel_elements, 
                                          'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
@@ -119,7 +122,7 @@ class Combustor(om.Group):
                 # Calculate static properties.
 
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':air_fuel_elements, 
                                                  'spec':thermo_data})
                 prom_in = ['MN']
@@ -137,7 +140,7 @@ class Combustor(om.Group):
             else:
                 # Calculate static properties.
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':air_fuel_elements, 
                                                  'spec':thermo_data})
                 prom_in = ['area']

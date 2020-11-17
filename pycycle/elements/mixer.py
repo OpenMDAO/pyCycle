@@ -138,6 +138,8 @@ class Mixer(om.Group):
 
     def initialize(self):
 
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=janaf,
                               desc='thmodynamic data set', recordable=False)
         self.options.declare('Fl_I1_elements', default=AIR_FUEL_ELEMENTS,
@@ -153,7 +155,8 @@ class Mixer(om.Group):
 
 
     def setup(self):
-
+        
+        thermo_method = self.options['thermo_method']
         design = self.options['design']
         thermo_data = self.options['thermo_data']
 
@@ -170,7 +173,7 @@ class Mixer(om.Group):
             # internal flow station to compute the area that is needed to match the static pressures
             if self.options['designed_stream'] == 1:
                 Fl1_stat = Thermo(mode='static_Ps', fl_name="Fl_I1_calc:stat", 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':flow1_elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
@@ -184,7 +187,7 @@ class Mixer(om.Group):
 
             else:
                 Fl2_stat = Thermo(mode='static_Ps', fl_name="Fl_I2_calc:stat", 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':flow2_elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
@@ -199,7 +202,7 @@ class Mixer(om.Group):
         else:
             if self.options['designed_stream'] == 1:
                 Fl1_stat = Thermo(mode='static_A', fl_name="Fl_I1_calc:stat", 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':flow1_elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
@@ -210,7 +213,7 @@ class Mixer(om.Group):
 
             else:
                 Fl2_stat = Thermo(mode='static_A', fl_name="Fl_I2_calc:stat", 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':flow2_elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
@@ -257,7 +260,7 @@ class Mixer(om.Group):
             conv.linear_solver = om.DirectSolver(assemble_jac=True)
 
         out_tot = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                         method='CEA', 
+                         method=thermo_method, 
                          thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
                                         'spec':thermo_data})
         conv.add_subsystem('out_tot', out_tot, promotes_outputs=['Fl_O:tot:*'])
@@ -266,7 +269,7 @@ class Mixer(om.Group):
         # note: gets Pt from the balance comp
 
         out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                          method='CEA', 
+                          method=thermo_method, 
                           thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
                                          'spec':thermo_data})
         conv.add_subsystem('out_stat', out_stat, promotes_outputs=['Fl_O:stat:*'], promotes_inputs=['area', ])

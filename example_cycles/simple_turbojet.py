@@ -7,10 +7,6 @@ import pycycle.api as pyc
 
 class Turbojet(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
         thermo_spec = pyc.species_data.janaf
@@ -161,7 +157,7 @@ class MPTurbojet(pyc.MPCycle):
     def setup(self):
 
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', Turbojet())
+        self.pyc_add_pnt('DESIGN', Turbojet(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm')
         self.set_input_defaults('DESIGN.inlet.MN', 0.60)
