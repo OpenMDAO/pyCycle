@@ -8,10 +8,6 @@ import pycycle.api as pyc
 
 class MixedFlowTurbofan(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-            desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
@@ -224,7 +220,7 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
 
     def setup(self):
 
-        self.pyc_add_pnt('DESIGN', MixedFlowTurbofan(design=True))
+        self.pyc_add_pnt('DESIGN', MixedFlowTurbofan(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.balance.rhs:BPR', 1.05 ,units=None) # defined as 1 over 2
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
@@ -274,7 +270,7 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
         self.od_MNs = [0.8, ]
 
         for i,pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, MixedFlowTurbofan(design=False))
+            self.pyc_add_pnt(pt, MixedFlowTurbofan(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.balance.rhs:FAR_core', self.od_T4s[i], units='degR')
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')

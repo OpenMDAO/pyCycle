@@ -11,7 +11,8 @@ from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
 class FlowStart(Group):
 
     def initialize(self):
-
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -21,6 +22,7 @@ class FlowStart(Group):
                               desc='If True, includes WAR calculation')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         use_WAR = self.options['use_WAR']
@@ -41,7 +43,7 @@ class FlowStart(Group):
         
 
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
-                        method='CEA', 
+                        method=thermo_method, 
                         thermo_kwargs={'elements':elements, 
                                        'spec':thermo_data})
 
@@ -51,7 +53,7 @@ class FlowStart(Group):
                            promotes_outputs=('Fl_O:tot:*',))
 
         set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                             method='CEA', 
+                             method=thermo_method, 
                              thermo_kwargs={'elements':elements, 
                                             'spec':thermo_data} )
 

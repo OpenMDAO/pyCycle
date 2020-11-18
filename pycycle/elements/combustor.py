@@ -57,6 +57,13 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
+<<<<<<< HEAD
+=======
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
+        self.options.declare('inflow_thermo_data', default=None,
+                             desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
+>>>>>>> 2b7f9c2a60c6d93d5e561c71b27e75566b3baef0
         self.options.declare('thermo_data', default=janaf,
                              desc='Thermodynamic data set for the flow', recordable=False)
         self.options.declare('inflow_elements', default=AIR_ELEMENTS,
@@ -71,6 +78,7 @@ class Combustor(om.Group):
                              desc='Type of fuel.')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
 
         inflow_elements = self.options['inflow_elements']
@@ -97,7 +105,7 @@ class Combustor(om.Group):
 
         # Calculate vitiated flow station properties
         vit_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                          method='CEA', 
+                          method=thermo_method, 
                           thermo_kwargs={'elements':air_fuel_elements, 
                                          'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
@@ -110,7 +118,7 @@ class Combustor(om.Group):
                 # Calculate static properties.
 
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':air_fuel_elements, 
                                                  'spec':thermo_data})
                 prom_in = ['MN']
@@ -128,7 +136,7 @@ class Combustor(om.Group):
             else:
                 # Calculate static properties.
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':air_fuel_elements, 
                                                  'spec':thermo_data})
                 prom_in = ['area']

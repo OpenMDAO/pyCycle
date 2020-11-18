@@ -387,6 +387,8 @@ class Compressor(om.Group):
     def initialize(self):
         self.options.declare('map_data', default=NCP01,
                               desc='data container for raw compressor map data')
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -427,6 +429,7 @@ class Compressor(om.Group):
         # self.nonlinear_solver = Newton()
         # self.nonlinear_solver.options['utol'] = 1e-9
 
+        thermo_method = self.options['thermo_method']
         design = self.options['design']
         bleeds = self.options['bleed_names']
         thermo_data = self.options['thermo_data']
@@ -457,7 +460,7 @@ class Compressor(om.Group):
 
         # Calculate ideal flow station properties
         ideal_flow = Thermo(mode='total_SP', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':elements, 
                                            'spec':thermo_data})
         self.add_subsystem('ideal_flow', ideal_flow,
@@ -472,7 +475,7 @@ class Compressor(om.Group):
 
         # Calculate real flow station properties
         real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
@@ -511,7 +514,7 @@ class Compressor(om.Group):
 
             bleed_names.append(BN + '_flow')
             bleed_flow = Thermo(mode='total_hP', fl_name=BN + ":tot", 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
             self.add_subsystem(BN + '_flow', bleed_flow,
@@ -526,7 +529,7 @@ class Compressor(om.Group):
             if design:
                 #   Calculate static properties
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
@@ -541,7 +544,7 @@ class Compressor(om.Group):
 
             else:  # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,

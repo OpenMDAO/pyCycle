@@ -5,9 +5,6 @@ import pycycle.api as pyc
 
 class Propulsor(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', types=bool, default=True)
-
     def setup(self):
 
         thermo_spec = pyc.species_data.janaf
@@ -106,7 +103,7 @@ class MPpropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        design = self.pyc_add_pnt('design', Propulsor(design=True))
+        design = self.pyc_add_pnt('design', Propulsor(design=True, thermo_method='CEA'))
         self.pyc_add_cycle_param('pwr_target', 100.)
 
         # define the off-design conditions we want to run
@@ -116,7 +113,7 @@ class MPpropulsor(pyc.MPCycle):
         self.od_Rlines = [2.2,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, Propulsor(design=False))
+            self.pyc_add_pnt(pt, Propulsor(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
             self.set_input_defaults(pt+'.fc.alt', val=self.od_alts, units='m') 

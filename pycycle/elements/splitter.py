@@ -83,6 +83,8 @@ class Splitter(om.Group):
     """
 
     def initialize(self):
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
@@ -94,6 +96,7 @@ class Splitter(om.Group):
 
     def setup(self):
 
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         statics = self.options['statics']
@@ -110,7 +113,7 @@ class Splitter(om.Group):
 
         # Set Fl_out1 totals based on T, P
         real_flow1 = Thermo(mode='total_TP', fl_name='Fl_O1:tot', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow1', real_flow1,
@@ -121,7 +124,7 @@ class Splitter(om.Group):
 
         # Set Fl_out2 totals based on T, P
         real_flow2 = Thermo(mode='total_TP', fl_name='Fl_O2:tot', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('composition', 'Fl_I:tot:composition'),
@@ -133,7 +136,7 @@ class Splitter(om.Group):
             if design:
             #   Calculate static properties
                 out1_stat = Thermo(mode='static_MN', fl_name='Fl_O1:stat', 
-                                   method='CEA', 
+                                   method=thermo_method, 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
@@ -148,7 +151,7 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = Thermo(mode='static_MN', fl_name='Fl_O2:stat', 
-                                   method='CEA', 
+                                   method=thermo_method, 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
@@ -165,7 +168,7 @@ class Splitter(om.Group):
             else:
                 # Calculate static properties
                 out1_stat = Thermo(mode='static_A', fl_name='Fl_O1:stat', 
-                                   method='CEA', 
+                                   method=thermo_method, 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
@@ -180,7 +183,7 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = Thermo(mode='static_A', fl_name='Fl_O2:stat', 
-                                   method='CEA', 
+                                   method=thermo_method, 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),

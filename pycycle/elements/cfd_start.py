@@ -8,17 +8,20 @@ from pycycle.elements.flow_start import FlowStart
 class CFDStart(om.Group):
 
     def initialize(self):
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
                              desc='set of elements present in the flow')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
 
-        self.add_subsystem('fs', FlowStart(thermo_data=thermo_data, elements=elements), promotes_outputs=['Fl_O:*'],
-                           promotes_inputs=['W'])
+        self.add_subsystem('fs', FlowStart(thermo_method=thermo_method,thermo_data=thermo_data, 
+                           elements=elements), promotes_outputs=['Fl_O:*'],promotes_inputs=['W'])
 
         balance = om.BalanceComp()
         balance.add_balance('P', val=10., units='psi', eq_units='psi', lhs_name='Ps_computed', rhs_name='Ps',

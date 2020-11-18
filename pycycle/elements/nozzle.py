@@ -306,6 +306,8 @@ class Nozzle(om.Group):
                               desc='Nozzle type: CD, CV, or CD_CV.')
         self.options.declare('lossCoef', default='Cv',
                               desc='If set to "Cfg", then Gross Thrust Coefficient is an input.')
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_FUEL_ELEMENTS,
@@ -313,6 +315,7 @@ class Nozzle(om.Group):
         self.options.declare('internal_solver', default=False)
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
         nozzType = self.options['nozzType']
@@ -342,7 +345,7 @@ class Nozzle(om.Group):
 
         # Calculate throat total flow properties
         throat_total = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                              method='CEA', 
+                              method=thermo_method, 
                               thermo_kwargs={'elements':elements, 
                                              'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
@@ -353,7 +356,7 @@ class Nozzle(om.Group):
 
         # Calculate static properties for sonic flow
         throat_static_MN = Thermo(mode='static_MN', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
@@ -369,7 +372,7 @@ class Nozzle(om.Group):
 
         # Calculate static properties based on exit static pressure
         throat_static_Ps = Thermo(mode='static_Ps', 
-                                  method='CEA', 
+                                  method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
@@ -384,7 +387,7 @@ class Nozzle(om.Group):
 
         # Calculate ideal exit flow properties
         ideal_flow = Thermo(mode='static_Ps', 
-                            method='CEA', 
+                            method=thermo_method, 
                             thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),

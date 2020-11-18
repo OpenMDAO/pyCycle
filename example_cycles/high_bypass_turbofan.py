@@ -11,10 +11,8 @@ class HBTF(pyc.Cycle):
 
     def initialize(self):
         # Initialize the model here by setting option variables such as a switch for design vs off-des cases
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
         self.options.declare('throttle_mode', default='T4', values=['T4', 'percent_thrust'])
+        super().initialize()
 
         super().initialize()
 
@@ -288,7 +286,7 @@ class MPhbtf(pyc.MPCycle):
 
     def setup(self):
 
-        self.pyc_add_pnt('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
+        self.pyc_add_pnt('DESIGN', HBTF(thermo_method='CEA')) # Create an instace of the High Bypass ratio Turbofan
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
         self.set_input_defaults('DESIGN.fan.MN', 0.4578)
@@ -346,13 +344,13 @@ class MPhbtf(pyc.MPCycle):
         self.od_Fn_target = [5500.0, 5300]
         self.od_dTs = [0.0, 0.0]
 
-        self.pyc_add_pnt('OD_full_pwr', HBTF(design=False, throttle_mode='T4'))
+        self.pyc_add_pnt('OD_full_pwr', HBTF(design=False, thermo_method='CEA', throttle_mode='T4'))
 
         self.set_input_defaults('OD_full_pwr.fc.MN', 0.8)
         self.set_input_defaults('OD_full_pwr.fc.alt', 35000, units='ft')
         self.set_input_defaults('OD_full_pwr.fc.dTs', 0., units='degR')
 
-        self.pyc_add_pnt('OD_part_pwr', HBTF(design=False, throttle_mode='percent_thrust'))
+        self.pyc_add_pnt('OD_part_pwr', HBTF(design=False, thermo_method='CEA', throttle_mode='percent_thrust'))
 
         self.set_input_defaults('OD_part_pwr.fc.MN', 0.8)
         self.set_input_defaults('OD_part_pwr.fc.alt', 35000, units='ft')

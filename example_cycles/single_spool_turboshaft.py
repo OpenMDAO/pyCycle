@@ -6,10 +6,6 @@ import pycycle.api as pyc
 
 class SingleSpoolTurboshaft(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
         thermo_spec = pyc.species_data.janaf
@@ -166,7 +162,7 @@ class MPSingleSpool(pyc.MPCycle):
     def setup(self):
 
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft())
+        self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.HP_Nmech', 8070.0, units='rpm')
         self.set_input_defaults('DESIGN.LP_Nmech', 5000.0, units='rpm')
@@ -185,7 +181,7 @@ class MPSingleSpool(pyc.MPCycle):
         self.od_nmechs =[5000., 5000.]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, SingleSpoolTurboshaft(design=False))
+            self.pyc_add_pnt(pt, SingleSpoolTurboshaft(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
