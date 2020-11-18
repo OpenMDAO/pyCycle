@@ -15,6 +15,8 @@ class Cycle(om.Group):
         self.options.declare('thermo_method', values=('CEA',), default='CEA',
                               desc='Method for computing thermodynamic properties')
 
+        self._elements = set()
+
     def pyc_add_element(self, name, element,**kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 

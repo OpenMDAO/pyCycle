@@ -1,8 +1,7 @@
 import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
-from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.thermo_add import ThermoAdd
+from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.flow_in import FlowIn
@@ -205,19 +204,20 @@ class Row(om.Group):
         consts = self.add_subsystem('consts', om.IndepVarComp()) # values that should not be changed ever
         consts.add_output('bld_frac_P', val=1)
 
-        # self.add_subsystem('mix_n', Bleeds(thermo_data=self.options['thermo_data'],
-        #                                    main_flow_elements=AIR_FUEL_ELEMENTS,
-        #                                    bld_flow_elements=AIR_ELEMENTS,
-        #                                    bleed_names=['cool']
-        #                                   ),
-        #                   promotes_inputs=['Pt_in', 'Pt_out', ('W_in','W_primary'), ('n_in', 'n_primary'), ('cool:n', 'n_cool')],
-        #                   promotes_outputs=['W_out'])
+        # self.add_subsystem('mix_n', ThermoAdd(thermo_data=self.options['thermo_data'], 
+        #                                      inflow_elements=AIR_FUEL_ELEMENTS, 
+        #                                      mix_mode='flow',
+        #                                      mix_elements=AIR_ELEMENTS, 
+        #                                      mix_names='cool'),
+        #                    promotes_inputs=[('Fl_I:stat:W','W_primary'), 
+        #                                     ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
+        #                    promotes_outputs=[('Wout','W_out'),]
+        #                    )
 
-        self.add_subsystem('mix_n', ThermoAdd(thermo_data=self.options['thermo_data'], 
-                                             inflow_elements=AIR_FUEL_ELEMENTS, 
-                                             mix_mode='flow',
-                                             mix_elements=AIR_ELEMENTS, 
-                                             mix_names='cool'),
+        self.add_subsystem('mix_n', ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
+                                              thermo_kwargs={'spec':self.options['thermo_data'], 
+                                                             'inflow_elements':AIR_FUEL_ELEMENTS, 
+                                                             'mix_elements':AIR_ELEMENTS,}),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
                                             ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
                            promotes_outputs=[('Wout','W_out'),]

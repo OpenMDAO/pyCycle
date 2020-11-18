@@ -4,7 +4,8 @@ from pycycle.thermo.static_ps_calc import PsCalc
 from pycycle.thermo.static_ps_resid import PsResid
 from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
 
-from pycycle.thermo.cea import chem_eq
+from pycycle.thermo.cea import chem_eq as cea_thermo
+from pycycle.thermo.cea import thermo_add as cea_thermo_add
 
 
 class Thermo(om.Group):
@@ -39,7 +40,7 @@ class Thermo(om.Group):
         # Instantiate components based on method for calculating the thermo properties.
         # All these components should compute the properties in a TP mode.
         if method == 'CEA':
-            base_thermo = chem_eq.SetTotalTP(**thermo_kwargs)
+            base_thermo = cea_thermo.SetTotalTP(**thermo_kwargs)
 
         # elif method == 'Ideal':
         #     # base_thermo = IdealThermo(thermo_data=xx)
@@ -175,4 +176,32 @@ class Thermo(om.Group):
         
         if 'static' in mode: 
             self.flow_static.setup_io()
+
+
+class ThermoAdd(om.Group): 
+
+    def initialize(self):
+        self.options.declare('method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
+
+        self.options.declare('thermo_kwargs', default={},
+                             desc='Defines the thermodynamic data to be used in computations', recordable=False)
+
+        self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
+
+        self.options.declare('mix_names', default='mix', types=(str, list, tuple))
+
+    def setup(self): 
+
+        method = self.options['method']
+        mix_mode = self.options['mix_mode']
+        mix_names = self.options['mix_names']
+        thermo_kwargs = self.options['thermo_kwargs']
+
+        if method == 'CEA': 
+
+            self.add_subsystem('thermo_add', cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs), promotes=['*'])
+
+
+
 

@@ -6,8 +6,7 @@ import openmdao.api as om
 
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
-from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.thermo_add import ThermoAdd
+from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.thermo.cea.species_data import Properties, janaf
 
@@ -57,13 +56,11 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
-<<<<<<< HEAD
-=======
+
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
                               desc='Method for computing thermodynamic properties')
         self.options.declare('inflow_thermo_data', default=None,
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
->>>>>>> 2b7f9c2a60c6d93d5e561c71b27e75566b3baef0
         self.options.declare('thermo_data', default=janaf,
                              desc='Thermodynamic data set for the flow', recordable=False)
         self.options.declare('inflow_elements', default=AIR_ELEMENTS,
@@ -93,11 +90,13 @@ class Combustor(om.Group):
         in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
-        # Perform combustor engineering calculations
         self.add_subsystem('mix_fuel',
-                           ThermoAdd(thermo_data=thermo_data,
-                                     inflow_elements=inflow_elements, mix_elements=fuel_type),
+                           ThermoAdd(method=thermo_method, mix_mode='reactant',
+                                     thermo_kwargs={'spec':thermo_data,
+                                                    'inflow_elements':inflow_elements, 
+                                                    'mix_elements':fuel_type}),
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
+
 
         # Pressure loss
         prom_in = [('Pt_in', 'Fl_I:tot:P'),'dPqP']
