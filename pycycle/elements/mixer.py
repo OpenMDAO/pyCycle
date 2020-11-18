@@ -226,11 +226,6 @@ class Mixer(om.Group):
                             promotes_inputs=[('Pt1', 'Fl_I1:tot:P'), ('Pt2', 'Fl_I2:tot:P')],
                             promotes_outputs=['ER'])
 
-        # self.add_subsystem('mix_flow', ThermoAdd(thermo_data=thermo_data, mix_mode='flow', mix_names='mix', 
-        #                                       inflow_elements=flow1_elements, mix_elements=flow2_elements),
-        #                   promotes_inputs=[('Fl_I:stat:W', 'Fl_I1:stat:W'), ('Fl_I:tot:composition', 'Fl_I1:tot:composition'), ('Fl_I:tot:h', 'Fl_I1:tot:h'), 
-        #                                    ('mix:W', 'Fl_I2:stat:W'), ('mix:composition', 'Fl_I2:tot:composition'), ('mix:h', 'Fl_I2:tot:h')])
-
         self.add_subsystem('mix_flow', ThermoAdd(method=thermo_method,  mix_mode='flow', mix_names='mix', 
                                                  thermo_kwargs={'spec':thermo_data,
                                                                 'inflow_elements':flow1_elements, 
