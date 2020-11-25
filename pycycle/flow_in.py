@@ -14,15 +14,9 @@ class FlowIn(om.ExplicitComponent):
     def initialize(self):
         self.options.declare('fl_name', default='flow',
                               desc='thermodynamic data set')
-        self.options.declare('num_prods', default=0,
-                              desc='concentrations of products in mixture')
-        self.options.declare('num_elements', default=0,
-                              desc='number of elements in the flow')
 
     def setup(self):
         fl_name = self.options['fl_name']
-        num_prods = self.options['num_prods']
-        num_elements = self.options['num_elements']
 
         self.add_output('foo', val=1.,
             desc="dummy output that is NOT used for anything other than to keep the framework happy. ")
@@ -35,10 +29,8 @@ class FlowIn(om.ExplicitComponent):
         self.add_input('%s:tot:Cp'%fl_name, val=1.0, desc='total Specific heat at constant pressure', units='Btu/(lbm*degR)')
         self.add_input('%s:tot:Cv'%fl_name, val=1.0, desc='total Specific heat at constant volume', units='Btu/(lbm*degR)')
         self.add_input('%s:tot:S'%fl_name, val=1.0, desc='total entropy', units='Btu/(lbm*degR)')
-        self.add_input('%s:tot:n'%fl_name, val=np.zeros(num_prods), desc='concentrations of products in mixture')
-        # self.add_input('%s:tot:n_moles'%fl_name, val=1.0, desc='moles/gram of gas')
         self.add_input('%s:tot:R'%fl_name, val=1.0, desc='total gas constant', units='Btu/(lbm*degR)')
-        self.add_input('%s:tot:b0'%fl_name, val=np.ones(num_elements)/(10*num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
+        self.add_input('%s:tot:composition'%fl_name, shape_by_conn=True, desc='flow composition vector')
 
         self.add_input('%s:stat:h'%fl_name, val=1.0, desc='static enthalpy', units='Btu/lbm')
         self.add_input('%s:stat:T'%fl_name, val=518., desc='static temperature', units='degR')
@@ -48,10 +40,8 @@ class FlowIn(om.ExplicitComponent):
         self.add_input('%s:stat:Cp'%fl_name, val=1.0, desc='static Specific heat at constant pressure', units='Btu/(lbm*degR)')
         self.add_input('%s:stat:Cv'%fl_name, val=1.0, desc='static Specific heat at constant volume', units='Btu/(lbm*degR)')
         self.add_input('%s:stat:S'%fl_name, val= 0.0, desc='static entropy', units='Btu/(lbm*degR)')
-        self.add_input('%s:stat:n'%fl_name, val=np.zeros(num_prods), desc='concentrations of products in mixture')
-        # self.add_input('%s:stat:n_moles'%fl_name, val=1.0, desc='moles/gram of gas')
         self.add_input('%s:stat:R'%fl_name, val=1.0, desc='static gas constant', units='Btu/(lbm*degR)')
-        self.add_input('%s:stat:b0'%fl_name, val=np.ones(num_elements)/(10*num_elements), desc='assigned kg-atoms of element i per total kg of reactant for the initial prod amounts')
+        self.add_input('%s:stat:composition'%fl_name, shape_by_conn=True, desc='flow composition vector')
 
         # TODO takes these out of static (keep them top level)
         self.add_input('%s:stat:V'%fl_name, val=1.0, desc='Velocity', units='ft/s')

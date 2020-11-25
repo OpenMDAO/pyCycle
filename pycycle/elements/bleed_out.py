@@ -105,13 +105,10 @@ class BleedOut(om.Group):
         design = self.options['design']
         bleeds = self.options['bleed_names']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        gas_prods = gas_thermo.products
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Bleed flow calculations
@@ -130,7 +127,7 @@ class BleedOut(om.Group):
                                 thermo_kwargs={'elements':elements, 
                                                'spec':thermo_data})
             self.add_subsystem(BN+'_flow', bleed_flow,
-                               promotes_inputs=[('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
+                               promotes_inputs=[('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
 
         # Total Calc
@@ -138,7 +135,7 @@ class BleedOut(om.Group):
                            method='CEA', 
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
-        prom_in = [('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
+        prom_in = [('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
 
@@ -149,7 +146,7 @@ class BleedOut(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -167,7 +164,7 @@ class BleedOut(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -181,10 +178,6 @@ class BleedOut(om.Group):
         else:
             self.add_subsystem('W_passthru', PassThrough('W_out', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
-
-        self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
-
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
 
 
 if __name__ == "__main__":

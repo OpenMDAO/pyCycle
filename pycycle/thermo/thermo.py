@@ -48,7 +48,7 @@ class Thermo(om.Group):
         #     # base_thermo = TabularThermo(thermo_data=xx)
         #     pass
 
-        in_vars = ('T', 'b0')
+        in_vars = ('T', 'composition')
         # TODO: remove 'n', 'n_moles' variable from flow station
         out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n', 'n_moles')
 
@@ -111,10 +111,10 @@ class Thermo(om.Group):
         # not a big deal right now though
         # Compute English units and promote outputs to the station name
 
-        in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'b0', 'R')
+        in_vars = ('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'composition', 'R')
         if 'static' in mode: 
         # need to redefine this so that P gets promoted as P. 
-            in_vars = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R')
+            in_vars = ('T', ('P', 'Ps'), 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R')
 
         fl_name = self.options['fl_name']
         # TODO: remove need for thermo specific data in the flow components
@@ -168,13 +168,11 @@ class Thermo(om.Group):
         ln_bt.options['iprint'] = -1
 
     def configure(self): 
-        b0 = self.base_thermo.b0
-        num_n = self.base_thermo.num_n
+        composition = self.base_thermo.composition
         mode = self.options['mode']
 
-        self.flow.setup_io(b0, num_n)
+        self.flow.setup_io(composition)
         
         if 'static' in mode: 
             self.flow_static.setup_io()
-
 

@@ -433,12 +433,10 @@ class Compressor(om.Group):
         elements = self.options['elements']
         statics = self.options['statics']
 
-        thermo = species_data.Properties(thermo_data, init_elements=elements)
-        num_prod = thermo.num_prod
-        num_element = thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -464,7 +462,7 @@ class Compressor(om.Group):
                                            'spec':thermo_data})
         self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=[('S', 'Fl_I:tot:S'),
-                                            ('b0', 'Fl_I:tot:b0')])
+                                            ('composition', 'Fl_I:tot:composition')])
         self.connect("press_rise.Pt_out", "ideal_flow.P")
 
         # Calculate enthalpy rise across compressor
@@ -479,7 +477,7 @@ class Compressor(om.Group):
                                                  'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[
-                               ('b0', 'Fl_I:tot:b0')],
+                               ('composition', 'Fl_I:tot:composition')],
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("enth_rise.ht_out", "real_flow.h")
         self.connect("press_rise.Pt_out", "real_flow.P")
@@ -518,13 +516,11 @@ class Compressor(om.Group):
                                                  'spec':thermo_data})
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
-                                   ('b0', 'Fl_I:tot:b0')],
+                                   ('composition', 'Fl_I:tot:composition')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
             self.connect(BN + ':ht', BN + "_flow.h")
             self.connect(BN + ':Pt', BN + "_flow.P")
 
-        self.add_subsystem('FAR_passthru', PassThrough(
-            'Fl_I:FAR', 'Fl_O:FAR', 1.0), promotes=['*'])
 
         if statics:
             if design:
@@ -535,7 +531,7 @@ class Compressor(om.Group):
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'MN', ('b0', 'Fl_I:tot:b0')],
+                                       'MN', ('composition', 'Fl_I:tot:composition')],
                                    promotes_outputs=['Fl_O:stat:*'])
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
@@ -550,7 +546,7 @@ class Compressor(om.Group):
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'area', ('b0', 'Fl_I:tot:b0')],
+                                       'area', ('composition', 'Fl_I:tot:composition')],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
@@ -561,8 +557,8 @@ class Compressor(om.Group):
 
             self.set_order(['flow_in', 'corrinputs', 'map',
                             'press_rise','ideal_flow', 'enth_rise',
-                            'real_flow','eff_poly_calc' ,'blds_pwr',
-                            'FAR_passthru'] + bleed_names + ['out_stat'])
+                            'real_flow','eff_poly_calc' ,'blds_pwr',] 
+                            + bleed_names + ['out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough('W_out',
@@ -572,8 +568,8 @@ class Compressor(om.Group):
                                promotes=['*'])
             self.set_order(['flow_in', 'corrinputs', 'map',
                             'press_rise','ideal_flow', 'enth_rise',
-                            'real_flow','eff_poly_calc' , 'blds_pwr',
-                            'FAR_passthru'] + bleed_names + ['W_passthru'])
+                            'real_flow','eff_poly_calc' , 'blds_pwr'] 
+                            + bleed_names + ['W_passthru'])
 
 
         # define the group level defaults

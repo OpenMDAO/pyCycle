@@ -3,10 +3,10 @@ import unittest
 import os
 
 from openmdao.api import Problem
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
-
+from pycycle.mp_cycle import Cycle
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
@@ -16,31 +16,30 @@ from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.axi5 import AXI5
 from pycycle import constants
 
-from pycycle.elements.test.util import check_element_partials
-
 
 class CompressorODTestCase(unittest.TestCase):
 
     def setUp(self):
 
         self.prob = Problem()
+        cycle = self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('compressor', Compressor(
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.add_subsystem('compressor', Compressor(
                 map_data=AXI5, design=False, elements=AIR_ELEMENTS, map_extrap=False))
 
-        self.prob.model.set_input_defaults('compressor.s_PR', val=1.)
-        self.prob.model.set_input_defaults('compressor.s_eff', val=1.)
-        self.prob.model.set_input_defaults('compressor.s_Wc', val=1.)
-        self.prob.model.set_input_defaults('compressor.s_Nc', val=1.)
-        self.prob.model.set_input_defaults('compressor.map.alphaMap', val=0.)
-        self.prob.model.set_input_defaults('compressor.Nmech', 0., units='rpm')
-        self.prob.model.set_input_defaults('flow_start.P', 17., units='psi')
-        self.prob.model.set_input_defaults('flow_start.T', 500., units='degR')
-        self.prob.model.set_input_defaults('flow_start.W', 0., units='lbm/s')
-        self.prob.model.set_input_defaults('compressor.area', 50., units='inch**2')
+        cycle.set_input_defaults('compressor.s_PR', val=1.)
+        cycle.set_input_defaults('compressor.s_eff', val=1.)
+        cycle.set_input_defaults('compressor.s_Wc', val=1.)
+        cycle.set_input_defaults('compressor.s_Nc', val=1.)
+        cycle.set_input_defaults('compressor.map.alphaMap', val=0.)
+        cycle.set_input_defaults('compressor.Nmech', 0., units='rpm')
+        cycle.set_input_defaults('flow_start.P', 17., units='psi')
+        cycle.set_input_defaults('flow_start.T', 500., units='degR')
+        cycle.set_input_defaults('flow_start.W', 0., units='lbm/s')
+        cycle.set_input_defaults('compressor.area', 50., units='inch**2')
 
-        connect_flow(self.prob.model, "flow_start.Fl_O", "compressor.Fl_I")
+        cycle.pyc_connect_flow("flow_start.Fl_O", "compressor.Fl_I")
 
         newton = self.prob.model.nonlinear_solver = NewtonSolver()
         newton.options['atol'] = 1e-8
@@ -57,7 +56,7 @@ class CompressorODTestCase(unittest.TestCase):
 
 
         self.prob.set_solver_print(level=-1)
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
 
     def test_case1(self):
         np.seterr(divide='raise')
@@ -201,7 +200,8 @@ class CompressorODTestCase(unittest.TestCase):
                 assert_near_equal(pyc, npss, tol)
                 print()
 
-                check_element_partials(self, self.prob,tol = 5e-5)
-
+                partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['compressor.*'], excludes=['*.base_thermo.*',])
+                assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 if __name__ == "__main__":
     unittest.main()

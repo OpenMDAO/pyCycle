@@ -5,15 +5,13 @@ import os
 
 import numpy as np
 
-from openmdao.api import Problem, Group
+from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea import species_data
 from pycycle.elements.combustor import Combustor
-
-from pycycle.elements.test.util import check_element_partials
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -34,9 +32,9 @@ class BurnerTestCase(unittest.TestCase):
         prob = Problem()
         model = prob.model 
 
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
+
+        model.add_subsystem('ivc', IndepVarComp('in_composition', [3.23319235e-04, 1.10132233e-05, 
+                                                     5.39157698e-02, 1.44860137e-02]))
 
         model.add_subsystem('combustor', Combustor(), promotes=["*"])
         model.set_input_defaults('Fl_I:tot:P', 100.0, units='lbf/inch**2')
@@ -44,11 +42,14 @@ class BurnerTestCase(unittest.TestCase):
         model.set_input_defaults('Fl_I:stat:W', 100.0, units='lbm/s')
         model.set_input_defaults('Fl_I:FAR', 0.0)
         model.set_input_defaults('MN', 0.5)
-        model.set_input_defaults('Fl_I:tot:b0', val=[3.23319235e-04, 1.10132233e-05, 
-                                                     5.39157698e-02, 1.44860137e-02])
+
+
+        # needed because composition is sized by connection
+        model.connect('ivc.in_composition', ['Fl_I:tot:composition', 'Fl_I:stat:composition', ])
+
 
         prob.set_solver_print(level=2)
-        prob.setup(check=False)
+        prob.setup(check=False, force_alloc_complex=True)
 
         # 6 cases to check against
         for i, data in enumerate(ref_data):
@@ -64,7 +65,7 @@ class BurnerTestCase(unittest.TestCase):
 
             prob.model.combustor.mix_fuel.list_inputs(print_arrays=True)
             prob.model.combustor.mix_fuel.list_outputs(print_arrays=True)
-            # print(prob['Fl_I:tot:b0'])
+            # print(prob['Fl_I:tot:composition'])
             # print(prob['Fl_I:tot:n'])
             # print(prob['Fl_I:tot:h'])
             # print(prob['Fl_I:tot:P'])
@@ -111,7 +112,10 @@ class BurnerTestCase(unittest.TestCase):
 
             print('')
 
-            check_element_partials(self, prob, tol=1e-4)
+            partial_data = prob.check_partials(out_stream=None, method='cs', 
+                                               includes=['combustor.*',], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+
 
 if __name__ == "__main__":
     unittest.main()

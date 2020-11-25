@@ -23,7 +23,7 @@ class PropsRHS(ExplicitComponent):
                        desc="molar concentration of the mixtures, last element is "
                        "the total molar concentration")  # kg-mol/kg
         self.add_input('n_moles', val=1., desc="1/molar_mass for gaseous mixture")
-        self.add_input('b0', val=thermo.b0,
+        self.add_input('composition', val=thermo.b0,
                        desc="assigned kg-atoms of element i per total kg of reactant")  # kg-atom/kg
 
         self.add_output('rhs_T', val=np.zeros(num_element+1),
@@ -48,7 +48,7 @@ class PropsRHS(ExplicitComponent):
 
         drhsP_db0 = np.zeros((num_element+1, num_element))
         np.fill_diagonal(drhsP_db0[:num_element, :num_element], 1)
-        self.declare_partials('rhs_P', 'b0', val=drhsP_db0)
+        self.declare_partials('rhs_P', 'composition', val=drhsP_db0)
 
         # JSG: The for loops are slow, but its ok because we only do them one time
         ne1 = num_element+1
@@ -68,7 +68,7 @@ class PropsRHS(ExplicitComponent):
             for j in range(num_element):
                     dlhs_db0[ne1*num_element+j, j] = 1
                     dlhs_db0[ne1*j+num_element, j] = 1
-        self.declare_partials('lhs_TP', 'b0', val=dlhs_db0)
+        self.declare_partials('lhs_TP', 'composition', val=dlhs_db0)
 
         self.declare_partials('rhs_T', 'T')
         self.declare_partials('rhs_T', 'n')
@@ -80,7 +80,7 @@ class PropsRHS(ExplicitComponent):
         num_element = thermo.num_element
         T = inputs['T']
         n = inputs['n']
-        b0 = inputs['b0']
+        b0 = inputs['composition']
 
         for i in range(num_element):
             # outputs['lhs_TP'][i][:num_element] = np.sum(thermo.aij_prod[i] * n, axis=1)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
     indeps.add_output('T', val=2761.56784655, units='degK')
     indeps.add_output('n', val=np.array([2.272e-02, 1.000e-10, 1.136e-02]))
-    indeps.add_output('b0', val=np.array([0.023, 0.045]))
+    indeps.add_output('composition', val=np.array([0.023, 0.045]))
     indeps.add_output('n_moles', val=0.0340831628675)
 
     props_rhs = p.model.add_subsystem('props_rhs', PropsRHS(thermo=thermo), promotes=["*"])

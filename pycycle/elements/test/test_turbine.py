@@ -6,16 +6,15 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
-
-from pycycle.elements.test.util import check_element_partials
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/turbine.csv", delimiter=",", skiprows=1)
@@ -50,7 +49,7 @@ class TurbineTestCase(unittest.TestCase):
     def setUp(self):
 
         self.prob = Problem()
-        self.prob.model = Group()
+        self.prob.model = Cycle()
 
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
         self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True,
@@ -65,9 +64,9 @@ class TurbineTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.W', 100.0, units='lbm/s')
         self.prob.model.set_input_defaults('turbine.eff', 0.9)
 
-        connect_flow(self.prob.model, 'flow_start.Fl_O', 'turbine.Fl_I')
+        self.prob.model.pyc_connect_flow('flow_start.Fl_O', 'turbine.Fl_I')
 
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)
 
     def test_case1(self):
@@ -168,7 +167,9 @@ class TurbineTestCase(unittest.TestCase):
             print('effPoly:', npss, pyc)
             assert_near_equal(npss, pyc, tol)
 
-            check_element_partials(self, self.prob, tol=1e-4)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['turbine.*'], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     np.seterr(divide='warn')

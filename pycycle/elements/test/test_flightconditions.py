@@ -3,12 +3,10 @@ import unittest
 import os
 
 import openmdao.api as om
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flight_conditions import FlightConditions
-
-from pycycle.elements.test.util import check_element_partials
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +29,7 @@ class FlightConditionsTestCase(unittest.TestCase):
 
         self.prob.model.add_subsystem('fc', FlightConditions())
 
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)
 
     def test_case1(self):
@@ -66,7 +64,9 @@ class FlightConditionsTestCase(unittest.TestCase):
             assert_near_equal(Tt_c, Tt, tol)
             assert_near_equal(Ps_c, Ps, tol)
 
-            check_element_partials(self, self.prob, depth=3)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['fc.*'], excludes=['*.base_thermo.*', 'fc.ambient.readAtmTable'])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()

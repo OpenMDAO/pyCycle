@@ -39,9 +39,11 @@ class Cycle(om.Group):
         helper function to connect all of the flow variables between two ports 
         """
 
+        # always connect compositions, because these are shape_by_conn=True
+        self.connect(f'{fl_src}:tot:composition', [f'{fl_target}:tot:composition', f'{fl_target}:stat:composition'])
         # total
         if connect_tot:
-            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv','n', 'R', 'b0'):
+            for v_name in ('h','T','P','S','rho','gamma','Cp','Cv', 'R'):
                 self.connect('%s:tot:%s'%(fl_src, v_name), '%s:tot:%s'%(fl_target, v_name))
 
         # static
@@ -49,7 +51,7 @@ class Cycle(om.Group):
             for v_name in ('V', 'Vsonic'):  # ('Wc', 'W', 'FAR'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
-            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'n', 'rho', 'b0'):
+            for v_name in ('Cp', 'Cv', 'MN', 'P', 'S', 'T', 'area', 'gamma', 'h', 'rho'):
                 self.connect('%s:stat:%s'%(fl_src, v_name), '%s:stat:%s'%(fl_target, v_name))
 
         if connect_w:

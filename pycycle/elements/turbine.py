@@ -7,13 +7,13 @@ import openmdao.api as om
 
 from pycycle.constants import BTU_s2HP, HP_per_RPM_to_FT_LBF, AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.thermo.thermo import Thermo
+from pycycle.thermo.cea.thermo_add import ThermoAdd
 from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 # from pycycle.components.compressor import Power
 
 from pycycle.elements.turbine_map import TurbineMap
-from pycycle.elements.mix_ratio import MixRatio
 from pycycle.maps.lpt2269 import LPT2269
 
 
@@ -457,19 +457,11 @@ class Turbine(om.Group):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        self.gas_prods = gas_thermo.products
-        self.num_prod = len(self.gas_prods)
-        num_element = gas_thermo.num_element
-
-        bld_thermo = species_data.Properties(
-            thermo_data, init_elements=bleed_elements)
-        self.bld_prods = bld_thermo.products
-        self.num_bld_prod = len(self.bld_prods)
-        num_bld_element = bld_thermo.num_element
+        num_element = len(elements)
+        num_bld_element = len(bleed_elements)
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_prod, num_elements=num_element)
+        in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -498,7 +490,7 @@ class Turbine(om.Group):
                             thermo_kwargs={'elements':elements, 
                                            'spec':thermo_data})
         self.add_subsystem('ideal_flow', ideal_flow,
-                           promotes_inputs=[('S', 'Fl_I:tot:S'), ('b0', 'Fl_I:tot:b0')])
+                           promotes_inputs=[('S', 'Fl_I:tot:S'), ('composition', 'Fl_I:tot:composition')])
         self.connect("press_drop.Pt_out", "ideal_flow.P")
 
         # # Calculate enthalpy drop across turbine
@@ -507,10 +499,9 @@ class Turbine(om.Group):
         # self.connect("ideal_flow.h", "enth_drop.ht_out_ideal")
 
         for BN in bleeds:
-            bld_flow = FlowIn(fl_name=BN, num_prods=self.num_bld_prod, num_elements=num_bld_element)
+            bld_flow = FlowIn(fl_name=BN)
             self.add_subsystem(BN, bld_flow, promotes_inputs=[
                                f'{BN}:*'])
-            self.set_input_defaults(f'{BN}:tot:b0', bld_thermo.b0)
 
         # # Calculate bleed parameters
         blds = BleedPressure(bleed_names=bleeds)
@@ -520,12 +511,12 @@ class Turbine(om.Group):
         self.connect('press_drop.Pt_out', 'blds.Pt_out')
 
         bleed_element_list = [bleed_elements for name in bleeds]
-        bld_mix = MixRatio(mix_thermo_data=thermo_data, inflow_elements=elements, 
+        bld_mix = ThermoAdd(mix_thermo_data=thermo_data, inflow_elements=elements, 
                            mix_elements=bleed_element_list, mix_names=bleeds, mix_mode='flow')
         self.add_subsystem('bld_mix', bld_mix, 
-                           promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:b0'] + 
+                           promotes_inputs=['Fl_I:stat:W', 'Fl_I:tot:composition'] + 
                                            [(f'{BN}:W', f'{BN}:stat:W') for BN in bleeds] + 
-                                           [(f'{BN}:b0', f'{BN}:tot:b0') for BN in bleeds], 
+                                           [(f'{BN}:composition', f'{BN}:tot:composition') for BN in bleeds], 
                            promotes_outputs=[('Wout', 'W_out')]
                            )
 
@@ -538,7 +529,7 @@ class Turbine(om.Group):
                             thermo_kwargs={'elements':bleed_elements, 
                                            'spec':thermo_data})
             self.add_subsystem(BN + '_inflow', inflow,
-                               promotes_inputs=[('b0', BN + ":tot:b0"), ('h', BN + ':tot:h')])
+                               promotes_inputs=[('composition', BN + ":tot:composition"), ('h', BN + ':tot:h')])
             self.connect( f'blds.{BN}:Pt', f'{BN}_inflow.P')
 
             # Ideally expand bleeds to exit pressure
@@ -548,7 +539,7 @@ class Turbine(om.Group):
                            thermo_kwargs={'elements':bleed_elements, 
                                           'spec':thermo_data})
             self.add_subsystem(f'{BN}_ideal', ideal,
-                               promotes_inputs=[('b0', BN + ":tot:b0")])
+                               promotes_inputs=[('composition', BN + ":tot:composition")])
             self.connect(f"{BN}_inflow.flow:S", f"{BN}_ideal.S")
             self.connect("press_drop.Pt_out", f"{BN}_ideal.P")
 
@@ -568,7 +559,7 @@ class Turbine(om.Group):
                                  thermo_kwargs={'elements':elements, 
                                                 'spec':thermo_data})
         self.add_subsystem('real_flow_b4bld', real_flow_b4bld,
-                           promotes_inputs=[('b0', 'Fl_I:tot:b0')])
+                           promotes_inputs=[('composition', 'Fl_I:tot:composition')])
         self.connect('ht_out_b4bld', 'real_flow_b4bld.h')
         self.connect('press_drop.Pt_out', 'real_flow_b4bld.P')
 
@@ -587,10 +578,7 @@ class Turbine(om.Group):
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("pwr_turb.ht_out", "real_flow.h")
         self.connect("press_drop.Pt_out", "real_flow.P")
-        self.connect("bld_mix.b0_out", "real_flow.b0")
-
-        self.add_subsystem('FAR_passthru', PassThrough(
-            'Fl_I:FAR', 'Fl_O:FAR', 1.0), promotes=['*'])
+        self.connect("bld_mix.composition_out", "real_flow.composition")
 
        # Calculate static properties
         if statics:
@@ -603,7 +591,7 @@ class Turbine(om.Group):
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
-                self.connect('bld_mix.b0_out', 'out_stat.b0')
+                self.connect('bld_mix.composition_out', 'out_stat.composition')
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('W_out', 'out_stat.W')
@@ -619,7 +607,7 @@ class Turbine(om.Group):
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['area'],
                                    promotes_outputs=['Fl_O:stat:*'])
-                self.connect('bld_mix.b0_out', 'out_stat.b0')
+                self.connect('bld_mix.composition_out', 'out_stat.composition')
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('W_out', 'out_stat.W')
@@ -627,17 +615,15 @@ class Turbine(om.Group):
                 self.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
             self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'FAR_passthru', 'out_stat'])
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc' ,'real_flow', 'out_stat'])
 
         else:
             self.add_subsystem('W_passthru', PassThrough(
                 'W_out', 'Fl_O:stat:W', 1.0, units="lbm/s"), promotes=['*'])
             self.set_order(['in_flow', 'corrinputs', 'map', 'press_drop', 'ideal_flow'] + bleeds + ['bld_mix', 'blds'] + bleed_names2 +
-                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'FAR_passthru', 'W_passthru'])
+                           ['pwr_turb','real_flow_b4bld', 'eff_poly_calc', 'real_flow', 'W_passthru'])
 
-        self.set_input_defaults('Fl_I:FAR', val=0., units=None)
         self.set_input_defaults('eff', val=0.99, units=None)
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
         # if not designFlag: 
         #     self.set_input_defaults('area', val=1, units='in**2')
 

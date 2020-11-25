@@ -318,16 +318,12 @@ class Nozzle(om.Group):
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        self.gas_prods = gas_thermo.products
-
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name="Fl_I", num_prods=num_prod, num_elements=num_element)
+        in_flow = FlowIn(fl_name="Fl_I")
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         # PR_bal = self.add_subsystem('PR_bal', BalanceComp())
@@ -350,7 +346,7 @@ class Nozzle(om.Group):
                               thermo_kwargs={'elements':elements, 
                                              'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
-                   ('b0', 'Fl_I:tot:b0')]
+                   ('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('throat_total', throat_total, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect('press_calcs.Pt_th', 'throat_total.P')
@@ -362,7 +358,7 @@ class Nozzle(om.Group):
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
-                   ('b0', 'Fl_I:tot:b0')]
+                   ('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('staticMN', throat_static_MN,
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticMN.S')
@@ -379,7 +375,7 @@ class Nozzle(om.Group):
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
-                   ('b0', 'Fl_I:tot:b0')]
+                   ('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('staticPs', throat_static_Ps,
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticPs.S')
@@ -395,7 +391,7 @@ class Nozzle(om.Group):
                    ('S', 'Fl_I:tot:S'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
-                   ('b0', 'Fl_I:tot:b0')]
+                   ('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=prom_in)
         # self.connect('press_calcs.Ps_calc', 'ideal_flow.Ps')
@@ -462,5 +458,3 @@ class Nozzle(om.Group):
 
             newton.linesearch.options['iprint'] = -1
             self.linear_solver = om.DirectSolver(assemble_jac=True)
-
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)

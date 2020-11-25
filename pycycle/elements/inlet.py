@@ -166,13 +166,10 @@ class Inlet(om.Group):
         design = self.options['design']
         MS = self.options['MilSpec']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        gas_prods = gas_thermo.products
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         self.add_subsystem('RamRecovery', RamRecovery(MilSpec=MS), promotes_inputs=['ram_recovery', ('MN_in', 'Fl_I:stat:MN')], promotes_outputs=['P_recovery'])
@@ -189,13 +186,11 @@ class Inlet(om.Group):
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
-                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('b0', 'Fl_I:tot:b0')],
+                           promotes_inputs=[('T', 'Fl_I:tot:T'), ('composition', 'Fl_I:tot:composition')],
                            promotes_outputs=['Fl_O:*'])
 
 
         self.connect("calcs_inlet.Pt_out", "real_flow.P")
-
-        self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
 
         if statics:
             if design:
@@ -206,7 +201,7 @@ class Inlet(om.Group):
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
-                                   promotes_inputs=[('b0', 'Fl_I:tot:b0'), ('W', 'Fl_I:stat:W'), 'MN'],
+                                   promotes_inputs=[('composition', 'Fl_I:tot:composition'), ('W', 'Fl_I:stat:W'), 'MN'],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
@@ -220,7 +215,7 @@ class Inlet(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
@@ -236,12 +231,7 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
-        # if not design: 
-        #     self.set_input_defaults('area', val=1, units='in**2') 
-
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
-
-
+    
 if __name__ == "__main__":
     from pycycle import constants
 

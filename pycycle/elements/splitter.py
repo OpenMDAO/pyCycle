@@ -99,12 +99,10 @@ class Splitter(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        thermo = species_data.Properties(thermo_data, init_elements=elements)
-        num_prod = thermo.num_prod
-        num_element = thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes_inputs=('Fl_I:*',))
 
         # Split the flows
@@ -116,7 +114,7 @@ class Splitter(om.Group):
                             thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow1', real_flow1,
-                           promotes_inputs=(('b0', 'Fl_I:tot:b0'),
+                           promotes_inputs=(('composition', 'Fl_I:tot:composition'),
                                             ('P', 'Fl_I:tot:P'),
                                             ('T', 'Fl_I:tot:T')),
                            promotes_outputs=('Fl_O1:tot:*', ))
@@ -126,7 +124,7 @@ class Splitter(om.Group):
                             method='CEA', 
                             thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
-        self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('b0', 'Fl_I:tot:b0'),
+        self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('composition', 'Fl_I:tot:composition'),
                                             ('P', 'Fl_I:tot:P'),
                                             ('T', 'Fl_I:tot:T')),
                            promotes_outputs=('Fl_O2:tot:*', ))
@@ -138,7 +136,7 @@ class Splitter(om.Group):
                                    method='CEA', 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN1')]
                 prom_out = ['Fl_O1:stat:*']
                 self.add_subsystem('out1_stat', out1_stat, promotes_inputs=prom_in,
@@ -153,7 +151,7 @@ class Splitter(om.Group):
                                    method='CEA', 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN2')]
                 prom_out = ['Fl_O2:stat:*']
                 self.add_subsystem('out2_stat', out2_stat, promotes_inputs=prom_in,
@@ -170,7 +168,7 @@ class Splitter(om.Group):
                                    method='CEA', 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area1')]
                 prom_out = ['Fl_O1:stat:*']
                 self.add_subsystem('out1_stat', out1_stat, promotes_inputs=prom_in,
@@ -185,7 +183,7 @@ class Splitter(om.Group):
                                    method='CEA', 
                                    thermo_kwargs={'elements':elements, 
                                                   'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area2')]
                 prom_out = ['Fl_O2:stat:*']
                 self.add_subsystem('out2_stat', out2_stat, promotes_inputs=prom_in,
@@ -203,8 +201,6 @@ class Splitter(om.Group):
                                promotes=['*'])
             self.connect('split_calc.W1', 'split_calc_W1')
             self.connect('split_calc.W2', 'split_calc_W2')
-
-        self.set_input_defaults('Fl_I:tot:b0', thermo.b0)
 
 
 if __name__ == "__main__":

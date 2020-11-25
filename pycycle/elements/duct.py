@@ -172,13 +172,10 @@ class Duct(om.Group):
         design = self.options['design']
         expMN = self.options['expMN']
 
-        gas_thermo = species_data.Properties(thermo_data, init_elements=elements)
-        gas_prods = gas_thermo.products
-        num_prod = gas_thermo.num_prod
-        num_element = gas_thermo.num_element
+        num_element = len(elements)
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_elements=num_element)
+        flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         if expMN > 1e-10: # Calcluate pressure losses as function of Mach number
@@ -204,7 +201,7 @@ class Duct(om.Group):
                            method='CEA', 
                            thermo_kwargs={'elements':elements, 
                                           'spec':thermo_data})
-        prom_in = [('b0', 'Fl_I:tot:b0')]
+        prom_in = [('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect("q_calc.ht_out", "real_flow.h")
@@ -217,7 +214,7 @@ class Duct(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
@@ -235,7 +232,7 @@ class Duct(om.Group):
                                   method='CEA', 
                                   thermo_kwargs={'elements':elements, 
                                                  'spec':thermo_data})
-                prom_in = [('b0', 'Fl_I:tot:b0'),
+                prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
@@ -250,12 +247,6 @@ class Duct(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
-        self.add_subsystem('FAR_passthru', PassThrough('Fl_I:FAR', 'Fl_O:FAR', 0.0), promotes=['*'])
-
-        # if not design: 
-        #     self.set_input_defaults('area', val=1, units='in**2')
-
-        self.set_input_defaults('Fl_I:tot:b0', gas_thermo.b0)
 
 
 if __name__ == "__main__":

@@ -103,12 +103,13 @@ import unittest
 
 import numpy as np
 
-from openmdao.api import Problem, Group
+from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
-from pycycle.elements import cooling, mix_ratio, flow_start
+from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
+from pycycle.thermo.cea import thermo_add
 from pycycle.constants import AIR_FUEL_ELEMENTS
 
 
@@ -131,7 +132,7 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
 
         # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', mix_ratio.MixRatio(mix_thermo_data=species_data.janaf))
+        p.model.add_subsystem('mix_fuel', thermo_add.ThermoAdd(mix_thermo_data=species_data.janaf))
 
 
         p.model.add_subsystem(
@@ -139,7 +140,7 @@ class Tests(unittest.TestCase):
             flow_start.FlowStart(
                 thermo_data=species_data.janaf,
                 elements=AIR_FUEL_ELEMENTS))
-        p.model.connect('mix_fuel.b0_out', 'burner_flow.b0')
+        p.model.connect('mix_fuel.composition_out', 'burner_flow.composition')
 
         self.prob = p
 
@@ -180,7 +181,7 @@ class Tests(unittest.TestCase):
         #                    1.00000000e-10, 7.23198770e-03])
         # p.model.set_input_defaults('row.n_cool', val=n_init)  # product ratios for clean air
         b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
-        p.model.set_input_defaults('row.cool:b0', val=b0_air)
+        p.model.set_input_defaults('row.cool:composition', val=b0_air)
         p.model.set_input_defaults('Pt_in', val=616.736, units='psi')
         p.model.set_input_defaults('Pt_out', val=149.113, units='psi')
         p.model.set_input_defaults('row.x_factor', val=.9)
@@ -203,7 +204,7 @@ class Tests(unittest.TestCase):
 
         p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
 
-        p.model.connect('burner_flow.Fl_O:tot:b0', 'row.b0_primary')
+        p.model.connect('burner_flow.Fl_O:tot:composition', 'row.composition_primary')
 
         p.setup()
 
@@ -224,8 +225,13 @@ class Tests(unittest.TestCase):
         # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
         #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
         #                    1.00000000e-10, 7.23198770e-03])
+
+
+        # need ivc here, because b0 is shape_by_conn
         b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
-        p.model.set_input_defaults('turb_cool.Fl_cool:tot:b0', val=b0_air)  # product ratios for clean air
+        p.model.add_subsystem('ivc', IndepVarComp('air_composition', b0_air))
+
+        # p.model.set_input_defaults('turb_cool.Fl_cool:tot:composition', val=b0_air)  # product ratios for clean air
         p.model.set_input_defaults('turb_cool.turb_pwr', val=24193.5, units='hp')
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:P', val=616.736, units='psi')
         p.model.set_input_defaults('turb_cool.Fl_turb_O:tot:P', val=149.113, units='psi')
@@ -243,7 +249,11 @@ class Tests(unittest.TestCase):
                 T_safety=150.,
                 thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.b0_out', 'turb_cool.Fl_turb_I:tot:b0')
+        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_I:tot:composition', 
+                                                     'turb_cool.Fl_turb_I:stat:composition' ])
+        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_O:tot:composition', 
+                                                     'turb_cool.Fl_turb_O:stat:composition'])
+        p.model.connect('ivc.air_composition', ['turb_cool.Fl_cool:tot:composition', 'turb_cool.Fl_cool:stat:composition'])
 
         p.setup()
         p.set_solver_print(0)

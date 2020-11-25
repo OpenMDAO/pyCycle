@@ -6,16 +6,14 @@ import os
 import numpy as np
 
 from openmdao.api import Problem, Group
-from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
+from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_ELEMENTS
 from pycycle import constants
-
-from pycycle.elements.test.util import check_element_partials
-from pycycle.connect_flow import connect_flow
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -55,20 +53,20 @@ class DuctTestCase(unittest.TestCase):
     def test_case1(self):
 
         self.prob = Problem()
-        self.prob.model = Group()
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
+        cycle = self.prob.model = Cycle()
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_ELEMENTS), promotes=['MN', 'P', 'T'])
-        self.prob.model.add_subsystem('duct', Duct(elements=AIR_ELEMENTS), promotes=['MN'])
+        cycle.add_subsystem('duct', Duct(elements=AIR_ELEMENTS), promotes=['MN'])
 
-        connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct.Fl_I')
+        cycle.pyc_connect_flow('flow_start.Fl_O', 'duct.Fl_I')
 
-        self.prob.model.set_input_defaults('MN', 0.5)
-        self.prob.model.set_input_defaults('duct.dPqP', 0.0)
-        self.prob.model.set_input_defaults('P', 17., units='psi')
-        self.prob.model.set_input_defaults('T', 500., units='degR')
-        self.prob.model.set_input_defaults('flow_start.W', 500., units='lbm/s')
+        cycle.set_input_defaults('MN', 0.5)
+        cycle.set_input_defaults('duct.dPqP', 0.0)
+        cycle.set_input_defaults('P', 17., units='psi')
+        cycle.set_input_defaults('T', 500., units='degR')
+        cycle.set_input_defaults('flow_start.W', 500., units='lbm/s')
 
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)
 
         # 6 cases to check against
@@ -103,36 +101,39 @@ class DuctTestCase(unittest.TestCase):
             assert_near_equal(ps_computed, ps, tol)
             assert_near_equal(ts_computed, ts, tol)
 
-            check_element_partials(self, self.prob)
+            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['duct.*'], excludes=['*.base_thermo.*',])
+            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+
 
 
     def test_case_with_dPqP_MN(self):
 
         self.prob = Problem()
-        self.prob.model = Group()
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
+        cycle = self.prob.model = Cycle()
+        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_ELEMENTS), promotes=['P', 'T', 'MN', 'W'])
-        self.prob.model.add_subsystem('flow_start_OD', FlowStart(thermo_data=janaf,
+        cycle.add_subsystem('flow_start_OD', FlowStart(thermo_data=janaf,
                                                               elements=AIR_ELEMENTS), promotes=['P', 'T', 'W'])
 
         expMN = 1.0
-        self.prob.model.add_subsystem('duct_des', Duct(elements=AIR_ELEMENTS, expMN=expMN), promotes=['MN'])
-        self.prob.model.add_subsystem('duct_OD', Duct(elements=AIR_ELEMENTS, expMN=expMN, design=False))
+        cycle.add_subsystem('duct_des', Duct(elements=AIR_ELEMENTS, expMN=expMN), promotes=['MN'])
+        cycle.add_subsystem('duct_OD', Duct(elements=AIR_ELEMENTS, expMN=expMN, design=False))
 
-        connect_flow(self.prob.model, 'flow_start.Fl_O', 'duct_des.Fl_I')
-        connect_flow(self.prob.model, 'flow_start_OD.Fl_O', 'duct_OD.Fl_I')
+        cycle.pyc_connect_flow('flow_start.Fl_O', 'duct_des.Fl_I')
+        cycle.pyc_connect_flow('flow_start_OD.Fl_O', 'duct_OD.Fl_I')
 
-        self.prob.model.set_input_defaults('P', 17., units='psi')
-        self.prob.model.set_input_defaults('T', 500., units='degR')
-        self.prob.model.set_input_defaults('MN', 0.5)
-        self.prob.model.set_input_defaults('flow_start_OD.MN', 0.25)
-        self.prob.model.set_input_defaults('duct_des.dPqP', 0.0)
-        self.prob.model.set_input_defaults('W', 500., units='lbm/s')
+        cycle.set_input_defaults('P', 17., units='psi')
+        cycle.set_input_defaults('T', 500., units='degR')
+        cycle.set_input_defaults('MN', 0.5)
+        cycle.set_input_defaults('flow_start_OD.MN', 0.25)
+        cycle.set_input_defaults('duct_des.dPqP', 0.0)
+        cycle.set_input_defaults('W', 500., units='lbm/s')
 
-        self.prob.model.connect("duct_des.s_dPqP", "duct_OD.s_dPqP")
-        self.prob.model.connect("duct_des.Fl_O:stat:area", "duct_OD.area")
+        cycle.connect("duct_des.s_dPqP", "duct_OD.s_dPqP")
+        cycle.connect("duct_des.Fl_O:stat:area", "duct_OD.area")
 
-        self.prob.setup(check=False)
+        self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)
 
 
@@ -166,7 +167,9 @@ class DuctTestCase(unittest.TestCase):
         assert_near_equal(ps_computed, 8.26348914, tol)
         assert_near_equal(ts_computed, ts, tol)
 
-        check_element_partials(self, self.prob)
+        partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+                                                    includes=['duct_OD.*'], excludes=['*.base_thermo.*',])
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":
     unittest.main()
