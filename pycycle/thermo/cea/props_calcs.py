@@ -173,12 +173,9 @@ class PropsCalcs(ExplicitComponent):
         dCp_dnj -= R_UNIVERSAL_ENG * H0_T * result_T_last
         J['Cp', 'n'] = dCp_dnj
 
-        dCp_dresultT = np.zeros(num_element+1, dtype=inputs._data.dtype)
-        # for i in range(num_element):
-        #     self.dCp_dresultT[i] = -R_UNIVERSAL_ENG*np.sum(aij[i]*nj_H0)
-        dCp_dresultT[:num_element] = -R_UNIVERSAL_ENG*np.sum(thermo.aij*nj_H0, axis=1)
-        dCp_dresultT[num_element] = - R_UNIVERSAL_ENG*np.sum(nj_H0)
-        J['Cp', 'result_T'] = dCp_dresultT
+        J['Cp', 'result_T'][0, :num_element] = -R_UNIVERSAL_ENG*np.sum(thermo.aij*nj_H0, axis=1)
+        J['Cp', 'result_T'][0, num_element] = - R_UNIVERSAL_ENG*np.sum(nj_H0)
+        dCp_dresultT = J['Cp', 'result_T'][0]
 
         dCp_dT = (dCpe_dT + dCpf_dT)*R_UNIVERSAL_ENG
         J['Cp', 'T'] = dCp_dT
@@ -189,27 +186,21 @@ class PropsCalcs(ExplicitComponent):
         J['Cv', 'n_moles'] = dCv_dnmoles
         J['Cv', 'T'] = dCp_dT
 
-        dCv_dresultP = np.zeros((1, num_element+1), dtype=inputs._data.dtype)
-        dCv_dresultP[0, -1] = -R_UNIVERSAL_ENG*n_moles*(dlnVqdlnT/dlnVqdlnP)**2
-        J['Cv', 'result_P'] = dCv_dresultP
+        dCv_dresultP = -R_UNIVERSAL_ENG*n_moles*(dlnVqdlnT/dlnVqdlnP)**2
+        J['Cv', 'result_P'] [0, -1] = dCv_dresultP
 
-        dCv_dresultT = dCp_dresultT.copy()
-        dCv_dresultT[-1] -= n_moles*R_UNIVERSAL_ENG/dlnVqdlnP*(2*dlnVqdlnT)
-        dCv_dresultT_last = dCv_dresultT[-1]
-        J['Cv', 'result_T'] = dCv_dresultT
+        J['Cv', 'result_T'] = dCp_dresultT
+        J['Cv', 'result_T'][0, -1] -= n_moles*R_UNIVERSAL_ENG/dlnVqdlnP*(2*dlnVqdlnT)
+        dCv_dresultT_last = J['Cv', 'result_T'][0, -1]
 
         J['gamma', 'n'] = dCp_dnj*(Cp/Cv-1)/(dlnVqdlnP*Cv)
         J['gamma', 'n_moles'] = Cp/dlnVqdlnP/Cv**2*dCv_dnmoles
         J['gamma', 'T'] = dCp_dT/dlnVqdlnP/Cv*(Cp/Cv-1)
 
-        dgamma_dresultT = np.zeros((1, num_element+1), dtype=inputs._data.dtype)
-        dgamma_dresultT[0, :num_element] = 1/Cv/dlnVqdlnP*dCp_dresultT[:num_element]*(Cp/Cv-1)
-        dgamma_dresultT[0, -1] = (-dCp_dresultT[-1]/Cv+Cp/Cv**2*dCv_dresultT_last)/dlnVqdlnP
-        J['gamma', 'result_T'] = dgamma_dresultT
+        J['gamma', 'result_T'][0, :num_element] = 1/Cv/dlnVqdlnP*dCp_dresultT[:num_element]*(Cp/Cv-1)
+        J['gamma', 'result_T'][0, -1] = (-dCp_dresultT[-1]/Cv+Cp/Cv**2*dCv_dresultT_last)/dlnVqdlnP
 
-        gamma_dresultP = np.zeros((1, num_element+1), dtype=inputs._data.dtype)
-        gamma_dresultP[0, num_element] = Cp/Cv/dlnVqdlnP*(dCv_dresultP[0, -1]/Cv + 1/dlnVqdlnP)
-        J['gamma', 'result_P'] = gamma_dresultP
+        J['gamma', 'result_P'][0, num_element] = Cp/Cv/dlnVqdlnP*(dCv_dresultP/Cv + 1/dlnVqdlnP)
 
 
 if __name__ == "__main__":
