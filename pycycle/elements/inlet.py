@@ -12,6 +12,52 @@ from pycycle.passthrough import PassThrough
 
 #from pycycle.elements.test.util import regression_generator
 
+class MilSpecRecovery(om.ExplicitComponent):
+    """
+    Performs subsonic, supersonic, and hypsersonic inlet ram recovery calculations.
+    """
+
+    def setup(self):
+        # inputs
+        self.add_input('MN', val=0.5, units=None, desc='Flight Mach Number')
+        self.add_input('ram_recovery_base', units=None, desc='Base Inlet Ram Recovery')
+        
+        # outputs
+        self.add_output('ram_recovery', val=1.0, units=None, desc='Mil Spec Ram Recovery')
+        
+        self.declare_partials('ram_recovery', ['ram_recovery_base' ,'MN'])
+
+    def compute(self, inputs, outputs):
+        
+        MN = inputs['MN']
+        ram_recovery_base = inputs['ram_recovery_base']
+            
+        if MN < 1.0:
+            outputs['ram_recovery'] = ram_recovery_base
+            
+        elif MN >= 1.0 and MN < 5.0:
+            outputs['ram_recovery'] = ram_recovery_base *(1-(0.075*((MN-1)**1.35)))
+            
+        elif MN >= 5.0:
+            outputs['ram_recovery'] = 800/(MN**4 + 935)
+
+    def compute_partials(self, inputs, J):
+        
+        MN = inputs['MN']
+        ram_recovery_base = inputs['ram_recovery_base']
+                
+        if MN < 1.0:
+            J['ram_recovery', 'ram_recovery_base'] = 1
+            J['ram_recovery', 'MN'] = 0
+            
+        elif MN >= 1.0 and MN < 5.0:
+            J['ram_recovery', 'ram_recovery_base'] = 1-(0.075*((MN-1)**1.35))
+            J['ram_recovery', 'MN'] = -0.10125*ram_recovery_base*((MN-1)**0.35)
+            
+        elif MN >= 5.0:
+            J['ram_recovery', 'ram_recovery_base'] = 0
+            J['ram_recovery', 'MN'] = -(3200 * MN**3)/((MN**4 + 935)**2)
+
 class Calcs(om.ExplicitComponent):
     """
     Performs inlet engineering calculations.
@@ -107,7 +153,7 @@ class Inlet(om.Group):
         # Create inlet flow station
         flow_in = FlowIn(fl_name='Fl_I')
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
-
+        
         # Perform inlet engineering calculations
         self.add_subsystem('calcs_inlet', Calcs(),
                            promotes_inputs=['ram_recovery', ('Pt_in', 'Fl_I:tot:P'),
@@ -170,13 +216,15 @@ if __name__ == "__main__":
     from pycycle import constants
 
     p = om.Problem()
-    p.model = Inlet()
+    p.model = Inlet(MilSpec=True)
 
     thermo = species_data.Properties(species_data.janaf, constants.AIR_ELEMENTS)
     p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
     p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
     p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
     p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
+    p.model.set_input_defaults('Fl_I:stat:MN', 1.3, units=None)
+    p.model.set_input_defaults('ram_recovery', 0.93, units=None)
 
     p.setup()
 
