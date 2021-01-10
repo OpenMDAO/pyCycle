@@ -70,6 +70,7 @@ class Cycle(om.Group):
                 # this passes whatever configuration data there was from the src element to the target keyed by port names
                 target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
 
+
             # need to setup the output ports of any targets that are at the end of the graph
             if target_type == 'element' and self._flow_graph.out_degree(node_target)==0:
                 target_element = self._get_subsystem(node_target)
