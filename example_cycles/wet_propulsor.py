@@ -13,10 +13,10 @@ class WetPropulsor(pyc.Cycle):
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
                                                   elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS,
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
+        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec))
         self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
@@ -77,6 +77,9 @@ class WetPropulsor(pyc.Cycle):
         # newton.linesearch.options['iprint'] = -1
         #
         self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        # base_class setup should be called as the last thing in your setup
+        super().setup()
 
 
 def viewer(prob, pt):

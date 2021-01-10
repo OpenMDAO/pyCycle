@@ -94,6 +94,19 @@ class Splitter(om.Group):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
 
+        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
+        self.Fl_O_data = {'Fl_O1': False, 
+                          'Fl_O2': False}
+
+    def pyc_setup_output_ports(self): 
+        
+        if self.Fl_I_data['Fl_I'] == False: 
+            raise ValueError('no input thermo data given for Fl_I')
+
+        self.Fl_O_data['Fl_O1'] = self.Fl_I_data['Fl_I']
+        self.Fl_O_data['Fl_O2'] = self.Fl_I_data['Fl_I']
+
+
     def setup(self):
 
         thermo_method = self.options['thermo_method']

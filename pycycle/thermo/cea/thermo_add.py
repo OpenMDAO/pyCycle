@@ -5,6 +5,7 @@ import openmdao.api as om
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import Properties, janaf
 
+
 class ThermoAdd(om.ExplicitComponent):
     """
     ThermoAdd calculates a new b0 given inflow, a reactant to add, and a mix ratio.
@@ -24,17 +25,41 @@ class ThermoAdd(om.ExplicitComponent):
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
 
+    def output_port_data(self): 
+        """
+        Computes the thermo data for the mixed properties according to whatever options are configured
+        """
+
+        spec = self.options['spec']
+
+        inflow_elements = self.options['inflow_elements']
+        mix_mode = self.options['mix_mode']
+
+        mix_elements = self.options['mix_elements']
+        if isinstance(mix_elements, (str, dict)): # cast it to tuple
+            mix_elements = (mix_elements,)
+
+        self.mix_elements = mix_elements
+
+        mixed_flow_elements = inflow_elements.copy()
+        if mix_mode == "reactant": # get the elements from the reactant dict in the spec
+            for reactant in mix_elements: 
+                mixed_flow_elements.update(spec.reactants[reactant]) #adds the fuel elements to the mix outflow
+        else: # flow mode 
+            for flow_elements in mix_elements: 
+                mixed_flow_elements.update(flow_elements)
+
+        self.mixed_elements = mixed_flow_elements
+
+        return self.mixed_elements
+
     def setup(self):
 
         spec = self.options['spec']
         
         mix_mode = self.options['mix_mode']
 
-        mix_elements = self.options['mix_elements']
-        if isinstance(mix_elements, (str, dict)): # cast it to tuple
-            mix_elements = (mix_elements,)
-        self.mix_elements = mix_elements
-
+        
         mix_names = self.options['mix_names']
         if isinstance(mix_names, str): # cast it to tuple 
             mix_names = (mix_names,)    
@@ -42,14 +67,7 @@ class ThermoAdd(om.ExplicitComponent):
 
         inflow_elements = self.options['inflow_elements']
 
-
-        self.mixed_elements = inflow_elements.copy()
-        if mix_mode == "reactant": # get the elements from the reactant dict in the spec
-            for reactant in mix_elements: 
-                self.mixed_elements.update(spec.reactants[reactant]) #adds the fuel elements to the mix outflow
-        else: # flow mode 
-            for flow_elements in mix_elements: 
-                self.mixed_elements.update(flow_elements)
+        self.output_port_data()
 
         inflow_thermo = Properties(spec, init_elements=inflow_elements)
         self.inflow_elements = inflow_thermo.elements
@@ -65,7 +83,7 @@ class ThermoAdd(om.ExplicitComponent):
         self.init_fuel_amounts_1kg = {}
 
         if mix_mode == 'reactant': 
-            for reactant in mix_elements: 
+            for reactant in self.mix_elements: 
                 self.init_fuel_amounts_1kg[reactant] = np.zeros(mixed_thermo.num_element)
                 ifa_1kg = self.init_fuel_amounts_1kg[reactant]
                 for i, e in enumerate(self.mixed_elements): 
@@ -77,7 +95,7 @@ class ThermoAdd(om.ExplicitComponent):
             mix_b0 = {}
             self.mix_wt_mole = {}
             self.mix_out_flow_idx_maps = {}
-            for name, elements in zip(mix_names, mix_elements): 
+            for name, elements in zip(mix_names, self.mix_elements): 
                 thermo = Properties(spec, init_elements=elements)
                 mix_b0[name] = thermo.b0
                 self.mix_wt_mole[name] = thermo.element_wt

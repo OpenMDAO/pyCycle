@@ -60,7 +60,7 @@ class InletTestCase(unittest.TestCase):
         cycle.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
         cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('inlet', Inlet(elements=AIR_ELEMENTS))
+        cycle.add_subsystem('inlet', Inlet())
 
         # total and static
         fl_src = "flow_start.Fl_O"

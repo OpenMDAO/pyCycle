@@ -15,7 +15,8 @@ class CFDStartTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model.add_subsystem('cfd_start', CFDStart(), promotes=['*'])
+        cfd_start = p.model.add_subsystem('cfd_start', CFDStart(), promotes=['*'])
+        cfd_start.pyc_setup_output_ports()
         p.model.set_input_defaults('Ps', units='kPa', val=100)
         p.model.set_input_defaults('V', units='m/s', val=100.)
         p.model.set_input_defaults('area', units='m**2', val=1)

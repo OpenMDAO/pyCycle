@@ -63,10 +63,6 @@ class Combustor(om.Group):
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
                              desc='Thermodynamic data set for the flow', recordable=False)
-        self.options.declare('inflow_elements', default=AIR_ELEMENTS,
-                             desc='set of elements present in the air flow')
-        self.options.declare('air_fuel_elements', default=AIR_FUEL_ELEMENTS,
-                             desc='set of elements present in the fuel')
         self.options.declare('design', default=True,
                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('statics', default=True,
@@ -74,29 +70,43 @@ class Combustor(om.Group):
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
 
+        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
+        self.Fl_O_data = {'Fl_O': False}
+
+
+    def pyc_setup_output_ports(self): 
+
+        if self.Fl_I_data['Fl_I'] == False: 
+            raise ValueError('no input thermo data given for Fl_I')
+
+        thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
+        fuel_type = self.options['fuel_type']
+
+
+        self.thermo_add_comp = ThermoAdd(method=thermo_method, mix_mode='reactant',
+                                         thermo_kwargs={'spec':thermo_data,
+                                                        'inflow_elements':self.Fl_I_data['Fl_I'], 
+                                                        'mix_elements':fuel_type})
+        
+        self.Fl_O_data['Fl_O'] = self.thermo_add_comp.output_port_data()
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
 
-        inflow_elements = self.options['inflow_elements']
-        air_fuel_elements = self.options['air_fuel_elements']
+        inflow_elements = self.Fl_I_data['Fl_I']
+        air_fuel_elements = self.Fl_O_data['Fl_O']
         design = self.options['design']
         statics = self.options['statics']
-        fuel_type = self.options['fuel_type']
 
-        num_air_element = len(inflow_elements)
 
         # Create combustor flow station
         in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
-        self.add_subsystem('mix_fuel',
-                           ThermoAdd(method=thermo_method, mix_mode='reactant',
-                                     thermo_kwargs={'spec':thermo_data,
-                                                    'inflow_elements':inflow_elements, 
-                                                    'mix_elements':fuel_type}),
+        self.add_subsystem('mix_fuel', self.thermo_add_comp,
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
-
 
         # Pressure loss
         prom_in = [('Pt_in', 'Fl_I:tot:P'),'dPqP']

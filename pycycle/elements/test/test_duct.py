@@ -56,7 +56,7 @@ class DuctTestCase(unittest.TestCase):
         cycle = self.prob.model = Cycle()
         cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
                                                               elements=AIR_ELEMENTS), promotes=['MN', 'P', 'T'])
-        cycle.add_subsystem('duct', Duct(elements=AIR_ELEMENTS), promotes=['MN'])
+        cycle.add_subsystem('duct', Duct(), promotes=['MN'])
 
         cycle.pyc_connect_flow('flow_start.Fl_O', 'duct.Fl_I')
 
@@ -117,8 +117,8 @@ class DuctTestCase(unittest.TestCase):
                                                               elements=AIR_ELEMENTS), promotes=['P', 'T', 'W'])
 
         expMN = 1.0
-        cycle.add_subsystem('duct_des', Duct(elements=AIR_ELEMENTS, expMN=expMN), promotes=['MN'])
-        cycle.add_subsystem('duct_OD', Duct(elements=AIR_ELEMENTS, expMN=expMN, design=False))
+        cycle.add_subsystem('duct_des', Duct(expMN=expMN), promotes=['MN'])
+        cycle.add_subsystem('duct_OD', Duct(expMN=expMN, design=False))
 
         cycle.pyc_connect_flow('flow_start.Fl_O', 'duct_des.Fl_I')
         cycle.pyc_connect_flow('flow_start_OD.Fl_O', 'duct_OD.Fl_I')

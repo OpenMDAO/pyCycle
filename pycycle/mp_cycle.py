@@ -1,12 +1,10 @@
 from collections import namedtuple
 
 import openmdao.api as om 
-
-# CycleParam = namedtuple('CycleParam', name, value, units)
+import networkx as nx
 
 
 class Cycle(om.Group): 
-
 
 
     def initialize(self):
@@ -17,6 +15,11 @@ class Cycle(om.Group):
 
         self._elements = set()
 
+        self._flow_graph = nx.DiGraph()
+
+        # flag needed for user focused error checking to make sure they called super in their sub-class
+        self.__base_class_super_called = False
+
     def pyc_add_element(self, name, element,**kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 
@@ -24,9 +27,55 @@ class Cycle(om.Group):
         components (e.g. BalanceComp, ExecComp, etc.)
         """
         self._elements.add(element)
-        self.add_subsystem(name, element, **kwargs)
         if 'thermo_method' in element.options:
             element.options['thermo_method'] = self.options['thermo_method']
+
+        self._flow_graph.add_node(name, type='element')
+
+        return self.add_subsystem(name, element, **kwargs)
+
+    #TODO: Find some way to error check based on __base_class_super_called to let user know they forgot a call to super
+
+
+    def setup(self): 
+
+
+        self.__base_class_super_called = True
+
+
+        # Code that follows the flow-graph and propagates thermo setup data down the chain
+        node_types = nx.get_node_attributes(self._flow_graph, 'type')
+        node_parents = nx.get_node_attributes(self._flow_graph, 'parent')
+        node_port_names = nx.get_node_attributes(self._flow_graph, 'port_name')
+
+        # note: two kinds of nodes in graph, ports and elements
+        # depth first search will start at the heads and work down
+        for node_src, node_target in nx.edge_dfs(self._flow_graph): 
+            src_type = node_types[node_src]
+            target_type = node_types[node_target]
+
+            # connection will be element -> out_port, so we can assume 
+            # any input port data was already set and its safe to setup output ports
+            if src_type == 'element': 
+                src_element = self._get_subsystem(node_src)
+                src_element.pyc_setup_output_ports()
+            
+            # connection will be out_port -> in_port
+            elif src_type == 'out_port': 
+                src_element = self._get_subsystem(node_parents[node_src])
+                target_element = self._get_subsystem(node_parents[node_target])
+
+                out_port = node_port_names[node_src]
+                in_port = node_port_names[node_target]
+                # this passes whatever configuration data there was from the src element to the target keyed by port names
+                target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
+
+            # need to setup the output ports of any targets that are at the end of the graph
+            if target_type == 'element' and self._flow_graph.out_degree(node_target)==0:
+                target_element = self._get_subsystem(node_target)
+                target_element.pyc_setup_output_ports()
+
+       
 
     def pyc_connect_flow(self, fl_src, fl_target, connect_stat=True, connect_tot=True, connect_w=True):
         """ 
@@ -51,6 +100,23 @@ class Cycle(om.Group):
         if connect_w:
            self.connect('%s:stat:W'%(fl_src,), '%s:stat:W'%(fl_target,))
 
+        # build the directed graph of flow connections
+        src_element_name = ''.join(fl_src.split('.')[:-1])
+        src_port_name = fl_src.split('.')[-1]
+
+        target_elment_name = ''.join(fl_target.split('.')[:-1])
+        target_port_name = fl_target.split('.')[-1]
+
+        # element nodes are needed so we can map from flow ports through elements
+        # self._flow_graph.add_node(src_element_name, type='element')
+        # self._flow_graph.add_node(target_elment_name, type='element')
+        
+        self._flow_graph.add_node(fl_src, type='out_port', parent=src_element_name, port_name=src_port_name)
+        self._flow_graph.add_node(fl_target, type='in_port', parent=target_elment_name, port_name=target_port_name)
+
+        self._flow_graph.add_edge(src_element_name, fl_src)
+        self._flow_graph.add_edge(fl_src, fl_target)
+        self._flow_graph.add_edge(fl_target, target_elment_name)
 
 class MPCycle(om.Group): 
 
@@ -102,6 +168,7 @@ class MPCycle(om.Group):
             self._od_pnts.append(pnt)
             
         return pnt
+
 
     def configure(self): 
         # after all child pts have been set up, 

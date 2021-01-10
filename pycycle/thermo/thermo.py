@@ -180,6 +180,9 @@ class Thermo(om.Group):
 
 class ThermoAdd(om.Group): 
 
+    # NOTE: This should probably be a meta-class. 
+    # The group is not really needed, and we could skip the delegation crap
+
     def initialize(self):
         self.options.declare('method', default='CEA', values=('CEA',),
                               desc='Method for computing thermodynamic properties')
@@ -191,6 +194,8 @@ class ThermoAdd(om.Group):
 
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
+        self.thermo_adder = None
+
     def setup(self): 
 
         method = self.options['method']
@@ -198,9 +203,26 @@ class ThermoAdd(om.Group):
         mix_names = self.options['mix_names']
         thermo_kwargs = self.options['thermo_kwargs']
 
-        if method == 'CEA': 
+        if self.thermo_adder is None: # just in case output_port_data is not called
+            if method == 'CEA': 
+                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs)
 
-            self.add_subsystem('thermo_add', cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs), promotes=['*'])
+        self.add_subsystem('thermo_add', self.thermo_adder, promotes=['*'])
+
+    def output_port_data(self): 
+        '''
+        delegate this call to whatever child component get instantiated
+        '''
+        method = self.options['method']
+        mix_mode = self.options['mix_mode']
+        mix_names = self.options['mix_names']
+        thermo_kwargs = self.options['thermo_kwargs']
+
+        if self.thermo_adder is None: # they might call this twice, so just in case we check to make sure it hasn't been set already
+            if method == 'CEA': 
+                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs)
+
+        return self.thermo_adder.output_port_data()
 
 
 

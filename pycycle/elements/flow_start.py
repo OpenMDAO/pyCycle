@@ -20,11 +20,19 @@ class FlowStart(Group):
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
+    def pyc_setup_output_ports(self): 
+        elements = self.options['elements']
+        
+        self.Fl_O_data = {
+          'Fl_O':elements
+        }
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         use_WAR = self.options['use_WAR']
+
+        elements = self.Fl_O_data['Fl_O']
 
         if use_WAR == True:
             if 'H' not in elements or 'O' not in elements:
@@ -63,3 +71,5 @@ class FlowStart(Group):
         self.connect('totals.S','exit_static.S')
         self.connect('Fl_O:tot:P','exit_static.guess:Pt')
         self.connect('totals.gamma', 'exit_static.guess:gamt')
+
+

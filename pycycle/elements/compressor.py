@@ -391,8 +391,6 @@ class Compressor(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
@@ -413,7 +411,19 @@ class Compressor(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
+        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
+        self.Fl_O_data = {'Fl_O': False}
 
+    def pyc_setup_output_ports(self): 
+        
+        if self.Fl_I_data['Fl_I'] == False: 
+            raise ValueError('no input thermo data given for Fl_I')
+
+        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
+
+        bleeds = self.options['bleed_names']
+        for BN in bleeds: 
+            self.Fl_O_data[BN] = self.Fl_I_data['Fl_I']
 
     def setup(self):
         #(self, mapclass=NCP01map(), design=True, thermo_data=species_data.janaf, elements=AIR_ELEMENTS, bleeds=[],statics=True):
@@ -433,8 +443,10 @@ class Compressor(om.Group):
         design = self.options['design']
         bleeds = self.options['bleed_names']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
+
+        # elements = self.options['elements']
+        elements = self.Fl_I_data['Fl_I']
 
         num_element = len(elements)
 
@@ -512,7 +524,7 @@ class Compressor(om.Group):
         bleed_names = []
         for BN in bleeds:
 
-            bleed_names.append(BN + '_flow')
+            bleed_names.append(f'{BN}_flow')
             bleed_flow = Thermo(mode='total_hP', fl_name=BN + ":tot", 
                                   method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
@@ -520,7 +532,7 @@ class Compressor(om.Group):
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
                                    ('composition', 'Fl_I:tot:composition')],
-                               promotes_outputs=['{}:tot:*'.format(BN)])
+                               promotes_outputs=[f'{BN}:tot:*'])
             self.connect(BN + ':ht', BN + "_flow.h")
             self.connect(BN + ':Pt', BN + "_flow.P")
 

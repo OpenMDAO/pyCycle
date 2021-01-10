@@ -310,17 +310,26 @@ class Nozzle(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_FUEL_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('internal_solver', default=False)
+
+        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
+        self.Fl_O_data = {'Fl_I': False}
+
+    def pyc_setup_output_ports(self): 
+        
+        if self.Fl_I_data['Fl_I'] == False: 
+            raise ValueError('no input thermo data given for Fl_I')
+
+        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
+        # elements = self.options['elements']
+        elements = self.Fl_I_data['Fl_I']
         num_element = len(elements)
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))

@@ -27,7 +27,8 @@ class FlightConditionsTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fc.alt', 0.0, units="ft")
         self.prob.model.set_input_defaults('fc.dTs', 0.0, units='degR')
 
-        self.prob.model.add_subsystem('fc', FlightConditions())
+        fc = self.prob.model.add_subsystem('fc', FlightConditions())
+        fc.pyc_setup_output_ports()
 
         self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)

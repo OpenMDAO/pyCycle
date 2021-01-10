@@ -100,6 +100,19 @@ class BleedOut(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
+        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
+        self.Fl_O_data = {'Fl_O': False}
+
+
+    def pyc_setup_output_ports(self): 
+        if self.Fl_I_data['Fl_I'] == False: 
+            raise ValueError('no input thermo data given for Fl_I')
+
+        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
+
+        for b_name in self.options['bleed_names']: 
+            self.Fl_O_data[b_name] = self.Fl_I_data['Fl_I']
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
@@ -116,7 +129,7 @@ class BleedOut(om.Group):
 
         # Bleed flow calculations
         blds = BleedCalcs(bleed_names=bleeds)
-        bld_port_globs = ['{}:*'.format(bn) for bn in bleeds]
+        bld_port_globs = [f'{bn}:*' for bn in bleeds]
         self.add_subsystem('bld_calcs', blds,
                            promotes_inputs=[('W_in', 'Fl_I:stat:W'), '*:frac_W'],
                            promotes_outputs=['W_out']+bld_port_globs)

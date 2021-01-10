@@ -5,10 +5,7 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.thermo.cea import species_data
-from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
-
+from pycycle.api import Cycle, FlowStart, AIR_ELEMENTS, WET_AIR_ELEMENTS, species_data
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/flowstart.csv",
@@ -44,7 +41,8 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
         self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
-        self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
+        fl_start = self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
+        fl_start.pyc_setup_output_ports() #note: must manually call this for stand alone element tests
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)
@@ -152,7 +150,9 @@ class FlowStartTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             p = Problem()
-            p.model = FlowStart(elements=AIR_ELEMENTS, use_WAR=True, thermo_data=species_data.janaf)
+            fl_start = p.model = FlowStart(elements=AIR_ELEMENTS, use_WAR=True, thermo_data=species_data.janaf)
+            fl_start.pyc_setup_output_ports()
+
             p.model.set_input_defaults('WAR', .01)
             p.setup()
 
@@ -178,8 +178,9 @@ class WARTestCase(unittest.TestCase):
         prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
         prob.model.set_input_defaults('fl_start.WAR', .01)
 
-        prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
-                                                       elements=WET_AIR_ELEMENTS, use_WAR=True))
+        fl_start = prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
+                                                                  elements=WET_AIR_ELEMENTS, use_WAR=True))
+        fl_start.pyc_setup_output_ports()
 
         prob.set_solver_print(level=-1)
         prob.setup(check=False)
