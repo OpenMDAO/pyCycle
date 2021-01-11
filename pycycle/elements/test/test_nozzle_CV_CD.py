@@ -24,8 +24,8 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('nozzle', Nozzle(nozzType=NozzType, lossCoef=LossType,
                                                        thermo_data=janaf, internal_solver=True))
 
 

@@ -24,8 +24,8 @@ class CompressorODTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('compressor', Compressor(
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('compressor', Compressor(
                 map_data=AXI5, design=False, map_extrap=False))
 
         cycle.set_input_defaults('compressor.s_PR', val=1.)

@@ -22,9 +22,9 @@ class BleedOutTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf,
                                                     elements=AIR_ELEMENTS), promotes=['MN', 'P', 'T'])
-        cycle.add_subsystem('bleed', BleedOut(bleed_names=['bld1', 'bld2']), promotes=['MN'])
+        cycle.pyc_add_element('bleed', BleedOut(bleed_names=['bld1', 'bld2']), promotes=['MN'])
 
         cycle.pyc_connect_flow('flow_start.Fl_O', 'bleed.Fl_I')
 

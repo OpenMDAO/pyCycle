@@ -30,9 +30,9 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf,
                                                     elements=AIR_ELEMENTS))
-        cycle.add_subsystem('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True))
+        cycle.pyc_add_element('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True))
 
         cycle.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
         cycle.set_input_defaults('flow_start.MN', 0.0)

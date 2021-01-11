@@ -51,8 +51,8 @@ class CompressorTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf))
-        cycle.add_subsystem('compressor', Compressor(design=True))
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf))
+        cycle.pyc_add_element('compressor', Compressor(design=True))
 
         cycle.set_input_defaults('flow_start.P', 17., units='psi')
         cycle.set_input_defaults('flow_start.T', 500., units='degR')
