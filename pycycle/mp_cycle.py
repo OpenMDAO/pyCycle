@@ -62,6 +62,16 @@ class Cycle(om.Group):
         while queue:
             node = queue.pop(0) 
 
+            # make sure we've already processed all predecessor nodes
+            # if not skip this one, we'll hit it again later
+            ready_for_node = True
+            for p in G.predecessors(node): 
+                if p not in visited: 
+                    ready_for_node = False
+                    break
+            if not ready_for_node:
+                continue
+
             queue.extend(G.successors(node))
 
             node_type = node_types[node]
@@ -86,7 +96,6 @@ class Cycle(om.Group):
 
                 visited.add(node)
        
-
     def pyc_connect_flow(self, fl_src, fl_target, connect_stat=True, connect_tot=True, connect_w=True):
         """ 
         helper function to connect all of the flow variables between two ports 

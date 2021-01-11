@@ -451,7 +451,7 @@ class Turbine(om.Group):
     def pyc_setup_output_ports(self): 
 
         if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
+            raise ValueError(f'no input thermo data given for Fl_I for {self.pathname}')
 
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
@@ -551,7 +551,7 @@ class Turbine(om.Group):
             bleed_names2.append(BN + '_inflow')
             inflow = Thermo(mode='total_hP', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':bleed_elements, 
+                            thermo_kwargs={'elements':self.Fl_I_data[BN], 
                                            'spec':thermo_data})
             self.add_subsystem(BN + '_inflow', inflow,
                                promotes_inputs=[('composition', BN + ":tot:composition"), ('h', BN + ':tot:h')])
@@ -561,7 +561,7 @@ class Turbine(om.Group):
             bleed_names2.append(f'{BN}_ideal')
             ideal = Thermo(mode='total_SP', 
                            method=thermo_method, 
-                           thermo_kwargs={'elements':bleed_elements, 
+                           thermo_kwargs={'elements':self.Fl_I_data[BN], 
                                           'spec':thermo_data})
             self.add_subsystem(f'{BN}_ideal', ideal,
                                promotes_inputs=[('composition', BN + ":tot:composition")])

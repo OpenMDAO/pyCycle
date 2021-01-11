@@ -12,9 +12,9 @@ class HBTF(pyc.Cycle):
     def initialize(self):
         # Initialize the model here by setting option variables such as a switch for design vs off-des cases
         self.options.declare('throttle_mode', default='T4', values=['T4', 'percent_thrust'])
-        super().initialize()
 
         super().initialize()
+
 
     def setup(self):
         #Setup the problem by including all the relavant components here - comp, burner, turbine etc
@@ -25,42 +25,40 @@ class HBTF(pyc.Cycle):
         
         #Add subsystems to build the engine deck:
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         
         # Note variable promotion for the fan -- 
         # the LP spool speed and the fan speed are INPUTS that are promoted:
         # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
         # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
-        self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('duct4', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('duct4', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec,
                                         map_extrap=True),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct6', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('hpc', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.pyc_add_element('duct6', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('hpc', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1','cool2','cust'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
         self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['cool3','cool4']))
         self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_ELEMENTS,
-                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
                                         fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
+        self.pyc_add_element('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool3','cool4'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('duct11', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
+        self.pyc_add_element('duct11', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct13', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
+        self.pyc_add_element('duct13', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
 
         self.pyc_add_element('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
-        self.pyc_add_element('duct15', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.pyc_add_element('duct15', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
         
         #Create shaft instances. Note that LP shaft has 3 ports! => no gearbox
-        self.pyc_add_element('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=2, num_burners=1))
+        self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
+        self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
     
         # Now use the explicit connect method to make connections -- connect(<from>, <to>)
         
@@ -219,6 +217,8 @@ class HBTF(pyc.Cycle):
         # ls.options['print_bound_enforce'] = True
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        super().setup()
 
 
 def viewer(prob, pt, file=sys.stdout):
