@@ -261,6 +261,30 @@ class TurbineCooling(om.Group):
                               desc='set of elements present in the flow')
 
         self.options.declare('owns_x_factor', types=bool, default=True, desc='if True, x_factor will be connected to an IndepVarComp inside this element')
+
+        self.Fl_I_data = {'Fl_turb_I': False, 'Fl_turb_O': False}
+        self.Fl_O_data = {}
+
+    def pyc_setup_output_ports(self): 
+
+        inflow_elements = self.Fl_I_data['Fl_turb_I']
+        mix_elements = self.Fl_I_data['Fl_cool']
+        
+        # we could do this, but we shouldn't need to, because it will be the same as Fl_turb_O
+        # tmp_thermo_add = ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
+        #                            thermo_kwargs={'spec':self.options['thermo_data'], 
+        #                                           'inflow_elements':inflow_elements, 
+        #                                           'mix_elements':mix_elements})
+
+        # output_data = tmp_thermo_add.output_port_data()
+
+        n_stages = self.options['n_stages']
+        n_rows = 2 * n_stages
+        for i in range(n_rows):
+            row_port_name = r'row_{i}.Fl_O'
+            # self.Fl_O_data[row_port_name] = output_data
+            self.Fl_O_data[row_port_name] = self.Fl_I_data['Fl_turb_O']
+
     def setup(self):
 
         thermo_data = self.options['thermo_data']
@@ -271,15 +295,12 @@ class TurbineCooling(om.Group):
             indeps = self.add_subsystem('indeps', om.IndepVarComp(), promotes=['*'])
             indeps.add_output('x_factor', val=1.0)
 
-        primary_num_element = len(self.options['primary_elements'])
-
         in_flow = FlowIn(fl_name='Fl_turb_I')
         self.add_subsystem('turb_in_flow', in_flow, promotes_inputs=['Fl_turb_I:tot:*', 'Fl_turb_I:stat:*'])
 
         in_flow = FlowIn(fl_name='Fl_turb_O')
         self.add_subsystem('turb_out_flow', in_flow, promotes_inputs=['Fl_turb_O:tot:*', 'Fl_turb_O:stat:*'])
 
-        cool_num_elements = len(self.options['cool_elements'])
         in_flow = FlowIn(fl_name='Fl_cool')
         self.add_subsystem('cool_in_flow', in_flow, promotes_inputs=['Fl_cool:tot:*', 'Fl_cool:stat:*'])
 

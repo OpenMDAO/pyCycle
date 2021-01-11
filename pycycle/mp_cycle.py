@@ -61,10 +61,12 @@ class Cycle(om.Group):
         #       predecessors set up before we get to them. 
         while queue:
             node = queue.pop(0) 
+            node_type = node_types[node]
 
             # make sure we've already processed all predecessor nodes
             # if not skip this one, we'll hit it again later
             ready_for_node = True
+
             for p in G.predecessors(node): 
                 if p not in visited: 
                     ready_for_node = False
@@ -74,7 +76,6 @@ class Cycle(om.Group):
 
             queue.extend(G.successors(node))
 
-            node_type = node_types[node]
 
             if node not in visited: 
 
@@ -85,14 +86,17 @@ class Cycle(om.Group):
                 # connection will be out_port -> in_port
                 elif node_type == 'out_port': 
                     src_element = self._get_subsystem(node_parents[node])
-                    link = list(G.out_edges(node))[0] # note: there should only ever be one out edge from a out_port node
-                    
-                    target_element = self._get_subsystem(node_parents[link[1]])
+                    links = G.out_edges(node)
+                    for link in links: 
+                        # in almost every case there should only be one link, because otherwise you are creating extra mass flow 
+                        # the one exception is for the cooling calcs, which get some "weak" connections from turbine and bleed srcs
+                        
+                        target_element = self._get_subsystem(node_parents[link[1]])
 
-                    out_port = node_port_names[node]
-                    in_port = node_port_names[link[1]]
-                    # this passes whatever configuration data there was from the src element to the target keyed by port names
-                    target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
+                        out_port = node_port_names[node]
+                        in_port = node_port_names[link[1]]
+                        # this passes whatever configuration data there was from the src element to the target keyed by port names
+                        target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
 
                 visited.add(node)
        

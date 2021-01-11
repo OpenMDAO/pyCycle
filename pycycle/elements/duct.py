@@ -174,7 +174,6 @@ class Duct(om.Group):
 
         self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
 
-
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
