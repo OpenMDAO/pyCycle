@@ -14,24 +14,20 @@ class WetTurbojet(pyc.Cycle):
 
         # Add engine elements
         self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
-                                    elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
-                                    elements=pyc.WET_AIR_ELEMENTS))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS,),
+                                    elements=pyc.WET_AIR_ELEMENTS)) # WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
+        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec),
                                     promotes_inputs=['Nmech'])
 
-        self.pyc_add_element('burner', pyc.Combustor(design=design, thermo_data=thermo_spec, 
-                                                     inflow_elements=pyc.WET_AIR_ELEMENTS,
-                                                     air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
+        self.pyc_add_element('burner', pyc.Combustor(design=design, thermo_data=thermo_spec,
                                                      fuel_type='JP-7'))
         self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,),
+                                    thermo_data=thermo_spec),
                                     promotes_inputs=['Nmech'])
         self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
+                                    thermo_data=thermo_spec))
+        self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         # Connect flow stations
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
@@ -102,6 +98,8 @@ class WetTurbojet(pyc.Cycle):
         newton.linesearch.options['iprint'] = -1
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        super().setup()
 
 def viewer(prob, pt, file=sys.stdout):
     """

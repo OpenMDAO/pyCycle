@@ -39,7 +39,6 @@ class Cycle(om.Group):
 
     def setup(self): 
 
-
         self.__base_class_super_called = True
 
 

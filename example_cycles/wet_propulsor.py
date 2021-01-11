@@ -17,7 +17,7 @@ class WetPropulsor(pyc.Cycle):
         self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
         self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec))
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+        self.add_subsytem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
