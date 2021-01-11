@@ -48,34 +48,44 @@ class Cycle(om.Group):
         node_parents = nx.get_node_attributes(self._flow_graph, 'parent')
         node_port_names = nx.get_node_attributes(self._flow_graph, 'port_name')
 
-        # note: two kinds of nodes in graph, ports and elements
-        # depth first search will start at the heads and work down
-        for node_src, node_target in nx.edge_dfs(self._flow_graph): 
-            src_type = node_types[node_src]
-            target_type = node_types[node_target]
+        G = self._flow_graph
 
-            # connection will be element -> out_port, so we can assume 
-            # any input port data was already set and its safe to setup output ports
-            if src_type == 'element': 
-                src_element = self._get_subsystem(node_src)
-                src_element.pyc_setup_output_ports()
-            
-            # connection will be out_port -> in_port
-            elif src_type == 'out_port': 
-                src_element = self._get_subsystem(node_parents[node_src])
-                target_element = self._get_subsystem(node_parents[node_target])
-
-                out_port = node_port_names[node_src]
-                in_port = node_port_names[node_target]
-                # this passes whatever configuration data there was from the src element to the target keyed by port names
-                target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
+        # put all starting nodes into a FIFO queue
+        queue = [node for node in self._flow_graph if G.in_degree(node) == 0]
+        visited = set() # use a set, because checking "in" on a queue is slow
 
 
-            # need to setup the output ports of any targets that are at the end of the graph
-            if target_type == 'element' and self._flow_graph.out_degree(node_target)==0:
-                target_element = self._get_subsystem(node_target)
-                target_element.pyc_setup_output_ports()
+        # note: three kinds of nodes in graph, elements, in_ports, out_ports. 
+        #       The graph is a tree with (potentially) multiple separate root nodes. 
+        #       We will do a breadth first search, starting from all starting nodes at the same time. 
+        #       This makes sure that Elements with multiple inputs will have all
+        #       predecessors set up before we get to them. 
+        while queue:
+            node = queue.pop(0) 
 
+            queue.extend(G.successors(node))
+
+            node_type = node_types[node]
+
+            if node not in visited: 
+
+                if node_type == 'element': 
+                    node_element = self._get_subsystem(node)
+                    node_element.pyc_setup_output_ports()
+                
+                # connection will be out_port -> in_port
+                elif node_type == 'out_port': 
+                    src_element = self._get_subsystem(node_parents[node])
+                    link = list(G.out_edges(node))[0] # note: there should only ever be one out edge from a out_port node
+                    
+                    target_element = self._get_subsystem(node_parents[link[1]])
+
+                    out_port = node_port_names[node]
+                    in_port = node_port_names[link[1]]
+                    # this passes whatever configuration data there was from the src element to the target keyed by port names
+                    target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
+
+                visited.add(node)
        
 
     def pyc_connect_flow(self, fl_src, fl_target, connect_stat=True, connect_tot=True, connect_w=True):
