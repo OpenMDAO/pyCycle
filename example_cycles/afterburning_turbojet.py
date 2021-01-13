@@ -12,7 +12,7 @@ class ABTurbojet(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         self.add_subsystem('duct1', pyc.Duct(design=design, thermo_data=thermo_spec))
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec,

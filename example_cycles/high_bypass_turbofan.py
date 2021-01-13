@@ -24,7 +24,7 @@ class HBTF(pyc.Cycle):
         design = self.options['design']
         
         #Add subsystems to build the engine deck:
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         
         # Note variable promotion for the fan -- 

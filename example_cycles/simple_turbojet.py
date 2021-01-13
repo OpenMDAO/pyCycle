@@ -13,8 +13,7 @@ class Turbojet(pyc.Cycle):
         design = self.options['design']
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                    elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
                                     thermo_data=thermo_spec, map_extrap=True),

@@ -10,8 +10,7 @@ class Propulsor(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
 
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec,

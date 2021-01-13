@@ -11,7 +11,8 @@ class WetPropulsor(pyc.Cycle):
         design = self.options['design']
 
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
-                                                  elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
+                                                      elements=pyc.WET_AIR_ELEMENTS))
+                                                      #WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
 
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec,

@@ -18,7 +18,7 @@ class MultiSpoolTurboshaft(pyc.Cycle):
         design = self.options['design']
         maxiter = self.options['maxiter']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
         self.add_subsystem('duct1', pyc.Duct(design=design, thermo_data=thermo_spec))
         self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec),
