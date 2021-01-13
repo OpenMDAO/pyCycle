@@ -117,7 +117,8 @@ class Cycle(om.Group):
                         # this passes whatever configuration data there was from the src element to the target keyed by port names
 
                         if out_port not in src_element.Fl_O_data: 
-                            raise RuntimeError(f'in {self.pathname},{src_element.pathname}.{out_port} has not been properly setup.')
+                            raise RuntimeError(f'in {self.pathname},{src_element.pathname}.{out_port} has not been properly setup.'
+                                               f'something is wrong with one of your `pyc_setup_output_ports` method in {src_element.pathname}')
 
                         target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
 
