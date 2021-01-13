@@ -12,18 +12,18 @@ class ABTurbojet(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('duct1', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('duct1', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                         fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
-        self.pyc_add_element('ab', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.add_subsystem('ab', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                         fuel_type='JP-7'))
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', thermo_data=thermo_spec, internal_solver=True))
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', thermo_data=thermo_spec, internal_solver=True))
         self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=2))
 

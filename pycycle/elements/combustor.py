@@ -14,9 +14,11 @@ from pycycle.elements.duct import PressureLoss
 
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 
-class Combustor(om.Group):
+
+class Combustor(Element):
     """
     A combustor that adds a fuel to an incoming flow mixture and burns it
 
@@ -70,14 +72,7 @@ class Combustor(om.Group):
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
 
-        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
-        self.Fl_O_data = {'Fl_O': False}
-
-
     def pyc_setup_output_ports(self): 
-
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
 
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
@@ -89,7 +84,8 @@ class Combustor(om.Group):
                                                         'inflow_elements':self.Fl_I_data['Fl_I'], 
                                                         'mix_elements':fuel_type})
         
-        self.Fl_O_data['Fl_O'] = self.thermo_add_comp.output_port_data()
+        # self.Fl_O_data['Fl_O'] = self.thermo_add_comp.output_port_data()
+        self.copy_flow(self.thermo_add_comp, 'Fl_O')
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -163,6 +159,9 @@ class Combustor(om.Group):
         else:
             self.add_subsystem('W_passthru', PassThrough('Wout', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
+
+
+        super().setup()
 
 
 if __name__ == "__main__":

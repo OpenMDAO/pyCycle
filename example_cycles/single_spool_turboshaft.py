@@ -12,20 +12,20 @@ class SingleSpoolTurboshaft(pyc.Cycle):
         design = self.options['design']
 
         # Add engine elements
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
                                     thermo_data=thermo_spec, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                     fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
                                     thermo_data=thermo_spec, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.pyc_add_element('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
+        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
                                     thermo_data=thermo_spec, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
                                     thermo_data=thermo_spec))
         self.add_subsystem('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
         self.add_subsystem('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])

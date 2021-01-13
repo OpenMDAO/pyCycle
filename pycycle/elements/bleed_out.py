@@ -10,6 +10,7 @@ from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 class BleedCalcs(om.ExplicitComponent):
 
@@ -52,7 +53,7 @@ class BleedCalcs(om.ExplicitComponent):
             J[BN+':stat:W',BN+':frac_W'] = inputs['W_in']
 
 
-class BleedOut(om.Group):
+class BleedOut(Element):
     """
     bleed extration from the incomming flow
 
@@ -100,18 +101,11 @@ class BleedOut(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
-        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
-        self.Fl_O_data = {'Fl_O': False}
-
-
     def pyc_setup_output_ports(self): 
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
-
-        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
+        self.copy_flow('Fl_I', 'Fl_O')
 
         for b_name in self.options['bleed_names']: 
-            self.Fl_O_data[b_name] = self.Fl_I_data['Fl_I']
+            self.copy_flow('Fl_I', b_name)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -195,6 +189,7 @@ class BleedOut(om.Group):
             self.add_subsystem('W_passthru', PassThrough('W_out', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
+        super().setup()
 
 if __name__ == "__main__":
 

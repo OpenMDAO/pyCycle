@@ -9,6 +9,7 @@ from pycycle.thermo.thermo import Thermo
 
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 #from pycycle.elements.test.util import regression_generator
 
@@ -42,7 +43,7 @@ class Calcs(om.ExplicitComponent):
         J['F_ram', 'W_in'] = inputs['V_in'] / g_c
 
 
-class Inlet(om.Group):
+class Inlet(Element):
     """
     Calculates ram-drag and exit flow conditions for an Inlet with
     specified MN (design) or area (off-design)
@@ -92,16 +93,9 @@ class Inlet(om.Group):
             ('Fl_O:stat:area', 'area'),
         ]
 
-        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
-        self.Fl_O_data = {'Fl_I': False}
-
     def pyc_setup_output_ports(self): 
         
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
-
-        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
-
+        self.copy_flow('Fl_I', 'Fl_O')
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -175,7 +169,8 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
-    
+        super().setup()
+        
     def pyc_setup_thermo(self, upstream):
         elements = self.options['elements']
         

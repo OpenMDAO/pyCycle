@@ -6,6 +6,7 @@ from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
+from pycycle.element_base import Element
 
 
 class MixImpulse(om.ExplicitComponent):
@@ -96,7 +97,7 @@ class Impulse(om.ExplicitComponent):
         J['impulse', 'W'] = inputs['V']
 
 
-class Mixer(om.Group):
+class Mixer(Element):
     """
     Combines two incomming flows into a single outgoing flow
     using a conservation of momentum approach
@@ -148,15 +149,8 @@ class Mixer(om.Group):
         self.options.declare('internal_solver', default=True,
                               desc='If True, a newton solver is used inside the mixer to converge the impulse balance')
 
-        self.Fl_I_data = {'Fl_I1':False, 
-                          'Fl_I2':False}
-
-        self.Fl_O_data = {'Fl_O': False}
 
     def pyc_setup_output_ports(self): 
-
-        if not np.any(self.Fl_I_data.values): 
-            raise ValueError('no input thermo data given for Fl_I')
 
         flow1_elements = self.Fl_I_data['Fl_I1']
         flow2_elements = self.Fl_I_data['Fl_I2']
@@ -168,7 +162,7 @@ class Mixer(om.Group):
                                                  'inflow_elements':flow1_elements, 
                                                  'mix_elements':flow2_elements})
 
-        self.Fl_O_data['Fl_O'] = self.flow_add.output_port_data()
+        self.copy_flow(self.flow_add, 'Fl_O')
 
     def setup(self):
         
@@ -307,4 +301,6 @@ class Mixer(om.Group):
         conv.connect('balance.P_tot', 'out_tot.P')
         conv.connect('imp_out.impulse', 'balance.lhs:P_tot')
         self.connect('impulse_mix.impulse_mix', 'balance.rhs:P_tot') #note that this connection comes from outside the convergence group
+
+        super().setup()
 

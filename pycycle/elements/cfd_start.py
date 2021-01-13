@@ -3,9 +3,9 @@ import openmdao.api as om
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
+from pycycle.element_base import Element
 
-
-class CFDStart(om.Group):
+class CFDStart(Element):
 
     def initialize(self):
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
@@ -17,10 +17,7 @@ class CFDStart(om.Group):
 
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']
-        
-        self.Fl_O_data = {
-          'Fl_O':elements
-        }
+        self.init_output_flow('Fl_O', elements)
 
     def setup(self):
         thermo_method = self.options['thermo_method']

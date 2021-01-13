@@ -1,7 +1,11 @@
 from collections import namedtuple
 
+import warnings
+
 import openmdao.api as om 
 import networkx as nx
+
+from pycycle.element_base import Element
 
 
 class Cycle(om.Group): 
@@ -20,21 +24,36 @@ class Cycle(om.Group):
         # flag needed for user focused error checking to make sure they called super in their sub-class
         self.__base_class_super_called = False
 
-    def pyc_add_element(self, name, element,**kwargs):
+    def pyc_add_element(self, name, element, **kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 
         the elements in a given cycle, separate from the general 
         components (e.g. BalanceComp, ExecComp, etc.)
         """
-        self._elements.add(element)
-        if 'thermo_method' in element.options:
-            element.options['thermo_method'] = self.options['thermo_method']
 
-        self._flow_graph.add_node(name, type='element')
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn(f"Deprecation warning: `pyc_add_element` function is deprecated because it is no longer needed. " 
+                       "Use the `add_subsystem` method." )
+        warnings.simplefilter('ignore', DeprecationWarning)
 
-        return self.add_subsystem(name, element, **kwargs)
+        self.add_subsystem(name, element, **kwargs)
 
-    #TODO: Find some way to error check based on __base_class_super_called to let user know they forgot a call to super
+
+    def add_subsystem(self, name, subsys, **kwargs):
+        """
+        Customized version of the OpenMDAO Group API method that does 
+        additional tracking of elements for the Cycle
+        """
+
+        if isinstance(subsys, Element): 
+            self._elements.add(subsys)
+            if 'thermo_method' in subsys.options:
+                subsys.options['thermo_method'] = self.options['thermo_method']
+
+            self._flow_graph.add_node(name, type='element')
+
+        #TODO: Find some way to error check based on __base_class_super_called to let user know they forgot a call to super
+        return super().add_subsystem(name, subsys, **kwargs)
 
 
     def setup(self): 
@@ -96,6 +115,10 @@ class Cycle(om.Group):
                         out_port = node_port_names[node]
                         in_port = node_port_names[link[1]]
                         # this passes whatever configuration data there was from the src element to the target keyed by port names
+
+                        if out_port not in src_element.Fl_O_data: 
+                            raise RuntimeError(f'in {self.pathname},{src_element.pathname}.{out_port} has not been properly setup.')
+
                         target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
 
                 visited.add(node)

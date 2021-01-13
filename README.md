@@ -22,18 +22,7 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | 3.0.0            | 2.8.0 thru 3.1.1  |
 | 3.2.0            | 3.2.0 or greater  |
 | 3.4.0            | 3.3.0 or greater  |
-
-## pyCycle 3.4.0 includes the following features: 
-* new `MPCycle` (stands for MultiPoint Cycle) and `Cycle` classes that you can optionally use to simplify your models and reduce boiler plate code associated with connecting data between design and off-design instances. 
-* major refactor of the thermodynamics library that won't directly affect your models, but is a major cleanup of the core thermo implementation. Though it is fully backwards compatible with 3.2.0, you may notice some small numerical differences due to slightly different solver structure for the CEA solver. 
-
-The thermo refactor has been specifically designed to make it easier to swap between multiple thermodynamics analyses 
-(i.e. simpler ones than CEA). 
-No other thermodynamic solvers are currently implemented, but they will be coming in future versions. 
-
-The features that will allow you to select from multiple thermodynamics libraries will be integrated in pyCycle 4.0.0. 
-This version will likely be slightly backwards incompatible, in terms of how you instantiate the elements. 
-If possible we'll provide a deprecations, but regardless it should be fairly simple to update to the new APIs. 
+| 3.5.0            | 3.5.0 or greater  |
 
 
 ## Citation

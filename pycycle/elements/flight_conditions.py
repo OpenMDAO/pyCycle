@@ -4,9 +4,10 @@ from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
+from pycycle.element_base import Element
 
 
-class FlightConditions(om.Group):
+class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
@@ -22,9 +23,7 @@ class FlightConditions(om.Group):
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']
         
-        self.Fl_O_data = {
-          'Fl_O':elements
-        }
+        self.init_output_flow('Fl_O', elements)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -79,6 +78,8 @@ class FlightConditions(om.Group):
         self.connect('Fl_O:stat:T', 'balance.lhs:Tt')
 
         # self.set_order(['ambient', 'subgroup'])
+
+        super().setup()
 
 
 if __name__ == "__main__":

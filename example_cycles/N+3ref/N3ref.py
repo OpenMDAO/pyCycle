@@ -30,36 +30,36 @@ class N3(pyc.Cycle):
         design = self.options['design']
         cooling = self.options['cooling']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('fan', pyc.Compressor(map_data=FanMap, design=design, thermo_data=thermo_spec, map_extrap=True,
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('fan', pyc.Compressor(map_data=FanMap, design=design, thermo_data=thermo_spec, map_extrap=True,
                                                  bleed_names=[]),
                            promotes_inputs=[('Nmech','Fan_Nmech')])
-        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('duct2', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=LPCMap, design=design, thermo_data=thermo_spec, map_extrap=True),
+        self.add_subsystem('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('duct2', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
+        self.add_subsystem('lpc', pyc.Compressor(map_data=LPCMap, design=design, thermo_data=thermo_spec, map_extrap=True),
                             promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('bld25', pyc.BleedOut(design=design, bleed_names=['sbv']))
-        self.pyc_add_element('duct25', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
-        self.pyc_add_element('hpc', pyc.Compressor(map_data=HPCMap, design=design, thermo_data=thermo_spec, map_extrap=True,
+        self.add_subsystem('bld25', pyc.BleedOut(design=design, bleed_names=['sbv']))
+        self.add_subsystem('duct25', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
+        self.add_subsystem('hpc', pyc.Compressor(map_data=HPCMap, design=design, thermo_data=thermo_spec, map_extrap=True,
                                         bleed_names=['bld_inlet','bld_exit','cust']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['bld_inlet','bld_exit']))
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.add_subsystem('bld3', pyc.BleedOut(design=design, bleed_names=['bld_inlet','bld_exit']))
+        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                         fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=HPTMap, design=design, thermo_data=thermo_spec, map_extrap=True,
+        self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, design=design, thermo_data=thermo_spec, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('duct45', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=LPTMap, design=design, thermo_data=thermo_spec, map_extrap=True,
+        self.add_subsystem('duct45', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
+        self.add_subsystem('lpt', pyc.Turbine(map_data=LPTMap, design=design, thermo_data=thermo_spec, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct5', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
-        self.pyc_add_element('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
+        self.add_subsystem('duct5', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
+        self.add_subsystem('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
 
-        self.pyc_add_element('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
-        self.pyc_add_element('duct17', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
-        self.pyc_add_element('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
+        self.add_subsystem('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
+        self.add_subsystem('duct17', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec))
+        self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
 
         self.add_subsystem('fan_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','Fan_Nmech')])
         self.add_subsystem('gearbox', pyc.Gearbox(design=design), promotes_inputs=[('N_in','LP_Nmech'), ('N_out','Fan_Nmech')])
@@ -205,7 +205,7 @@ class N3(pyc.Cycle):
             order_add = []
 
         if cooling:
-            self.pyc_add_element('hpt_cooling', pyc.TurbineCooling(n_stages=2, thermo_data=pyc.species_data.janaf, T_metal=2460.))
+            self.add_subsystem('hpt_cooling', pyc.TurbineCooling(n_stages=2, thermo_data=pyc.species_data.janaf, T_metal=2460.))
             self.add_subsystem('hpt_chargable', pyc.CombineCooling(n_ins=3)) #Number of cooling flows which are chargable
 
             self.pyc_connect_flow('bld3.bld_inlet', 'hpt_cooling.Fl_cool', connect_stat=False)

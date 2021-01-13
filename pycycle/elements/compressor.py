@@ -11,6 +11,8 @@ from pycycle.passthrough import PassThrough
 from pycycle.constants import AIR_ELEMENTS, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
 from pycycle.elements.compressor_map import CompressorMap
 from pycycle.maps.ncp01 import NCP01
+from pycycle.element_base import Element
+
 
 
 class CorrectedInputsCalc(om.ExplicitComponent):
@@ -334,7 +336,7 @@ class PressureRise(om.ExplicitComponent):
         J['Pt_out', 'PR'] = inputs['Pt_in']
 
 
-class Compressor(om.Group):
+class Compressor(Element):
     """
     Calculates pressure and temperature rise of a flow through a non-ideal compressors,
     using turbomachinery performance maps.
@@ -411,19 +413,13 @@ class Compressor(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
-        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
-        self.Fl_O_data = {'Fl_O': False}
-
     def pyc_setup_output_ports(self): 
         
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
-
-        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
+        self.copy_flow('Fl_I', 'Fl_O')
 
         bleeds = self.options['bleed_names']
         for BN in bleeds: 
-            self.Fl_O_data[BN] = self.Fl_I_data['Fl_I']
+            self.copy_flow('Fl_I', BN)
 
     def setup(self):
         #(self, mapclass=NCP01map(), design=True, thermo_data=species_data.janaf, elements=AIR_ELEMENTS, bleeds=[],statics=True):
@@ -594,4 +590,6 @@ class Compressor(om.Group):
 
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='inch**2')
+
+        super().setup()
 

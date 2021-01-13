@@ -9,6 +9,7 @@ from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 class MachPressureLossMap(om.ExplicitComponent):
     """
@@ -108,7 +109,7 @@ class qCalc(om.ExplicitComponent):
         J['ht_out','ht_in'] = 1.0
 
 
-class Duct(om.Group):
+class Duct(Element):
     """
     Calculates flow for an element with specified MN (on design)
     or Area (off-design) and Pressure/Energy loss across the component.
@@ -164,15 +165,8 @@ class Duct(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
-        self.Fl_I_data = {'Fl_I': False} #False means was not setup, which is an error
-        self.Fl_O_data = {'Fl_I': False}
-
-
     def pyc_setup_output_ports(self): 
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError('no input thermo data given for Fl_I')
-
-        self.Fl_O_data['Fl_O'] = self.Fl_I_data['Fl_I']
+        self.copy_flow('Fl_I','Fl_O')
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -258,7 +252,7 @@ class Duct(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
-
+        super().setup()
 
 if __name__ == "__main__":
 

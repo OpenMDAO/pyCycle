@@ -5,6 +5,7 @@ from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
 from pycycle.flow_in import FlowIn
+from pycycle.element_base import Element
 
 
 class CombineCooling(om.ExplicitComponent):
@@ -247,7 +248,7 @@ class Row(om.Group):
         self.connect('cooling_calcs.Pt_stage', 'mixed_flow.P')
 
 
-class TurbineCooling(om.Group):
+class TurbineCooling(Element):
 
     def initialize(self):
         self.options.declare('n_stages', types=int, desc="number of stages in the turbine")
@@ -262,15 +263,13 @@ class TurbineCooling(om.Group):
 
         self.options.declare('owns_x_factor', types=bool, default=True, desc='if True, x_factor will be connected to an IndepVarComp inside this element')
 
-        self.Fl_I_data = {'Fl_turb_I': False, 'Fl_turb_O': False}
-        self.Fl_O_data = {}
 
     def pyc_setup_output_ports(self): 
 
         inflow_elements = self.Fl_I_data['Fl_turb_I']
         mix_elements = self.Fl_I_data['Fl_cool']
         
-        # we could do this, but we shouldn't need to, because it will be the same as Fl_turb_O
+        # we could do this, but we do not need to, because it will be the same data as Fl_turb_O
         # tmp_thermo_add = ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
         #                            thermo_kwargs={'spec':self.options['thermo_data'], 
         #                                           'inflow_elements':inflow_elements, 
@@ -282,8 +281,7 @@ class TurbineCooling(om.Group):
         n_rows = 2 * n_stages
         for i in range(n_rows):
             row_port_name = r'row_{i}.Fl_O'
-            # self.Fl_O_data[row_port_name] = output_data
-            self.Fl_O_data[row_port_name] = self.Fl_I_data['Fl_turb_O']
+            self.copy_flow('Fl_turb_O', row_port_name)
 
     def setup(self):
 
@@ -332,6 +330,8 @@ class TurbineCooling(om.Group):
             self.connect('{}.Fl_O:tot:T'.format(prev_row), '{}.Tt_primary'.format(curr_row))
             self.connect('{}.Fl_O:tot:h'.format(prev_row), '{}.ht_primary'.format(curr_row))
             self.connect('{}.Fl_O:tot:composition'.format(prev_row), '{}.composition_primary'.format(curr_row))
+
+        super().setup()
 
 if __name__ == "__main__":
 

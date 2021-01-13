@@ -12,40 +12,40 @@ class MixedFlowTurbofan(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         # Inlet Components
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('inlet_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('inlet_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
         # Fan Components - Split here for CFD integration Add a CFDStart Compomponent
-        self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec,
                                              map_extrap=True),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec))
         # Core Stream components
-        self.pyc_add_element('splitter_core_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec,map_extrap=True),
+        self.add_subsystem('splitter_core_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec,map_extrap=True),
                                              promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('lpc_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('hpc', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('lpc_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('hpc', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1'],map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['cool3']))
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
+        self.add_subsystem('bld3', pyc.BleedOut(design=design, bleed_names=['cool3']))
+        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                                 fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec,
                                           bleed_names=['cool3'],map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('hpt_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec,
+        self.add_subsystem('hpt_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec,
                                         bleed_names=['cool1'],map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('lpt_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('lpt_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
         # Bypass Components
-        self.pyc_add_element('bypass_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('bypass_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
         # Mixer component
-        self.pyc_add_element('mixer', pyc.Mixer(design=design, designed_stream=1))
-        self.pyc_add_element('mixer_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('mixer', pyc.Mixer(design=design, designed_stream=1))
+        self.add_subsystem('mixer_duct', pyc.Duct(design=design, thermo_data=thermo_spec))
         # Afterburner Components
-        self.pyc_add_element('afterburner', pyc.Combustor(design=design,thermo_data=thermo_spec, fuel_type='Jet-A(g)'))
+        self.add_subsystem('afterburner', pyc.Combustor(design=design,thermo_data=thermo_spec, fuel_type='Jet-A(g)'))
         # End CFD HERE
         # Nozzle
-        self.pyc_add_element('mixed_nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cfg', thermo_data=thermo_spec))
+        self.add_subsystem('mixed_nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cfg', thermo_data=thermo_spec))
 
         # Mechanical components
         self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])

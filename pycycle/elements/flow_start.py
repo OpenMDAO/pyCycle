@@ -5,9 +5,10 @@ from openmdao.api import Group, ExplicitComponent
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
+from pycycle.element_base import Element
 
 
-class FlowStart(Group):
+class FlowStart(Element):
 
     def initialize(self):
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
@@ -23,9 +24,7 @@ class FlowStart(Group):
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']
         
-        self.Fl_O_data = {
-          'Fl_O':elements
-        }
+        self.init_output_flow('Fl_O', elements)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
@@ -71,5 +70,7 @@ class FlowStart(Group):
         self.connect('totals.S','exit_static.S')
         self.connect('Fl_O:tot:P','exit_static.guess:Pt')
         self.connect('totals.gamma', 'exit_static.guess:gamt')
+
+        super().setup()
 
 

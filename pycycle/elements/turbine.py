@@ -10,7 +10,7 @@ from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.thermo.cea import species_data
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
-# from pycycle.components.compressor import Power
+from pycycle.element_base import Element
 
 from pycycle.elements.turbine_map import TurbineMap
 from pycycle.maps.lpt2269 import LPT2269
@@ -365,7 +365,7 @@ class EnthalpyAndPower(om.ExplicitComponent):
         J['trq', 'Nmech'] = dtrq_dNmech
 
 
-class Turbine(om.Group):
+class Turbine(Element):
     """
     An Assembly that models a turbine
 
@@ -444,14 +444,8 @@ class Turbine(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
-        self.Fl_I_data ={'Fl_I':False}
-        self.Fl_O_data ={'Fl_O':False}
-
 
     def pyc_setup_output_ports(self): 
-
-        if self.Fl_I_data['Fl_I'] == False: 
-            raise ValueError(f'no input thermo data given for Fl_I for {self.pathname}')
 
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
@@ -463,15 +457,12 @@ class Turbine(om.Group):
         for bleed_name in bleeds: 
             bleed_element_list.append(self.Fl_I_data[bleed_name])
         
-        bld_add = ThermoAdd(method=thermo_method, mix_names=bleeds, mix_mode='flow',
-                            thermo_kwargs={'spec':thermo_data, 
-                                           'inflow_elements':inflow_elements, 
-                                           'mix_elements':bleed_element_list})
-
-
-        self.Fl_O_data['Fl_O'] = bld_add.output_port_data()
-
-        self.bld_add = bld_add
+        self.bld_add = ThermoAdd(method=thermo_method, mix_names=bleeds, mix_mode='flow',
+                                 thermo_kwargs={'spec':thermo_data, 
+                                                'inflow_elements':inflow_elements, 
+                                                'mix_elements':bleed_element_list})
+        
+        self.copy_flow(self.bld_add, 'Fl_O')
 
 
     def setup(self):
@@ -652,3 +643,5 @@ class Turbine(om.Group):
         # if not designFlag: 
         #     self.set_input_defaults('area', val=1, units='in**2')
         thermo_method = self.options['thermo_method']
+
+        super().setup()
