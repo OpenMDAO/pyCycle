@@ -19,7 +19,7 @@ class ChemEqTestCase(unittest.TestCase):
 
     def test_set_total_tp(self):
         p = self.p
-        p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo, mode="T"), promotes=["*"])
+        p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo), promotes=["*"])
         p.model.set_input_defaults('T', 1500., units='degK')
         p.setup(check=False)
         p.run_model()
@@ -28,25 +28,25 @@ class ChemEqTestCase(unittest.TestCase):
 
         assert_near_equal(p['n'], [8.15344263e-06, 2.27139552e-02, 4.07672148e-06], tol)
 
-    def test_set_total_hp(self):
-        p = self.p
-        p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo, mode="h"), promotes=["*"])
-        p.model.set_input_defaults('h', -1801.3, units='cal/g')
-        p.setup(check=False)
-        p.run_model()
-        tol = 6e-4
+    # def test_set_total_hp(self):
+    #     p = self.p
+    #     p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo, mode="h"), promotes=["*"])
+    #     p.model.set_input_defaults('h', -1801.3, units='cal/g')
+    #     p.setup(check=False)
+    #     p.run_model()
+    #     tol = 6e-4
 
-        assert_near_equal(p['n'], [8.15344263e-06, 2.27139552e-02, 4.07672148e-06], tol)
+    #     assert_near_equal(p['n'], [8.15344263e-06, 2.27139552e-02, 4.07672148e-06], tol)
 
-    def test_set_total_sp(self):
-        p = self.p
-        p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo, mode="S"), promotes=["*"])
-        p.model.set_input_defaults('S', 1.58645, units='cal/(g*degK)')
-        p.setup(check=False)
-        p.run_model()
+    # def test_set_total_sp(self):
+    #     p = self.p
+    #     p.model.add_subsystem('ceq', ChemEq(thermo=self.thermo, mode="S"), promotes=["*"])
+    #     p.model.set_input_defaults('S', 1.58645, units='cal/(g*degK)')
+    #     p.setup(check=False)
+    #     p.run_model()
 
-        tol = 6e-4
-        assert_near_equal(p['n'], [8.15344263e-06, 2.27139552e-02, 4.07672148e-06], tol)
+    #     tol = 6e-4
+    #     assert_near_equal(p['n'], [8.15344263e-06, 2.27139552e-02, 4.07672148e-06], tol)
 
 
 if __name__ == "__main__":
