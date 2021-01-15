@@ -442,7 +442,7 @@ class Turbine(Element):
         thermo_data = self.options['thermo_data']
         bleeds = self.options['bleed_names']
 
-        inflow_elements = self.Fl_I_data['Fl_I']
+        inflow_composition = self.Fl_I_data['Fl_I']
         # thermo add expects a list of bleed_element, one for each bleed
         bleed_element_list = []
         for bleed_name in bleeds: 
@@ -450,8 +450,8 @@ class Turbine(Element):
         
         self.bld_add = ThermoAdd(method=thermo_method, mix_names=bleeds, mix_mode='flow',
                                  thermo_kwargs={'spec':thermo_data, 
-                                                'inflow_elements':inflow_elements, 
-                                                'mix_elements':bleed_element_list})
+                                                'inflow_composition':inflow_composition, 
+                                                'mix_composition':bleed_element_list})
         
         self.copy_flow(self.bld_add, 'Fl_O')
 
@@ -467,8 +467,7 @@ class Turbine(Element):
         interp_method = self.options['map_interp_method']
         map_extrap = self.options['map_extrap']
 
-        elements = self.Fl_I_data['Fl_I']
-
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flow station
         in_flow = FlowIn(fl_name='Fl_I')
@@ -497,7 +496,7 @@ class Turbine(Element):
         # Calculate ideal flow station properties
         ideal_flow = Thermo(mode='total_SP', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':elements, 
+                            thermo_kwargs={'composition':composition, 
                                            'spec':thermo_data})
         self.add_subsystem('ideal_flow', ideal_flow,
                            promotes_inputs=[('S', 'Fl_I:tot:S'), ('composition', 'Fl_I:tot:composition')])
@@ -533,7 +532,7 @@ class Turbine(Element):
             bleed_names2.append(BN + '_inflow')
             inflow = Thermo(mode='total_hP', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':self.Fl_I_data[BN], 
+                            thermo_kwargs={'composition':self.Fl_I_data[BN], 
                                            'spec':thermo_data})
             self.add_subsystem(BN + '_inflow', inflow,
                                promotes_inputs=[('composition', BN + ":tot:composition"), ('h', BN + ':tot:h')])
@@ -543,7 +542,7 @@ class Turbine(Element):
             bleed_names2.append(f'{BN}_ideal')
             ideal = Thermo(mode='total_SP', 
                            method=thermo_method, 
-                           thermo_kwargs={'elements':self.Fl_I_data[BN], 
+                           thermo_kwargs={'composition':self.Fl_I_data[BN], 
                                           'spec':thermo_data})
             self.add_subsystem(f'{BN}_ideal', ideal,
                                promotes_inputs=[('composition', BN + ":tot:composition")])
@@ -563,7 +562,7 @@ class Turbine(Element):
         # Calculate real flow station properties before bleed air is added
         real_flow_b4bld = Thermo(mode='total_hP', fl_name="Fl_O_b4bld:tot",
                                  method=thermo_method, 
-                                 thermo_kwargs={'elements':elements, 
+                                 thermo_kwargs={'composition':composition, 
                                                 'spec':thermo_data})
         self.add_subsystem('real_flow_b4bld', real_flow_b4bld,
                            promotes_inputs=[('composition', 'Fl_I:tot:composition')])
@@ -579,7 +578,7 @@ class Turbine(Element):
         # Calculate real flow station properties
         real_flow = Thermo(mode='total_hP', fl_name="Fl_O:tot",
                                  method=thermo_method, 
-                                 thermo_kwargs={'elements':elements, 
+                                 thermo_kwargs={'composition':composition, 
                                                 'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_outputs=['Fl_O:tot:*'])
@@ -593,7 +592,7 @@ class Turbine(Element):
                 #   SetStaticMN
                 out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat",
                                  method=thermo_method, 
-                                 thermo_kwargs={'elements':elements, 
+                                 thermo_kwargs={'composition':composition, 
                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['MN'],
@@ -609,7 +608,7 @@ class Turbine(Element):
                 #   SetStaticArea
                 out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat",
                                  method=thermo_method, 
-                                 thermo_kwargs={'elements':elements, 
+                                 thermo_kwargs={'composition':composition, 
                                                 'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=['area'],

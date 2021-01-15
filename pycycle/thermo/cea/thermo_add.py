@@ -15,12 +15,12 @@ class ThermoAdd(om.ExplicitComponent):
         self.options.declare('spec', default=janaf,
                              desc=('Thermodynamic data set for flow.'), 
                              recordable=False)
-        self.options.declare('inflow_elements', default=AIR_ELEMENTS,
-                             desc='set of elements present in the flow')
+        self.options.declare('inflow_composition', default=AIR_ELEMENTS,
+                             desc='composition present in the flow')
 
         self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
 
-        self.options.declare('mix_elements', default="JP-7",
+        self.options.declare('mix_composition', default="JP-7",
                              desc='Type of fuel.', types=(dict, str, list, tuple))
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
@@ -32,21 +32,21 @@ class ThermoAdd(om.ExplicitComponent):
 
         spec = self.options['spec']
 
-        inflow_elements = self.options['inflow_elements']
+        inflow_composition = self.options['inflow_composition']
         mix_mode = self.options['mix_mode']
 
-        mix_elements = self.options['mix_elements']
-        if isinstance(mix_elements, (str, dict)): # cast it to tuple
-            mix_elements = (mix_elements,)
+        mix_composition = self.options['mix_composition']
+        if isinstance(mix_composition, (str, dict)): # cast it to tuple
+            mix_composition = (mix_composition,)
 
-        self.mix_elements = mix_elements
+        self.mix_composition = mix_composition
 
-        mixed_flow_elements = inflow_elements.copy()
+        mixed_flow_elements = inflow_composition.copy()
         if mix_mode == "reactant": # get the elements from the reactant dict in the spec
-            for reactant in mix_elements: 
+            for reactant in mix_composition: 
                 mixed_flow_elements.update(spec.reactants[reactant]) #adds the fuel elements to the mix outflow
         else: # flow mode 
-            for flow_elements in mix_elements: 
+            for flow_elements in mix_composition: 
                 mixed_flow_elements.update(flow_elements)
 
         self.mixed_elements = mixed_flow_elements
@@ -65,14 +65,14 @@ class ThermoAdd(om.ExplicitComponent):
             mix_names = (mix_names,)    
         self.mix_names = mix_names
 
-        inflow_elements = self.options['inflow_elements']
+        inflow_composition = self.options['inflow_composition']
 
         self.output_port_data()
 
-        inflow_thermo = Properties(spec, init_elements=inflow_elements)
-        self.inflow_elements = inflow_thermo.elements
+        inflow_thermo = Properties(spec, init_elements=inflow_composition)
+        self.inflow_composition = inflow_thermo.elements
         self.inflow_wt_mole = inflow_thermo.element_wt
-        self.num_inflow_elements = len(self.inflow_elements)
+        self.num_inflow_composition = len(self.inflow_composition)
 
         mixed_thermo = Properties(spec, init_elements=self.mixed_elements)
         self.mixed_elements = mixed_thermo.elements
@@ -83,7 +83,7 @@ class ThermoAdd(om.ExplicitComponent):
         self.init_fuel_amounts_1kg = {}
 
         if mix_mode == 'reactant': 
-            for reactant in self.mix_elements: 
+            for reactant in self.mix_composition: 
                 self.init_fuel_amounts_1kg[reactant] = np.zeros(mixed_thermo.num_element)
                 ifa_1kg = self.init_fuel_amounts_1kg[reactant]
                 for i, e in enumerate(self.mixed_elements): 
@@ -95,7 +95,7 @@ class ThermoAdd(om.ExplicitComponent):
             mix_b0 = {}
             self.mix_wt_mole = {}
             self.mix_out_flow_idx_maps = {}
-            for name, elements in zip(mix_names, self.mix_elements): 
+            for name, elements in zip(mix_names, self.mix_composition): 
                 thermo = Properties(spec, init_elements=elements)
                 mix_b0[name] = thermo.b0
                 self.mix_wt_mole[name] = thermo.element_wt
@@ -135,7 +135,7 @@ class ThermoAdd(om.ExplicitComponent):
         # which is basically a permutation matrix of ones resize the input to the output
 
         self.in_out_flow_idx_map = np.zeros((mixed_thermo.num_element, inflow_thermo.num_element))
-        for i,e in enumerate(self.inflow_elements): 
+        for i,e in enumerate(self.inflow_composition): 
             j = self.mixed_elements.index(e)
             self.in_out_flow_idx_map[j,i] = 1.
 
@@ -161,7 +161,7 @@ class ThermoAdd(om.ExplicitComponent):
         W_out = W.copy()
 
         if self.options['mix_mode'] == 'reactant': 
-            for name, reactant in zip(self.mix_names, self.mix_elements): 
+            for name, reactant in zip(self.mix_names, self.mix_composition): 
                 ratio = inputs[f'{name}:ratio']
                 # compute the amount of fuel-flow rate in terms of the incoming mass-flow rate
                 outputs[f'{name}:W'] = W_mix = W*ratio

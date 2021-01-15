@@ -75,8 +75,8 @@ class Combustor(Element):
 
         self.thermo_add_comp = ThermoAdd(method=thermo_method, mix_mode='reactant',
                                          thermo_kwargs={'spec':thermo_data,
-                                                        'inflow_elements':self.Fl_I_data['Fl_I'], 
-                                                        'mix_elements':fuel_type})
+                                                        'inflow_composition':self.Fl_I_data['Fl_I'], 
+                                                        'mix_composition':fuel_type})
         
         # self.Fl_O_data['Fl_O'] = self.thermo_add_comp.output_port_data()
         self.copy_flow(self.thermo_add_comp, 'Fl_O')
@@ -85,8 +85,8 @@ class Combustor(Element):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
 
-        inflow_elements = self.Fl_I_data['Fl_I']
-        air_fuel_elements = self.Fl_O_data['Fl_O']
+        inflow_composition = self.Fl_I_data['Fl_I']
+        air_fuel_composition = self.Fl_O_data['Fl_O']
         design = self.options['design']
         statics = self.options['statics']
 
@@ -105,7 +105,7 @@ class Combustor(Element):
         # Calculate vitiated flow station properties
         vit_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                           method=thermo_method, 
-                          thermo_kwargs={'elements':air_fuel_elements, 
+                          thermo_kwargs={'composition':air_fuel_composition, 
                                          'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
         self.connect("mix_fuel.mass_avg_h", "vitiated_flow.h")
@@ -118,7 +118,7 @@ class Combustor(Element):
 
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':air_fuel_elements, 
+                                  thermo_kwargs={'composition':air_fuel_composition, 
                                                  'spec':thermo_data})
                 prom_in = ['MN']
                 prom_out = ['Fl_O:stat:*']
@@ -136,7 +136,7 @@ class Combustor(Element):
                 # Calculate static properties.
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':air_fuel_elements, 
+                                  thermo_kwargs={'composition':air_fuel_composition, 
                                                  'spec':thermo_data})
                 prom_in = ['area']
                 prom_out = ['Fl_O:stat:*']

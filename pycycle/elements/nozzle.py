@@ -321,8 +321,7 @@ class Nozzle(Element):
         lossCoef = self.options['lossCoef']
 
         # elements = self.options['elements']
-        elements = self.Fl_I_data['Fl_I']
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 
@@ -347,7 +346,7 @@ class Nozzle(Element):
         # Calculate throat total flow properties
         throat_total = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                               method=thermo_method, 
-                              thermo_kwargs={'elements':elements, 
+                              thermo_kwargs={'composition':composition, 
                                              'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
                    ('composition', 'Fl_I:tot:composition')]
@@ -358,7 +357,7 @@ class Nozzle(Element):
         # Calculate static properties for sonic flow
         throat_static_MN = Thermo(mode='static_MN', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
@@ -374,7 +373,7 @@ class Nozzle(Element):
         # Calculate static properties based on exit static pressure
         throat_static_Ps = Thermo(mode='static_Ps', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
@@ -389,7 +388,7 @@ class Nozzle(Element):
         # Calculate ideal exit flow properties
         ideal_flow = Thermo(mode='static_Ps', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':elements, 
+                            thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('S', 'Fl_I:tot:S'),

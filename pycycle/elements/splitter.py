@@ -102,8 +102,7 @@ class Splitter(Element):
         statics = self.options['statics']
         design = self.options['design']
 
-        elements = self.Fl_I_data['Fl_I']
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flowstation
         flow_in = FlowIn(fl_name='Fl_I')
@@ -115,7 +114,7 @@ class Splitter(Element):
         # Set Fl_out1 totals based on T, P
         real_flow1 = Thermo(mode='total_TP', fl_name='Fl_O1:tot', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':elements, 
+                            thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow1', real_flow1,
                            promotes_inputs=(('composition', 'Fl_I:tot:composition'),
@@ -126,7 +125,7 @@ class Splitter(Element):
         # Set Fl_out2 totals based on T, P
         real_flow2 = Thermo(mode='total_TP', fl_name='Fl_O2:tot', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':elements, 
+                            thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('composition', 'Fl_I:tot:composition'),
                                             ('P', 'Fl_I:tot:P'),
@@ -138,7 +137,7 @@ class Splitter(Element):
             #   Calculate static properties
                 out1_stat = Thermo(mode='static_MN', fl_name='Fl_O1:stat', 
                                    method=thermo_method, 
-                                   thermo_kwargs={'elements':elements, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN1')]
@@ -153,7 +152,7 @@ class Splitter(Element):
 
                 out2_stat = Thermo(mode='static_MN', fl_name='Fl_O2:stat', 
                                    method=thermo_method, 
-                                   thermo_kwargs={'elements':elements, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN2')]
@@ -170,7 +169,7 @@ class Splitter(Element):
                 # Calculate static properties
                 out1_stat = Thermo(mode='static_A', fl_name='Fl_O1:stat', 
                                    method=thermo_method, 
-                                   thermo_kwargs={'elements':elements, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area1')]
@@ -185,7 +184,7 @@ class Splitter(Element):
 
                 out2_stat = Thermo(mode='static_A', fl_name='Fl_O2:stat', 
                                    method=thermo_method, 
-                                   thermo_kwargs={'elements':elements, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area2')]

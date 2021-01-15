@@ -147,15 +147,15 @@ class Mixer(Element):
 
     def pyc_setup_output_ports(self): 
 
-        flow1_elements = self.Fl_I_data['Fl_I1']
-        flow2_elements = self.Fl_I_data['Fl_I2']
+        flow1_composition = self.Fl_I_data['Fl_I1']
+        flow2_composition = self.Fl_I_data['Fl_I2']
 
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         self.flow_add = ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='mix', 
                                   thermo_kwargs={'spec':thermo_data,
-                                                 'inflow_elements':flow1_elements, 
-                                                 'mix_elements':flow2_elements})
+                                                 'inflow_composition':flow1_composition, 
+                                                 'mix_composition':flow2_composition})
 
         self.copy_flow(self.flow_add, 'Fl_O')
 
@@ -165,11 +165,11 @@ class Mixer(Element):
         thermo_data = self.options['thermo_data']
         thermo_method = self.options['thermo_method']
 
-        flow1_elements = self.Fl_I_data['Fl_I1']
+        flow1_composition = self.Fl_I_data['Fl_I1']
         in_flow = FlowIn(fl_name='Fl_I1')
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
-        flow2_elements = self.Fl_I_data['Fl_I1']
+        flow2_composition = self.Fl_I_data['Fl_I1']
         in_flow = FlowIn(fl_name='Fl_I2')
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
@@ -179,7 +179,7 @@ class Mixer(Element):
             if self.options['designed_stream'] == 1:
                 Fl1_stat = Thermo(mode='static_Ps', fl_name="Fl_I1_calc:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':flow1_elements, 
+                                  thermo_kwargs={'composition':flow1_composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
                                    promotes_inputs=[('composition', 'Fl_I1:tot:composition'), ('S', 'Fl_I1:tot:S'),
@@ -193,7 +193,7 @@ class Mixer(Element):
             else:
                 Fl2_stat = Thermo(mode='static_Ps', fl_name="Fl_I2_calc:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':flow2_elements, 
+                                  thermo_kwargs={'composition':flow2_composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
                                    promotes_inputs=[('composition', 'Fl_I2:tot:composition'), ('S', 'Fl_I2:tot:S'),
@@ -208,7 +208,7 @@ class Mixer(Element):
             if self.options['designed_stream'] == 1:
                 Fl1_stat = Thermo(mode='static_A', fl_name="Fl_I1_calc:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':flow1_elements, 
+                                  thermo_kwargs={'composition':flow1_composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
                                     promotes_inputs=[('composition', 'Fl_I1:tot:composition'), ('S', 'Fl_I1:tot:S'),
@@ -219,7 +219,7 @@ class Mixer(Element):
             else:
                 Fl2_stat = Thermo(mode='static_A', fl_name="Fl_I2_calc:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':flow2_elements, 
+                                  thermo_kwargs={'composition':flow2_composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('Fl_I2_stat_calc', Fl2_stat,
                                     promotes_inputs=[('composition', 'Fl_I2:tot:composition'), ('S', 'Fl_I2:tot:S'),
@@ -266,7 +266,7 @@ class Mixer(Element):
 
         out_tot = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                          method=thermo_method, 
-                         thermo_kwargs={'elements':flow1_elements, 
+                         thermo_kwargs={'composition':flow1_composition, 
                                         'spec':thermo_data})
         conv.add_subsystem('out_tot', out_tot, promotes_outputs=['Fl_O:tot:*'])
         self.connect('flow_add.composition_out', 'out_tot.composition')
@@ -275,7 +275,7 @@ class Mixer(Element):
 
         out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                           method=thermo_method, 
-                          thermo_kwargs={'elements':flow1_elements, 
+                          thermo_kwargs={'composition':flow1_composition, 
                                          'spec':thermo_data})
         conv.add_subsystem('out_stat', out_stat, promotes_outputs=['Fl_O:stat:*'], promotes_inputs=['area', ])
         self.connect('flow_add.composition_out', 'out_stat.composition')

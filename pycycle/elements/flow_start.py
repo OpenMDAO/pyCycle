@@ -11,8 +11,8 @@ from pycycle.element_base import Element
 class FlowStart(Element):
 
     def initialize(self):
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
+        self.options.declare('composition', default=AIR_ELEMENTS,
+                              desc='composition of the flow')
 
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
@@ -20,27 +20,27 @@ class FlowStart(Element):
         super().initialize()
 
     def pyc_setup_output_ports(self): 
-        elements = self.options['elements']
+        composition = self.options['composition']
         
-        self.init_output_flow('Fl_O', elements)
+        self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         use_WAR = self.options['use_WAR']
 
-        elements = self.Fl_O_data['Fl_O']
+        composition = self.Fl_O_data['Fl_O']
 
         if use_WAR == True:
-            if 'H' not in elements or 'O' not in elements:
-                raise ValueError('The provided elements to FlightConditions do not contain H or O. In order to specify a nonzero WAR the elements must contain both H and O.')
+            if 'H' not in composition or 'O' not in composition:
+                raise ValueError('The provided composition to FlightConditions does not contain H or O. In order to specify a nonzero WAR the composition must contain both H and O.')
 
         # inputs
         if use_WAR == True:
 
             mix = ThermoAdd(method=thermo_method, thermo_kwargs={'spec':thermo_data, 
-                                                                 'inflow_elements':elements, 
-                                                                 'mix_elements':'Water', })
+                                                                 'inflow_composition':composition, 
+                                                                 'mix_composition':'Water', })
             self.add_subsystem('WAR', mix, 
                                 promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
                                 promotes_outputs=(('composition_out', 'composition'), ))
@@ -48,7 +48,7 @@ class FlowStart(Element):
 
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
                         method=thermo_method, 
-                        thermo_kwargs={'elements':elements, 
+                        thermo_kwargs={'composition':composition, 
                                        'spec':thermo_data})
 
         in_vars = ('T','P', 'composition')
@@ -58,7 +58,7 @@ class FlowStart(Element):
 
         set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
                              method=thermo_method, 
-                             thermo_kwargs={'elements':elements, 
+                             thermo_kwargs={'composition':composition, 
                                             'spec':thermo_data} )
 
         self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'composition'),

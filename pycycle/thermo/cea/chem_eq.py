@@ -427,13 +427,13 @@ class SetTotalTP(om.Group):
     def initialize(self): 
 
         self.options.declare('spec', recordable=False)
-        self.options.declare('elements')
+        self.options.declare('composition')
 
 
     def setup(self):
 
         self.thermo = species_data.Properties(self.options['spec'], 
-                                              init_elements=self.options['elements'])
+                                              init_elements=self.options['composition'])
         
         # these have to be part of the API for the unit_comps to use
         self.composition = self.thermo.b0
