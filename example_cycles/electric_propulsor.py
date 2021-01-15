@@ -10,14 +10,14 @@ class Propulsor(pyc.Cycle):
         thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec,
                                                  design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+        self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec))
+        
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
@@ -78,6 +78,8 @@ class Propulsor(pyc.Cycle):
         #
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
+        # base_class setup should be called as the last thing in your setup
+        super().setup()
 
 def viewer(prob, pt):
     """
@@ -164,6 +166,7 @@ if __name__ == "__main__":
 
     prob.model.off_design.nonlinear_solver.options['atol'] = 1e-6
     prob.model.off_design.nonlinear_solver.options['rtol'] = 1e-6
+
 
     prob.run_model()
     run_time = time.time() - st

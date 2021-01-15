@@ -3,9 +3,9 @@ import openmdao.api as om
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
+from pycycle.element_base import Element
 
-
-class CFDStart(om.Group):
+class CFDStart(Element):
 
     def initialize(self):
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
@@ -15,13 +15,21 @@ class CFDStart(om.Group):
         self.options.declare('elements', default=AIR_ELEMENTS,
                              desc='set of elements present in the flow')
 
+    def pyc_setup_output_ports(self): 
+        elements = self.options['elements']
+        self.init_output_flow('Fl_O', elements)
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
+        
+        elements = self.Fl_O_data['Fl_O']
 
-        self.add_subsystem('fs', FlowStart(thermo_method=thermo_method,thermo_data=thermo_data, 
-                           elements=elements), promotes_outputs=['Fl_O:*'],promotes_inputs=['W'])
+
+        fs = self.add_subsystem('fs', FlowStart(thermo_method=thermo_method,thermo_data=thermo_data, 
+                                elements=elements), promotes_outputs=['Fl_O:*'],promotes_inputs=['W'])
+        fs.pyc_setup_output_ports()
+
 
         balance = om.BalanceComp()
         balance.add_balance('P', val=10., units='psi', eq_units='psi', lhs_name='Ps_computed', rhs_name='Ps',

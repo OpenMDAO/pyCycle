@@ -6,8 +6,7 @@ import openmdao.api as om
 
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 
-from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.thermo_add import ThermoAdd
+from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.thermo.cea.species_data import Properties, janaf
 
@@ -15,9 +14,11 @@ from pycycle.elements.duct import PressureLoss
 
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 
-class Combustor(om.Group):
+
+class Combustor(Element):
     """
     A combustor that adds a fuel to an incoming flow mixture and burns it
 
@@ -57,16 +58,13 @@ class Combustor(om.Group):
     """
 
     def initialize(self):
+
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
                               desc='Method for computing thermodynamic properties')
         self.options.declare('inflow_thermo_data', default=None,
                              desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
         self.options.declare('thermo_data', default=janaf,
-                             desc='Thermodynamic data set for flow. This is used for incoming and outgoing flow unless inflow_thermo_data is set, in which case it is used only for outgoing flow.', recordable=False)
-        self.options.declare('inflow_elements', default=AIR_ELEMENTS,
-                             desc='set of elements present in the air flow')
-        self.options.declare('air_fuel_elements', default=AIR_FUEL_ELEMENTS,
-                             desc='set of elements present in the fuel')
+                             desc='Thermodynamic data set for the flow', recordable=False)
         self.options.declare('design', default=True,
                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('statics', default=True,
@@ -74,33 +72,36 @@ class Combustor(om.Group):
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
 
+    def pyc_setup_output_ports(self): 
+
+        thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
+        fuel_type = self.options['fuel_type']
+
+
+        self.thermo_add_comp = ThermoAdd(method=thermo_method, mix_mode='reactant',
+                                         thermo_kwargs={'spec':thermo_data,
+                                                        'inflow_elements':self.Fl_I_data['Fl_I'], 
+                                                        'mix_elements':fuel_type})
+        
+        # self.Fl_O_data['Fl_O'] = self.thermo_add_comp.output_port_data()
+        self.copy_flow(self.thermo_add_comp, 'Fl_O')
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        if self.options['inflow_thermo_data'] is not None:
-            # Set the inflow thermodynamic data package if it is different from the outflow one
-            inflow_thermo_data = self.options['inflow_thermo_data']
 
-        else:
-            # Set the inflow thermodynamic data package if it is the same as the outflow one
-            inflow_thermo_data = thermo_data
-
-        inflow_elements = self.options['inflow_elements']
-        air_fuel_elements = self.options['air_fuel_elements']
+        inflow_elements = self.Fl_I_data['Fl_I']
+        air_fuel_elements = self.Fl_O_data['Fl_O']
         design = self.options['design']
         statics = self.options['statics']
-        fuel_type = self.options['fuel_type']
 
-        num_air_element = len(inflow_elements)
 
         # Create combustor flow station
         in_flow = FlowIn(fl_name='Fl_I')
         self.add_subsystem('in_flow', in_flow, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
-        # Perform combustor engineering calculations
-        self.add_subsystem('mix_fuel',
-                           ThermoAdd(inflow_thermo_data=inflow_thermo_data, mix_thermo_data=thermo_data,
-                                    inflow_elements=inflow_elements, mix_elements=fuel_type),
+        self.add_subsystem('mix_fuel', self.thermo_add_comp,
                            promotes=['Fl_I:stat:W', ('mix:ratio', 'Fl_I:FAR'), 'Fl_I:tot:composition', 'Fl_I:tot:h', ('mix:W','Wfuel'), 'Wout'])
 
         # Pressure loss
@@ -158,6 +159,9 @@ class Combustor(om.Group):
         else:
             self.add_subsystem('W_passthru', PassThrough('Wout', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
+
+
+        super().setup()
 
 
 if __name__ == "__main__":

@@ -51,9 +51,11 @@ class TurbineTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Cycle()
 
-        self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True,
+        self.prob.model.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        self.prob.model.pyc_add_element('turbine', Turbine(map_data=LPT2269, design=True,
                                                          elements=AIR_ELEMENTS))
+
+        self.prob.model.pyc_connect_flow('flow_start.Fl_O', 'turbine.Fl_I')
 
         self.prob.model.set_input_defaults('turbine.Nmech', 1000.0, units='rpm')
         self.prob.model.set_input_defaults('flow_start.MN', 0.0)
@@ -63,8 +65,6 @@ class TurbineTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('flow_start.T', 500.0, units='degR')
         self.prob.model.set_input_defaults('flow_start.W', 100.0, units='lbm/s')
         self.prob.model.set_input_defaults('turbine.eff', 0.9)
-
-        self.prob.model.pyc_connect_flow('flow_start.Fl_O', 'turbine.Fl_I')
 
         self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)

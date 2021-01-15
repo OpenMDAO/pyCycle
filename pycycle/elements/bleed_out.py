@@ -10,6 +10,7 @@ from pycycle.thermo.thermo import Thermo
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 class BleedCalcs(om.ExplicitComponent):
 
@@ -52,7 +53,7 @@ class BleedCalcs(om.ExplicitComponent):
             J[BN+':stat:W',BN+':frac_W'] = inputs['W_in']
 
 
-class BleedOut(om.Group):
+class BleedOut(Element):
     """
     bleed extration from the incomming flow
 
@@ -100,6 +101,12 @@ class BleedOut(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
+    def pyc_setup_output_ports(self): 
+        self.copy_flow('Fl_I', 'Fl_O')
+
+        for b_name in self.options['bleed_names']: 
+            self.copy_flow('Fl_I', b_name)
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
@@ -116,7 +123,7 @@ class BleedOut(om.Group):
 
         # Bleed flow calculations
         blds = BleedCalcs(bleed_names=bleeds)
-        bld_port_globs = ['{}:*'.format(bn) for bn in bleeds]
+        bld_port_globs = [f'{bn}:*' for bn in bleeds]
         self.add_subsystem('bld_calcs', blds,
                            promotes_inputs=[('W_in', 'Fl_I:stat:W'), '*:frac_W'],
                            promotes_outputs=['W_out']+bld_port_globs)
@@ -182,6 +189,7 @@ class BleedOut(om.Group):
             self.add_subsystem('W_passthru', PassThrough('W_out', 'Fl_O:stat:W', 1.0, units= "lbm/s"),
                                promotes=['*'])
 
+        super().setup()
 
 if __name__ == "__main__":
 

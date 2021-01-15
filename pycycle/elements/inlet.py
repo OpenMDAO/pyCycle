@@ -9,6 +9,7 @@ from pycycle.thermo.thermo import Thermo
 
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 #from pycycle.elements.test.util import regression_generator
 
@@ -88,7 +89,7 @@ class Calcs(om.ExplicitComponent):
         J['F_ram', 'W_in'] = inputs['V_in'] / g_c
 
 
-class Inlet(om.Group):
+class Inlet(Element):
     """
     Calculates ram-drag and exit flow conditions for an Inlet with
     specified MN (design) or area (off-design)
@@ -128,8 +129,6 @@ class Inlet(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
@@ -140,13 +139,18 @@ class Inlet(om.Group):
             ('Fl_O:stat:area', 'area'),
         ]
 
+    def pyc_setup_output_ports(self): 
+        
+        self.copy_flow('Fl_I', 'Fl_O')
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
         design = self.options['design']
+
+        # elements = self.options['elements']
+        elements = self.Fl_I_data['Fl_I']
 
         num_element = len(elements)
 
@@ -211,7 +215,15 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
-    
+        super().setup()
+        
+    def pyc_setup_thermo(self, upstream):
+        elements = self.options['elements']
+        
+        self.Fl_O_data = {
+            'Fl_O': upstream['Fl_I']
+        }
+
 if __name__ == "__main__":
     from pycycle import constants
 

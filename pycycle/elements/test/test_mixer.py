@@ -33,13 +33,14 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('MN', 0.5)
         cycle.set_input_defaults('W', 100., units='lbm/s')
 
-        cycle.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
-        cycle.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
+        cycle.pyc_add_element('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
+        cycle.pyc_add_element('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
 
-        cycle.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('mixer', Mixer(design=True))
 
         cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
         cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
+
         p.set_solver_print(level=-1)
 
         p.setup()
@@ -62,10 +63,10 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('MN', 0.5)
         cycle.set_input_defaults('W', 100., units='lbm/s')
 
-        cycle.add_subsystem('start1', FlowStart(), promotes=['MN', 'T', 'W'])
-        cycle.add_subsystem('start2', FlowStart(), promotes=['MN', 'T', 'W'])
+        cycle.pyc_add_element('start1', FlowStart(), promotes=['MN', 'T', 'W'])
+        cycle.pyc_add_element('start2', FlowStart(), promotes=['MN', 'T', 'W'])
 
-        cycle.add_subsystem('mixer', Mixer(design=True, Fl_I1_elements=AIR_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('mixer', Mixer(design=True))
 
         cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
         cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
@@ -78,6 +79,7 @@ class MixerTestcase(unittest.TestCase):
         assert_near_equal(p['mixer.Fl_O:stat:area'], 653.26524074, tolerance=tol)
         assert_near_equal(p['mixer.Fl_O:tot:P'], 15.7943609, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
+
 
     def _build_problem(self, designed_stream=1, complex=False):
 
@@ -95,11 +97,10 @@ class MixerTestcase(unittest.TestCase):
             cycle.set_input_defaults('start2.MN', 0.4463)
             cycle.set_input_defaults('start2.W', 158., units='lbm/s')
 
-            cycle.add_subsystem('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
-            cycle.add_subsystem('start2', FlowStart(elements=AIR_ELEMENTS))
+            cycle.pyc_add_element('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
+            cycle.pyc_add_element('start2', FlowStart(elements=AIR_ELEMENTS))
 
-            cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream,
-                                                 Fl_I1_elements=AIR_FUEL_ELEMENTS, Fl_I2_elements=AIR_ELEMENTS))
+            cycle.pyc_add_element('mixer', Mixer(design=True, designed_stream=designed_stream))
 
             cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
             cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
@@ -112,8 +113,31 @@ class MixerTestcase(unittest.TestCase):
 
     def test_mix_air_with_airfuel(self):
 
-        p = self._build_problem(designed_stream=1)
-        # p.model.mixer.impulse_converge.nonlinear_solver.options['maxiter'] = 10
+        p = Problem()
+
+        cycle = p.model = Cycle()
+        
+        cycle.set_input_defaults('start1.P', 9.218, units='psi')
+        cycle.set_input_defaults('start1.T', 1524.32, units='degR')
+        cycle.set_input_defaults('start1.MN', 0.4463)
+        cycle.set_input_defaults('start1.W', 161.49, units='lbm/s')
+
+        cycle.set_input_defaults('start2.P', 8.68, units='psi')
+        cycle.set_input_defaults('start2.T', 524., units='degR')
+        cycle.set_input_defaults('start2.MN', 0.4463)
+        cycle.set_input_defaults('start2.W', 158., units='lbm/s')
+
+        cycle.pyc_add_element('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
+        cycle.pyc_add_element('start2', FlowStart(elements=AIR_ELEMENTS))
+
+        cycle.pyc_add_element('mixer', Mixer(design=True, designed_stream=1))
+
+        cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
+        cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
+
+        p.setup(force_alloc_complex=True)
+
+        p.set_solver_print(level=-1)
 
         p.run_model()
 
@@ -122,18 +146,9 @@ class MixerTestcase(unittest.TestCase):
         assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8881475, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
-        # p = self._build_problem(designed_stream=2)
-
-        # p.model.mixer.impulse_converge.nonlinear_solver.options['maxiter'] = 10
-
-        # p.run_model()
-
-    def test_mixer_partials(self):
-
-        p = self._build_problem(designed_stream=1, complex=True)
-        p.run_model()
         partials = p.check_partials(includes=['mixer.area_calc*', 'mixer.mix_flow*', 'mixer.imp_out*'], out_stream=None, method='cs')
         assert_check_partials(partials, atol=1e-8, rtol=1e-8)
+
 
 if __name__ == "__main__":
     unittest.main()

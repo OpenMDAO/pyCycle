@@ -11,6 +11,8 @@ from pycycle.passthrough import PassThrough
 from pycycle.constants import AIR_ELEMENTS, BTU_s2HP, HP_per_RPM_to_FT_LBF, T_STDeng, P_STDeng
 from pycycle.elements.compressor_map import CompressorMap
 from pycycle.maps.ncp01 import NCP01
+from pycycle.element_base import Element
+
 
 
 class CorrectedInputsCalc(om.ExplicitComponent):
@@ -334,7 +336,7 @@ class PressureRise(om.ExplicitComponent):
         J['Pt_out', 'PR'] = inputs['Pt_in']
 
 
-class Compressor(om.Group):
+class Compressor(Element):
     """
     Calculates pressure and temperature rise of a flow through a non-ideal compressors,
     using turbomachinery performance maps.
@@ -391,8 +393,6 @@ class Compressor(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                               desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
@@ -413,7 +413,13 @@ class Compressor(om.Group):
             ('Fl_O:stat:area', 'area')
         ]
 
+    def pyc_setup_output_ports(self): 
+        
+        self.copy_flow('Fl_I', 'Fl_O')
 
+        bleeds = self.options['bleed_names']
+        for BN in bleeds: 
+            self.copy_flow('Fl_I', BN)
 
     def setup(self):
         #(self, mapclass=NCP01map(), design=True, thermo_data=species_data.janaf, elements=AIR_ELEMENTS, bleeds=[],statics=True):
@@ -433,8 +439,10 @@ class Compressor(om.Group):
         design = self.options['design']
         bleeds = self.options['bleed_names']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
+
+        # elements = self.options['elements']
+        elements = self.Fl_I_data['Fl_I']
 
         num_element = len(elements)
 
@@ -512,7 +520,7 @@ class Compressor(om.Group):
         bleed_names = []
         for BN in bleeds:
 
-            bleed_names.append(BN + '_flow')
+            bleed_names.append(f'{BN}_flow')
             bleed_flow = Thermo(mode='total_hP', fl_name=BN + ":tot", 
                                   method=thermo_method, 
                                   thermo_kwargs={'elements':elements, 
@@ -520,7 +528,7 @@ class Compressor(om.Group):
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
                                    ('composition', 'Fl_I:tot:composition')],
-                               promotes_outputs=['{}:tot:*'.format(BN)])
+                               promotes_outputs=[f'{BN}:tot:*'])
             self.connect(BN + ':ht', BN + "_flow.h")
             self.connect(BN + ':Pt', BN + "_flow.P")
 
@@ -582,4 +590,6 @@ class Compressor(om.Group):
 
         # if not design: 
         #     self.set_input_defaults('area', val=1, units='inch**2')
+
+        super().setup()
 

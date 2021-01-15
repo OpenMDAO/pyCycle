@@ -1,20 +1,15 @@
 from collections import namedtuple
 
-import openmdao.api as om 
+import warnings
 
-# CycleParam = namedtuple('CycleParam', name, value, units)
+import openmdao.api as om 
+import networkx as nx
+
+from pycycle.element_base import Element
 
 
 class Cycle(om.Group): 
 
-    def __init__(self, **kwargs): 
-        """
-        A custom group used to model a specific thermodynamic cycle
-        """
-
-        self._elements = set()
-
-        super().__init__(**kwargs)
 
     def initialize(self):
         self.options.declare('design', default=True,
@@ -22,17 +17,113 @@ class Cycle(om.Group):
         self.options.declare('thermo_method', values=('CEA',), default='CEA',
                               desc='Method for computing thermodynamic properties')
 
-    def pyc_add_element(self, name, element,**kwargs):
+        self._elements = set()
+
+        self._flow_graph = nx.DiGraph()
+
+        # flag needed for user focused error checking to make sure they called super in their sub-class
+        self.__base_class_super_called = False
+
+    def pyc_add_element(self, name, element, **kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 
         the elements in a given cycle, separate from the general 
         components (e.g. BalanceComp, ExecComp, etc.)
         """
-        self._elements.add(element)
-        self.add_subsystem(name, element, **kwargs)
-        if 'thermo_method' in element.options:
-            element.options['thermo_method'] = self.options['thermo_method']
 
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn(f"Deprecation warning: `pyc_add_element` function is deprecated because it is no longer needed. " 
+                       "Use the `add_subsystem` method." )
+        warnings.simplefilter('ignore', DeprecationWarning)
+
+        self.add_subsystem(name, element, **kwargs)
+
+
+    def add_subsystem(self, name, subsys, **kwargs):
+        """
+        Customized version of the OpenMDAO Group API method that does 
+        additional tracking of elements for the Cycle
+        """
+
+        if isinstance(subsys, Element): 
+            self._elements.add(subsys)
+            if 'thermo_method' in subsys.options:
+                subsys.options['thermo_method'] = self.options['thermo_method']
+
+            self._flow_graph.add_node(name, type='element')
+
+        #TODO: Find some way to error check based on __base_class_super_called to let user know they forgot a call to super
+        return super().add_subsystem(name, subsys, **kwargs)
+
+
+    def setup(self): 
+
+        self.__base_class_super_called = True
+
+
+        # Code that follows the flow-graph and propagates thermo setup data down the chain
+        node_types = nx.get_node_attributes(self._flow_graph, 'type')
+        node_parents = nx.get_node_attributes(self._flow_graph, 'parent')
+        node_port_names = nx.get_node_attributes(self._flow_graph, 'port_name')
+
+        G = self._flow_graph
+
+        # put all starting nodes into a FIFO queue
+        queue = [node for node in self._flow_graph if G.in_degree(node) == 0]
+        visited = set() # use a set, because checking "in" on a queue is slow
+
+
+        # note: three kinds of nodes in graph, elements, in_ports, out_ports. 
+        #       The graph is a tree with (potentially) multiple separate root nodes. 
+        #       We will do a breadth first search, starting from all starting nodes at the same time. 
+        #       This makes sure that Elements with multiple inputs will have all
+        #       predecessors set up before we get to them. 
+        while queue:
+            node = queue.pop(0) 
+            node_type = node_types[node]
+
+            # make sure we've already processed all predecessor nodes
+            # if not skip this one, we'll hit it again later
+            ready_for_node = True
+
+            for p in G.predecessors(node): 
+                if p not in visited: 
+                    ready_for_node = False
+                    break
+            if not ready_for_node:
+                continue
+
+            queue.extend(G.successors(node))
+
+
+            if node not in visited: 
+
+                if node_type == 'element': 
+                    node_element = self._get_subsystem(node)
+                    node_element.pyc_setup_output_ports()
+                
+                # connection will be out_port -> in_port
+                elif node_type == 'out_port': 
+                    src_element = self._get_subsystem(node_parents[node])
+                    links = G.out_edges(node)
+                    for link in links: 
+                        # in almost every case there should only be one link, because otherwise you are creating extra mass flow 
+                        # the one exception is for the cooling calcs, which get some "weak" connections from turbine and bleed srcs
+                        
+                        target_element = self._get_subsystem(node_parents[link[1]])
+
+                        out_port = node_port_names[node]
+                        in_port = node_port_names[link[1]]
+                        # this passes whatever configuration data there was from the src element to the target keyed by port names
+
+                        if out_port not in src_element.Fl_O_data: 
+                            raise RuntimeError(f'in {self.pathname},{src_element.pathname}.{out_port} has not been properly setup.'
+                                               f'something is wrong with one of your `pyc_setup_output_ports` method in {src_element.pathname}')
+
+                        target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
+
+                visited.add(node)
+       
     def pyc_connect_flow(self, fl_src, fl_target, connect_stat=True, connect_tot=True, connect_w=True):
         """ 
         helper function to connect all of the flow variables between two ports 
@@ -56,6 +147,23 @@ class Cycle(om.Group):
         if connect_w:
            self.connect('%s:stat:W'%(fl_src,), '%s:stat:W'%(fl_target,))
 
+        # build the directed graph of flow connections
+        src_element_name = ''.join(fl_src.split('.')[:-1])
+        src_port_name = fl_src.split('.')[-1]
+
+        target_elment_name = ''.join(fl_target.split('.')[:-1])
+        target_port_name = fl_target.split('.')[-1]
+
+        # element nodes are needed so we can map from flow ports through elements
+        # self._flow_graph.add_node(src_element_name, type='element')
+        # self._flow_graph.add_node(target_elment_name, type='element')
+        
+        self._flow_graph.add_node(fl_src, type='out_port', parent=src_element_name, port_name=src_port_name)
+        self._flow_graph.add_node(fl_target, type='in_port', parent=target_elment_name, port_name=target_port_name)
+
+        self._flow_graph.add_edge(src_element_name, fl_src)
+        self._flow_graph.add_edge(fl_src, fl_target)
+        self._flow_graph.add_edge(fl_target, target_elment_name)
 
 class MPCycle(om.Group): 
 
@@ -107,6 +215,7 @@ class MPCycle(om.Group):
             self._od_pnts.append(pnt)
             
         return pnt
+
 
     def configure(self): 
         # after all child pts have been set up, 

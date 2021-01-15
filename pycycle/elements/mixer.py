@@ -1,12 +1,12 @@
 import numpy as np
 import openmdao.api as om
 
-from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.thermo_add import ThermoAdd
+from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
+from pycycle.element_base import Element
 
 
 class MixImpulse(om.ExplicitComponent):
@@ -97,7 +97,7 @@ class Impulse(om.ExplicitComponent):
         J['impulse', 'W'] = inputs['V']
 
 
-class Mixer(om.Group):
+class Mixer(Element):
     """
     Combines two incomming flows into a single outgoing flow
     using a conservation of momentum approach
@@ -142,10 +142,6 @@ class Mixer(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=janaf,
                               desc='thmodynamic data set', recordable=False)
-        self.options.declare('Fl_I1_elements', default=AIR_FUEL_ELEMENTS,
-                              desc='set of elements present in the flow')
-        self.options.declare('Fl_I2_elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
         self.options.declare('designed_stream', default=1, values=(1,2),
@@ -154,17 +150,31 @@ class Mixer(om.Group):
                               desc='If True, a newton solver is used inside the mixer to converge the impulse balance')
 
 
+    def pyc_setup_output_ports(self): 
+
+        flow1_elements = self.Fl_I_data['Fl_I1']
+        flow2_elements = self.Fl_I_data['Fl_I2']
+
+        thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
+        self.flow_add = ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='mix', 
+                                  thermo_kwargs={'spec':thermo_data,
+                                                 'inflow_elements':flow1_elements, 
+                                                 'mix_elements':flow2_elements})
+
+        self.copy_flow(self.flow_add, 'Fl_O')
+
     def setup(self):
         
-        thermo_method = self.options['thermo_method']
-        design = self.options['design']
+        design = self.options['design']        
         thermo_data = self.options['thermo_data']
+        thermo_method = self.options['thermo_method']
 
-        flow1_elements = self.options['Fl_I1_elements']
+        flow1_elements = self.Fl_I_data['Fl_I1']
         in_flow = FlowIn(fl_name='Fl_I1')
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
-        flow2_elements = self.options['Fl_I2_elements']
+        flow2_elements = self.Fl_I_data['Fl_I1']
         in_flow = FlowIn(fl_name='Fl_I2')
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
@@ -227,10 +237,10 @@ class Mixer(om.Group):
                             promotes_inputs=[('Pt1', 'Fl_I1:tot:P'), ('Pt2', 'Fl_I2:tot:P')],
                             promotes_outputs=['ER'])
 
-        self.add_subsystem('mix_flow', ThermoAdd(mix_thermo_data=thermo_data, mix_mode='flow', mix_names='mix', 
-                                              inflow_elements=flow1_elements, mix_elements=flow2_elements),
+        self.add_subsystem('flow_add', self.flow_add,
                           promotes_inputs=[('Fl_I:stat:W', 'Fl_I1:stat:W'), ('Fl_I:tot:composition', 'Fl_I1:tot:composition'), ('Fl_I:tot:h', 'Fl_I1:tot:h'), 
                                            ('mix:W', 'Fl_I2:stat:W'), ('mix:composition', 'Fl_I2:tot:composition'), ('mix:h', 'Fl_I2:tot:h')])
+
 
         if self.options['designed_stream'] == 1:
             self.add_subsystem('impulse_mix', MixImpulse(),
@@ -261,22 +271,22 @@ class Mixer(om.Group):
 
         out_tot = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                          method=thermo_method, 
-                         thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
+                         thermo_kwargs={'elements':flow1_elements, 
                                         'spec':thermo_data})
         conv.add_subsystem('out_tot', out_tot, promotes_outputs=['Fl_O:tot:*'])
-        self.connect('mix_flow.composition_out', 'out_tot.composition')
-        self.connect('mix_flow.mass_avg_h', 'out_tot.h')
+        self.connect('flow_add.composition_out', 'out_tot.composition')
+        self.connect('flow_add.mass_avg_h', 'out_tot.h')
         # note: gets Pt from the balance comp
 
         out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                           method=thermo_method, 
-                          thermo_kwargs={'elements':self.options['Fl_I1_elements'], 
+                          thermo_kwargs={'elements':flow1_elements, 
                                          'spec':thermo_data})
         conv.add_subsystem('out_stat', out_stat, promotes_outputs=['Fl_O:stat:*'], promotes_inputs=['area', ])
-        self.connect('mix_flow.composition_out', 'out_stat.composition')
-        self.connect('mix_flow.Wout','out_stat.W')
+        self.connect('flow_add.composition_out', 'out_stat.composition')
+        self.connect('flow_add.Wout','out_stat.W')
         conv.connect('Fl_O:tot:S', 'out_stat.S')
-        self.connect('mix_flow.mass_avg_h', 'out_stat.ht')
+        self.connect('flow_add.mass_avg_h', 'out_stat.ht')
         conv.connect('Fl_O:tot:P', 'out_stat.guess:Pt')
         conv.connect('Fl_O:tot:gamma', 'out_stat.guess:gamt')
 
@@ -291,4 +301,6 @@ class Mixer(om.Group):
         conv.connect('balance.P_tot', 'out_tot.P')
         conv.connect('imp_out.impulse', 'balance.lhs:P_tot')
         self.connect('impulse_mix.impulse_mix', 'balance.rhs:P_tot') #note that this connection comes from outside the convergence group
+
+        super().setup()
 

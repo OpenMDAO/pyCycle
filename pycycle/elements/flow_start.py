@@ -3,12 +3,12 @@ import numpy as np
 from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
-from pycycle.thermo.thermo import Thermo
-from pycycle.thermo.cea.thermo_add import ThermoAdd
+from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
+from pycycle.element_base import Element
 
 
-class FlowStart(Group):
+class FlowStart(Element):
 
     def initialize(self):
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
@@ -21,11 +21,17 @@ class FlowStart(Group):
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
+    def pyc_setup_output_ports(self): 
+        elements = self.options['elements']
+        
+        self.init_output_flow('Fl_O', elements)
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         use_WAR = self.options['use_WAR']
+
+        elements = self.Fl_O_data['Fl_O']
 
         if use_WAR == True:
             if 'H' not in elements or 'O' not in elements:
@@ -34,9 +40,9 @@ class FlowStart(Group):
         # inputs
         if use_WAR == True:
 
-
-            mix = ThermoAdd(inflow_thermo_data=thermo_data, mix_thermo_data=thermo_data,
-                           inflow_elements=elements, mix_elements='Water')
+            mix = ThermoAdd(method=thermo_method, thermo_kwargs={'spec':thermo_data, 
+                                                                 'inflow_elements':elements, 
+                                                                 'mix_elements':'Water', })
             self.add_subsystem('WAR', mix, 
                                 promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
                                 promotes_outputs=(('composition_out', 'composition'), ))
@@ -64,3 +70,7 @@ class FlowStart(Group):
         self.connect('totals.S','exit_static.S')
         self.connect('Fl_O:tot:P','exit_static.guess:Pt')
         self.connect('totals.gamma', 'exit_static.guess:gamt')
+
+        super().setup()
+
+

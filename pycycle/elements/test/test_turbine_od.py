@@ -79,17 +79,9 @@ class TurbineODTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('burner', Combustor(thermo_data=janaf,
-                                                          inflow_elements=AIR_ELEMENTS,
-                                                          air_fuel_elements=AIR_FUEL_ELEMENTS,
-                                                          fuel_type="JP-7"))
-        cycle.add_subsystem(
-            'turbine',
-            Turbine(
-                map_data=LPT2269,
-                design=False,
-                elements=AIR_FUEL_ELEMENTS))
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('burner', Combustor(thermo_data=janaf, fuel_type="JP-7"))
+        cycle.pyc_add_element('turbine', Turbine( map_data=LPT2269, design=False))
 
 
         cycle.set_input_defaults('burner.MN', .01, units=None)

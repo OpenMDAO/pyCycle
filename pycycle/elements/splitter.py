@@ -7,6 +7,7 @@ from pycycle.flow_in import FlowIn
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 
 class BPRcalc(om.ExplicitComponent):
@@ -45,7 +46,7 @@ class BPRcalc(om.ExplicitComponent):
         J['W2','W_in'] = 1.0 - 1.0/(BPR+1)#BPR / (BPR + 1.0)
 
 
-class Splitter(om.Group):
+class Splitter(Element):
     """
     Splits a single incomming flow into two outgoing flows
 
@@ -93,6 +94,12 @@ class Splitter(om.Group):
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
+
+    def pyc_setup_output_ports(self): 
+        
+        self.copy_flow('Fl_I', 'Fl_O1')
+        self.copy_flow('Fl_I', 'Fl_O2')
+
 
     def setup(self):
 
@@ -205,6 +212,7 @@ class Splitter(om.Group):
             self.connect('split_calc.W1', 'split_calc_W1')
             self.connect('split_calc.W2', 'split_calc_W2')
 
+        super().setup()
 
 if __name__ == "__main__":
 

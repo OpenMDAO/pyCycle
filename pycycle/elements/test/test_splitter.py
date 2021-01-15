@@ -64,8 +64,8 @@ class splitterTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('splitter', Splitter(elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
+        cycle.pyc_add_element('splitter', Splitter(elements=AIR_ELEMENTS))
 
         cycle.set_input_defaults('flow_start.P', 17., units='psi')
         cycle.set_input_defaults('flow_start.T', 500., units='degR')

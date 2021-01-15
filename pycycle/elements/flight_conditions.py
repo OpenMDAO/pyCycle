@@ -4,9 +4,10 @@ from pycycle.thermo.cea import species_data
 from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
+from pycycle.element_base import Element
 
 
-class FlightConditions(om.Group):
+class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
@@ -19,11 +20,17 @@ class FlightConditions(om.Group):
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
+    def pyc_setup_output_ports(self): 
+        elements = self.options['elements']
+        
+        self.init_output_flow('Fl_O', elements)
+
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         use_WAR = self.options['use_WAR']
+
+        elements = self.Fl_O_data['Fl_O']
 
         self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
 
@@ -32,11 +39,15 @@ class FlightConditions(om.Group):
             proms = ['Fl_O:*', 'MN', 'W', 'WAR']
         else:
             proms = ['Fl_O:*', 'MN', 'W']
-        conv.add_subsystem('fs', FlowStart(thermo_method=thermo_method,
-                                           thermo_data=thermo_data, 
-                                           elements=elements, 
-                                           use_WAR=use_WAR), 
-                           promotes=proms)
+        fs_start = conv.add_subsystem('fs', FlowStart(thermo_method=thermo_method,
+                                                      thermo_data=thermo_data, 
+                                                      elements=elements, 
+                                                      use_WAR=use_WAR), 
+                                      promotes=proms)
+
+        # need to manually call this in this setup, because we have an element within an element
+        fs_start.pyc_setup_output_ports() 
+
         balance = conv.add_subsystem('balance', om.BalanceComp())
         balance.add_balance('Tt', val=500.0, lower=1e-4, units='degR', desc='Total temperature', eq_units='degR')
         balance.add_balance('Pt', val=14.696, lower=1e-4, units='psi', desc='Total pressure', eq_units='psi')
@@ -67,6 +78,8 @@ class FlightConditions(om.Group):
         self.connect('Fl_O:stat:T', 'balance.lhs:Tt')
 
         # self.set_order(['ambient', 'subgroup'])
+
+        super().setup()
 
 
 if __name__ == "__main__":
