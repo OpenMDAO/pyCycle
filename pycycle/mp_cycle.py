@@ -29,6 +29,8 @@ class Cycle(om.Group):
         # flag needed for user focused error checking to make sure they called super in their sub-class
         self.__base_class_super_called = False
 
+        self._children = {}
+
     def pyc_add_element(self, name, element, **kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 
@@ -49,6 +51,8 @@ class Cycle(om.Group):
         Customized version of the OpenMDAO Group API method that does 
         additional tracking of elements for the Cycle
         """
+
+        self._children[name] = subsys
 
         if isinstance(subsys, Element): 
             self._elements.add(subsys)
@@ -78,6 +82,15 @@ class Cycle(om.Group):
         visited = set() # use a set, because checking "in" on a queue is slow
 
 
+        # loop over all child subsystems and push down cycle level options 
+        cycle_level_options = ['thermo_method', 'thermo_data', 'design']
+        for child_name, child in self._children.items():
+            for opt in cycle_level_options: 
+                if opt in child.options: 
+                    child.options[opt] = self.options[opt]
+
+        # exit()
+
         # note: three kinds of nodes in graph, elements, in_ports, out_ports. 
         #       The graph is a tree with (potentially) multiple separate root nodes. 
         #       We will do a breadth first search, starting from all starting nodes at the same time. 
@@ -105,9 +118,9 @@ class Cycle(om.Group):
 
                 if node_type == 'element': 
                     node_element = self._get_subsystem(node)
-                    node_element.options['thermo_method'] = self.options['thermo_method']
-                    node_element.options['thermo_data'] = self.options['thermo_data']
-                    node_element.options['design'] = self.options['design']
+                    # node_element.options['thermo_method'] = self.options['thermo_method']
+                    # node_element.options['thermo_data'] = self.options['thermo_data']
+                    # node_element.options['design'] = self.options['design']
                     node_element.pyc_setup_output_ports()
 
                 # connection will be out_port -> in_port

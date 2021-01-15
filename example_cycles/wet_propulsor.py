@@ -7,17 +7,18 @@ class WetPropulsor(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
         design = self.options['design']
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
+
+        self.add_subsystem('fc', pyc.FlightConditions(use_WAR=True,
                                                       elements=pyc.WET_AIR_ELEMENTS))
                                                       #WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
 
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec,
-                                                 design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec))
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
+        self.add_subsystem('nozz', pyc.Nozzle())
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
