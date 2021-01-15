@@ -9,8 +9,9 @@ class ABTurbojet(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
         self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
