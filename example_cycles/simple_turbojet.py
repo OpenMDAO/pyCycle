@@ -198,6 +198,10 @@ if __name__ == "__main__":
 
     prob.setup(check=False)
 
+    om.n2(prob)
+
+    exit()
+
     #Define the design point
     prob.set_val('DESIGN.fc.alt', 0, units='ft')
     prob.set_val('DESIGN.fc.MN', 0.000001)

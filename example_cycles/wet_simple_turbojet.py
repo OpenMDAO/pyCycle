@@ -9,25 +9,26 @@ class WetTurbojet(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.wet_air
         design = self.options['design']
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
+
+
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
+        self.add_subsystem('fc', pyc.FlightConditions(use_WAR=True,
                                                       elements=pyc.WET_AIR_ELEMENTS)) 
                                                       # WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec),
+
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5),
                                     promotes_inputs=['Nmech'])
 
-        self.add_subsystem('burner', pyc.Combustor(design=design, thermo_data=thermo_spec,
-                                                     fuel_type='JP-7'))
-        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec),
+        self.add_subsystem('burner', pyc.Combustor(, fuel_type='JP-7'))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=thermo_spec))
-        self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))
+        self.add_subsystem('shaft', pyc.Shaft(num_ports=2), promotes_inputs=['Nmech'])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         # Connect flow stations
