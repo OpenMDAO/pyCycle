@@ -89,7 +89,6 @@ class Cycle(om.Group):
                 if opt in child.options: 
                     child.options[opt] = self.options[opt]
 
-        # exit()
 
         # note: three kinds of nodes in graph, elements, in_ports, out_ports. 
         #       The graph is a tree with (potentially) multiple separate root nodes. 
@@ -118,9 +117,6 @@ class Cycle(om.Group):
 
                 if node_type == 'element': 
                     node_element = self._get_subsystem(node)
-                    # node_element.options['thermo_method'] = self.options['thermo_method']
-                    # node_element.options['thermo_data'] = self.options['thermo_data']
-                    # node_element.options['design'] = self.options['design']
                     node_element.pyc_setup_output_ports()
 
                 # connection will be out_port -> in_port
