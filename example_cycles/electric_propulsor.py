@@ -7,15 +7,15 @@ class Propulsor(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
+        self.add_subsystem('fc', pyc.FlightConditions())
 
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('fan', pyc.Compressor(thermo_data=thermo_spec,
-                                                 design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.add_subsystem('nozz', pyc.Nozzle(thermo_data=thermo_spec))
+        self.add_subsystem('inlet', pyc.Inlet(design=design))
+        self.add_subsystem('fan', pyc.Compressor(design=design, map_data=pyc.FanMap, map_extrap=True))
+        self.add_subsystem('nozz', pyc.Nozzle())
         
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 

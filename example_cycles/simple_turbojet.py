@@ -9,22 +9,20 @@ class Turbojet(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet(design=design))
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, map_extrap=True),
+                                    map_extrap=True),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                    fuel_type='JP-7'))
-        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec),
+        self.add_subsystem('burner', pyc.Combustor(design=design,fuel_type='JP-7'))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=thermo_spec))
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))
         self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
@@ -190,9 +188,7 @@ if __name__ == "__main__":
     prob = om.Problem()
 
 
-    mp_turbojet = prob.model.add_subsystem('propulsion_cycle', MPTurbojet(), promotes=['*']) 
-
-    prob.model.add_subsystem('test', om.ExecComp('z = 3*x + 2*y'))
+    mp_turbojet = prob.model = MPTurbojet()
 
     # prob.model.set_order(['DESIGN', 'OD0', 'OD1', 'test')
 

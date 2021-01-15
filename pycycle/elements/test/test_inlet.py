@@ -10,7 +10,7 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
-from pycycle.elements.inlet import Inlet
+from pycycle.elements.inlet import Inlet, MilSpecRecovery
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_ELEMENTS
 
@@ -45,6 +45,43 @@ header = [
 
 h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 
+class MilSpecTestCase(unittest.TestCase):
+    
+    def test(self):
+        
+        prob = Problem()
+        
+        prob.model.add_subsystem('mil_spec', MilSpecRecovery(), promotes=['*'])
+        
+        prob.setup(check=False, force_alloc_complex=True)
+        
+        prob.set_val('MN', 0.8)
+        prob.set_val('ram_recovery_base', 0.9)
+        
+        prob.run_model()
+        
+        tol = 1e-4
+        assert_near_equal(prob['ram_recovery'], 0.9, tol)
+        
+        partial_data = prob.check_partials(out_stream=None, method='cs')
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+        
+        prob.set_val('MN', 2.0)
+        
+        prob.run_model()
+        assert_near_equal(prob['ram_recovery'], 0.8325, tol)
+        
+        partial_data = prob.check_partials(out_stream=None, method='cs')
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)        
+        
+        prob.set_val('MN', 6.0)
+        
+        prob.run_model()
+        assert_near_equal(prob['ram_recovery'], 0.35858, tol)
+        
+        partial_data = prob.check_partials(out_stream=None, method='cs')
+        assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+        
 
 class InletTestCase(unittest.TestCase):
 

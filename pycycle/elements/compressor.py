@@ -413,6 +413,8 @@ class Compressor(Element):
             ('Fl_O:stat:area', 'area')
         ]
 
+        super().initialize()
+
     def pyc_setup_output_ports(self): 
         
         self.copy_flow('Fl_I', 'Fl_O')

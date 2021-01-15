@@ -20,8 +20,12 @@ class Element(om.Group):
 
     def initialize(self): 
 
+        self.options.declare('design', default=True, 
+                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('thermo_data', default=False,
                               desc='thermodynamic data specific to this element', recordable=False)
+        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+                              desc='Method for computing thermodynamic properties')
 
     def copy_flow(self, src_port, output_port): 
         """
