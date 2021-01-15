@@ -12,19 +12,20 @@ class CFDStart(Element):
                               desc='set of elements present in the flow')
         super().initialize()
         
+
     def pyc_setup_output_ports(self): 
-        elements = self.options['elements']
-        self.init_output_flow('Fl_O', elements)
+        composition = self.options['composition']
+        self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         
-        elements = self.Fl_O_data['Fl_O']
+        composition = self.Fl_O_data['Fl_O']
 
 
         fs = self.add_subsystem('fs', FlowStart(thermo_method=thermo_method,thermo_data=thermo_data, 
-                                elements=elements), promotes_outputs=['Fl_O:*'],promotes_inputs=['W'])
+                                composition=composition), promotes_outputs=['Fl_O:*'],promotes_inputs=['W'])
         fs.pyc_setup_output_ports()
 
 

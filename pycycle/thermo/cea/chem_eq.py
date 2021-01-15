@@ -49,15 +49,9 @@ class ChemEq(om.ImplicitComponent):
         norm = resids.get_norm()
         if norm > 1e-2 or norm==0.0 or np.any(outputs['n'] < 0):
             outputs['n'] = self.n_init
-            if self.options['mode'] != 'T':
-                outputs['T'] = 1000.
 
     def initialize(self):
         self.options.declare('thermo', desc='thermodynamic data object', recordable=False)
-        self.options.declare('mode',
-                              desc='the input variable that defines the total properties',
-                              default='T',
-                              values=('T', 'S', 'h'))
 
     def setup(self):
 
@@ -89,7 +83,6 @@ class ChemEq(om.ImplicitComponent):
         self.use_trace_damping = True
 
         thermo = self.options['thermo']
-        mode = self.options['mode']
 
         num_prod = thermo.num_prod
         num_element = thermo.num_element
@@ -99,21 +92,7 @@ class ChemEq(om.ImplicitComponent):
 
         self.add_input('P', val=1.0, units="bar", desc="Pressure")
 
-        if mode == "T":  # T is an input
-            self.add_input('T', val=400., units="degK", desc="Temperature")
-        elif mode == "h" or mode == "S":  # T becomes another state variable
-            if mode == "h":  # hP solve
-                self.add_input('h', val=0., units="cal/g",
-                               desc="Enthalpy")
-            elif mode == "S":  # SP solve
-                self.add_input('S', val=0., units="cal/(g*degK)",
-                               desc="Entropy")
-
-            self.T_idx = num_prod + num_element
-            self.add_output('T', val=400., units="degK", desc="Temperature",
-                            lower=1.,
-                            res_ref=100
-                            )
+        self.add_input('T', val=400., units="degK", desc="Temperature")
 
         # State vars
         self.n_init = np.ones(num_prod) / num_prod / 10  # initial guess for n
@@ -135,8 +114,6 @@ class ChemEq(om.ImplicitComponent):
 
         # allocate the newton Jacobian
         self.size = size = num_prod + num_element
-        if mode != "T":
-            size += 1  # added T as a state variable
 
         self._dRdy = np.zeros((size, size))
         self._rhs = np.zeros(size)  # used for solve_linear
@@ -158,25 +135,15 @@ class ChemEq(om.ImplicitComponent):
         self.declare_partials('n_moles', 'n')
         self.declare_partials('n_moles', 'n_moles', val=-1)
 
-        if mode == 'h':
-            self.declare_partials('T', ['n', 'h', 'T'])
-        elif mode == 'S':
-            self.declare_partials('T', ['n', 'S', 'T', 'P'])
-
     def apply_nonlinear(self, inputs, outputs, resids):
         thermo = self.options['thermo']
-        mode = self.options['mode']
 
+        T = inputs['T']
         P = inputs['P'] / P_REF
         composition = inputs['composition']
         n = outputs['n']
         n_moles = np.sum(n)
         pi = outputs['pi']
-
-        if mode != "T":
-            T = outputs['T']
-        else:
-            T = inputs['T']
 
         # Output equation for n_moles
         resids['n_moles'] = n_moles - outputs['n_moles']
@@ -223,16 +190,6 @@ class ChemEq(om.ImplicitComponent):
         # residuals from the conservation of mass
         resids['pi'] = np.sum(thermo.aij * n, axis=1) - composition
 
-        # residuals from temperature equation when T is a state
-        if mode == "h":
-            self.sum_n_H0_T = np.sum(n * H0_T)
-            h = inputs['h']
-            resids['T'] = (h - self.sum_n_H0_T * R_UNIVERSAL_ENG * T)/h
-        elif mode == "S":
-            S = inputs['S']
-
-            resids['T'] = (S-R_UNIVERSAL_ENG*np.sum(n*(S0_T-np.log(n)+np.log(n_moles)-np.log(P))))/S
-
         if np.linalg.norm(resids['n']) < 1e-4:
             self.remove_trace_species = True
         else:
@@ -243,7 +200,6 @@ class ChemEq(om.ImplicitComponent):
         self._calc_dRdy(inputs, outputs)
         dRdy = self._dRdy
 
-        mode = self.options['mode']
         thermo = self.options['thermo']
 
         num_element = thermo.num_element
@@ -273,35 +229,16 @@ class ChemEq(om.ImplicitComponent):
         else:
             J_n_P = qP*np.ones((num_prod, 1))
 
-        # can only use the dRdy vals when T is a state. Otherwise its not computed
-        if mode != 'T':
-            J_n_T = dRdy[:num_prod, -1].reshape((num_prod, 1))
+        T = inputs['T']
+        dH0_dT = thermo.H0_applyJ(T, 1)
+        dS0_dT = thermo.S0_applyJ(T, 1)
+        if self.use_trace_damping:
+            J_n_T = ((dH0_dT - dS0_dT) * self.weights).reshape((num_prod, 1))
         else:
-            T = inputs['T']
-            dH0_dT = thermo.H0_applyJ(T, 1)
-            dS0_dT = thermo.S0_applyJ(T, 1)
-            if self.use_trace_damping:
-                J_n_T = ((dH0_dT - dS0_dT) * self.weights).reshape((num_prod, 1))
-            else:
-                J_n_T = ((dH0_dT - dS0_dT)).reshape((num_prod, 1))
+            J_n_T = ((dH0_dT - dS0_dT)).reshape((num_prod, 1))
 
         J['pi', 'n'] = dRdy[num_prod:end_element, :num_prod]
         J['pi', 'composition'] = -np.eye(num_element)
-
-        if mode == 'h':
-            J['T', 'n'] = dRdy[-1, :num_prod].reshape(1, num_prod)
-            J['T', 'h'] = (self.sum_n_H0_T * R_UNIVERSAL_ENG * outputs['T'])/inputs['h']**2
-            J['T', 'T'] = dRdy[-1, -1]
-
-        elif mode == 'S':
-            S = inputs['S']
-            J['T', 'n'] = dRdy[-1, :num_prod].reshape(1, num_prod)
-
-            tmp = np.sum(n*(self.S0_T - np.log(n) + np.log(n_moles) - np.log(P)))
-            J['T', 'S'] = (R_UNIVERSAL_ENG*tmp)/S**2
-
-            J['T', 'T'] = dRdy[-1, -1]
-            J['T', 'P'] = R_UNIVERSAL_ENG * n_moles / (P * S * P_REF)
 
         J['n_moles', 'n'] = np.ones((1, num_prod))
 
@@ -318,8 +255,6 @@ class ChemEq(om.ImplicitComponent):
             #         J['n', 'pi'][j, :] = 0
 
             #         J['pi', 'n'][:, j] = 0.
-            #         if self.mode == "h" or self.mode == "S":
-            #             J['T', 'n'][:, j] = 0.
 
             mask = self._trace
             J_n_n[:, mask] = 0.
@@ -332,8 +267,6 @@ class ChemEq(om.ImplicitComponent):
             J_n_n_moles[mask] = 0
 
             # J['pi', 'n'][:, mask] = 0.
-            # if self.mode == "h" or self.mode == "S":
-                # J['T', 'n'][:, mask] = 0.
 
         J['n', 'n'] = J_n_n
         J['n', 'P'] = J_n_P
@@ -349,7 +282,6 @@ class ChemEq(om.ImplicitComponent):
         aij = thermo.aij
         num_prod = thermo.num_prod
         num_element = thermo.num_element
-        mode = self.options['mode']
 
         n = outputs['n']
         n_moles = np.sum(n)
@@ -380,36 +312,6 @@ class ChemEq(om.ImplicitComponent):
         if self.use_trace_damping:
             dRdy[:num_prod, num_prod:end_element] *= self.weights[:, np.newaxis]
 
-        if mode != "T":
-            # dRgibbs_dT
-            T = outputs['T']
-            self.dH0_dT = thermo.H0_applyJ(T, 1)
-            self.dS0_dT = thermo.S0_applyJ(T, 1)
-            dRdy[:num_prod, -1] = (self.dH0_dT - self.dS0_dT)
-            if self.use_trace_damping:
-                dRdy[:num_prod, -1] *= self.weights
-            # dRmass_dT = 0
-
-        if mode == "h":
-            h = inputs['h']
-            # dRT_dn
-            dRdy[-1, :num_prod] = (- R_UNIVERSAL_ENG * T * self.H0_T)/h
-            # dRT_dT
-            dRdy[-1, -1] = (-R_UNIVERSAL_ENG *
-                            (T * np.sum(n * self.dH0_dT) + self.sum_n_H0_T))/h
-
-        elif mode == "S":
-            P = inputs['P'] / P_REF
-            n_moles = np.sum(n)  # outputs['n_moles']
-            S = inputs['S']
-            # dRT_dn
-            dRdy[-1, :num_prod] = -R_UNIVERSAL_ENG * \
-                (self.S0_T - np.log(n) + np.log(n_moles)-np.log(P))/S
-            # dRT_dT
-            # uc*(S0_T + np.log(sum_nj) - np.log(P) - np.log(nj))
-            # valid_products = n > MIN_VALID_CONCENTRATION
-            dRdy[-1, -1] = -R_UNIVERSAL_ENG * np.sum(n * self.dS0_dT) / S
-
         # dRmass_dn
         dRdy[num_prod:end_element, :num_prod] = aij
 
@@ -427,18 +329,18 @@ class SetTotalTP(om.Group):
     def initialize(self): 
 
         self.options.declare('spec', recordable=False)
-        self.options.declare('elements')
+        self.options.declare('composition')
 
 
     def setup(self):
 
         self.thermo = species_data.Properties(self.options['spec'], 
-                                              init_elements=self.options['elements'])
+                                              init_elements=self.options['composition'])
         
         # these have to be part of the API for the unit_comps to use
         self.composition = self.thermo.b0
         
-        self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo, mode='T'), promotes=['*'])
+        self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo), promotes=['*'])
 
         self.add_subsystem('props', ThermoCalcs(thermo=self.thermo), promotes=['*'])
 

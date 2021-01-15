@@ -186,7 +186,6 @@ class Row(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)
-       
 
     def setup(self):
 
@@ -202,20 +201,18 @@ class Row(om.Group):
         consts = self.add_subsystem('consts', om.IndepVarComp()) # values that should not be changed ever
         consts.add_output('bld_frac_P', val=1)
 
-
         self.add_subsystem('mix_n', ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
                                               thermo_kwargs={'spec':self.options['thermo_data'], 
-                                                             'inflow_elements':CEA_AIR_FUEL_COMPOSITION, 
-                                                             'mix_elements':CEA_AIR_COMPOSITION,}),
+                                                             'inflow_composition':CEA_AIR_FUEL_COMPOSITION, 
+                                                             'mix_composition':CEA_AIR_COMPOSITION,}),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
                                             ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
                            promotes_outputs=[('Wout','W_out'),]
                            )
 
-
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':CEA_AIR_FUEL_COMPOSITION, 
+                            thermo_kwargs={'composition':CEA_AIR_FUEL_COMPOSITION, 
                                            'spec':self.options['thermo_data']})
         self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])
@@ -249,16 +246,8 @@ class TurbineCooling(Element):
 
     def pyc_setup_output_ports(self): 
 
-        inflow_elements = self.Fl_I_data['Fl_turb_I']
-        mix_elements = self.Fl_I_data['Fl_cool']
-        
-        # we could do this, but we do not need to, because it will be the same data as Fl_turb_O
-        # tmp_thermo_add = ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
-        #                            thermo_kwargs={'spec':self.options['thermo_data'], 
-        #                                           'inflow_elements':inflow_elements, 
-        #                                           'mix_elements':mix_elements})
-
-        # output_data = tmp_thermo_add.output_port_data()
+        inflow_composition = self.Fl_I_data['Fl_turb_I']
+        mix_composition = self.Fl_I_data['Fl_cool']
 
         n_stages = self.options['n_stages']
         n_rows = 2 * n_stages

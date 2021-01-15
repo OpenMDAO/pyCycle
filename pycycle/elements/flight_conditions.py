@@ -11,24 +11,24 @@ class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
-        self.options.declare('elements', default=CEA_AIR_COMPOSITION,
-                              desc='set of elements present in the flow')
+        self.options.declare('composition', default=CEA_AIR_COMPOSITION,
+                              desc='composition of the flow')
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
         super().initialize()
         
     def pyc_setup_output_ports(self): 
-        elements = self.options['elements']
+        composition = self.options['composition']
         
-        self.init_output_flow('Fl_O', elements)
+        self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         use_WAR = self.options['use_WAR']
 
-        elements = self.Fl_O_data['Fl_O']
+        composition = self.Fl_O_data['Fl_O']
 
         self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
 
@@ -39,7 +39,7 @@ class FlightConditions(Element):
             proms = ['Fl_O:*', 'MN', 'W']
         fs_start = conv.add_subsystem('fs', FlowStart(thermo_method=thermo_method,
                                                       thermo_data=thermo_data, 
-                                                      elements=elements, 
+                                                      composition=composition, 
                                                       use_WAR=use_WAR), 
                                       promotes=proms)
 

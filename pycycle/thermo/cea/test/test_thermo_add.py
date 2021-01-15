@@ -23,8 +23,13 @@ class ThermoAddTestCase(unittest.TestCase):
 
         fuel = 'JP-7'
         p.model = ThermoAdd(spec=thermo_spec,
+<<<<<<< HEAD
                             inflow_elements=CEA_AIR_COMPOSITION, mix_mode='reactant', 
                             mix_elements=fuel, mix_names='fuel')
+=======
+                            inflow_composition=AIR_ELEMENTS, mix_mode='reactant', 
+                            mix_composition=fuel, mix_names='fuel')
+>>>>>>> e63a07637628c69ff2370f03e9f86e56c1cfc88c
 
 
         p.setup(force_alloc_complex=True)
@@ -59,8 +64,13 @@ class ThermoAddTestCase(unittest.TestCase):
 
         fuel = 'JP-7'
         p.model = ThermoAdd(spec=thermo_spec,
+<<<<<<< HEAD
                             inflow_elements=CEA_AIR_COMPOSITION, mix_mode='reactant', 
                             mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
+=======
+                            inflow_composition=AIR_ELEMENTS, mix_mode='reactant', 
+                            mix_composition=[fuel, fuel], mix_names=['fuel1','fuel2'])
+>>>>>>> e63a07637628c69ff2370f03e9f86e56c1cfc88c
 
 
         p.setup(force_alloc_complex=True)
@@ -96,8 +106,13 @@ class ThermoAddTestCase(unittest.TestCase):
         p = om.Problem()
 
         p.model = ThermoAdd(spec=thermo_spec,
+<<<<<<< HEAD
                             inflow_elements=CEA_AIR_FUEL_COMPOSITION, mix_mode='flow', 
                             mix_elements=CEA_AIR_COMPOSITION, mix_names='mix')
+=======
+                            inflow_composition=AIR_FUEL_ELEMENTS, mix_mode='flow', 
+                            mix_composition=AIR_ELEMENTS, mix_names='mix')
+>>>>>>> e63a07637628c69ff2370f03e9f86e56c1cfc88c
 
         p.setup(force_alloc_complex=True)
 
@@ -121,8 +136,13 @@ class ThermoAddTestCase(unittest.TestCase):
         p = om.Problem()
 
         p.model = ThermoAdd(spec=thermo_spec,
+<<<<<<< HEAD
                             inflow_elements=CEA_AIR_FUEL_COMPOSITION, mix_mode='flow', 
                             mix_elements=[CEA_AIR_COMPOSITION, CEA_AIR_COMPOSITION], mix_names=['mix1', 'mix2'])
+=======
+                            inflow_composition=AIR_FUEL_ELEMENTS, mix_mode='flow', 
+                            mix_composition=[AIR_ELEMENTS, AIR_ELEMENTS], mix_names=['mix1', 'mix2'])
+>>>>>>> e63a07637628c69ff2370f03e9f86e56c1cfc88c
 
         p.setup(force_alloc_complex=True)
 
@@ -156,7 +176,11 @@ class ThermoAddTestCase(unittest.TestCase):
         air_thermo = species_data.Properties(thermo_spec, init_elements=CEA_AIR_COMPOSITION)
 
         prob.model.add_subsystem('war', ThermoAdd(spec=thermo_spec,
+<<<<<<< HEAD
                                                  inflow_elements=CEA_AIR_COMPOSITION, mix_elements='Water'), 
+=======
+                                                 inflow_composition=AIR_ELEMENTS, mix_composition='Water'), 
+>>>>>>> e63a07637628c69ff2370f03e9f86e56c1cfc88c
                                  promotes=['*'])
         
 

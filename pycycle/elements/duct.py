@@ -171,9 +171,7 @@ class Duct(Element):
         design = self.options['design']
         expMN = self.options['expMN']
 
-        elements = self.Fl_I_data['Fl_I']
-
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flowstation
         flow_in = FlowIn(fl_name='Fl_I')
@@ -200,7 +198,7 @@ class Duct(Element):
         # Total Calc
         real_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                            method=thermo_method, 
-                           thermo_kwargs={'elements':elements, 
+                           thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         prom_in = [('composition', 'Fl_I:tot:composition')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
@@ -213,7 +211,7 @@ class Duct(Element):
             #   Calculate static properties
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
@@ -231,7 +229,7 @@ class Duct(Element):
                 # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),

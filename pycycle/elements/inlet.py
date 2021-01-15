@@ -146,9 +146,7 @@ class Inlet(Element):
         design = self.options['design']
 
         # elements = self.options['elements']
-        elements = self.Fl_I_data['Fl_I']
-
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flow station
         flow_in = FlowIn(fl_name='Fl_I')
@@ -163,7 +161,7 @@ class Inlet(Element):
         # Calculate real flow station properties
         real_flow = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
                            method=thermo_method, 
-                           thermo_kwargs={'elements':elements, 
+                           thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[('T', 'Fl_I:tot:T'), ('composition', 'Fl_I:tot:composition')],
@@ -178,7 +176,7 @@ class Inlet(Element):
 
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[('composition', 'Fl_I:tot:composition'), ('W', 'Fl_I:stat:W'), 'MN'],
@@ -193,7 +191,7 @@ class Inlet(Element):
                 # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),

@@ -82,7 +82,6 @@ class BleedOut(Element):
     """
 
     def initialize(self):
-        
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',
@@ -107,9 +106,7 @@ class BleedOut(Element):
         statics = self.options['statics']
         design = self.options['design']
         bleeds = self.options['bleed_names']
-        elements = self.Fl_I_data['Fl_I']
-
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flowstation
         flow_in = FlowIn(fl_name='Fl_I')
@@ -128,7 +125,7 @@ class BleedOut(Element):
             bleed_names.append(BN+'_flow')
             bleed_flow = Thermo(mode='total_TP', fl_name=BN+":tot", 
                                 method=thermo_method, 
-                                thermo_kwargs={'elements':elements, 
+                                thermo_kwargs={'composition':composition, 
                                                'spec':thermo_data})
             self.add_subsystem(BN+'_flow', bleed_flow,
                                promotes_inputs=[('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
@@ -137,7 +134,7 @@ class BleedOut(Element):
         # Total Calc
         real_flow = Thermo(mode='total_TP', fl_name="Fl_O:tot", 
                            method=thermo_method, 
-                           thermo_kwargs={'elements':elements, 
+                           thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         prom_in = [('composition', 'Fl_I:tot:composition'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
@@ -148,7 +145,7 @@ class BleedOut(Element):
             #   Calculate static properties
                 out_stat = Thermo(mode='static_MN', fl_name="Fl_O:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            'MN']
@@ -166,7 +163,7 @@ class BleedOut(Element):
                 # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name="Fl_O:stat", 
                                   method=thermo_method, 
-                                  thermo_kwargs={'elements':elements, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            'area']
