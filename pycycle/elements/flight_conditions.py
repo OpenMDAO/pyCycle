@@ -20,6 +20,8 @@ class FlightConditions(Element):
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')
 
+        super().initialize()
+        
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']
         

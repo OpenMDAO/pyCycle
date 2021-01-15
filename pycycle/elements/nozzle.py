@@ -312,6 +312,8 @@ class Nozzle(Element):
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('internal_solver', default=False)
 
+        super().initialize()
+
     def pyc_setup_output_ports(self): 
         
         self.copy_flow('Fl_I', 'Fl_O')

@@ -107,6 +107,7 @@ class Cycle(om.Group):
                     node_element = self._get_subsystem(node)
                     node_element.options['thermo_method'] = self.options['thermo_method']
                     node_element.options['thermo_data'] = self.options['thermo_data']
+                    node_element.options['design'] = self.options['design']
                     node_element.pyc_setup_output_ports()
 
                 # connection will be out_port -> in_port
