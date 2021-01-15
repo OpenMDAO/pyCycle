@@ -149,9 +149,12 @@ class Duct(Element):
 
     def initialize(self):
         self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
+                              desc='Method for computing thermodynamic properties. '
+                                   'Note that this will be set automatically by the containing Cycle group.')
         self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
+                              desc='thermodynamic data set. Note that this will be set automatically by the containing Cycle group.', 
+                              recordable=False)
+        
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('design', default=True,
