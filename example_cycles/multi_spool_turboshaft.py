@@ -14,37 +14,35 @@ class MultiSpoolTurboshaft(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
         maxiter = self.options['maxiter']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('duct1', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec),
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('duct1', pyc.Duct())
+        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap),
                            promotes_inputs=[('Nmech','IP_Nmech')])
-        self.add_subsystem('icduct', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('hpc_axi', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec),
+        self.add_subsystem('icduct', pyc.Duct())
+        self.add_subsystem('hpc_axi', pyc.Compressor(map_data=pyc.HPCMap),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.add_subsystem('bld25', pyc.BleedOut(design=design, bleed_names=['cool1','cool2']))
-        self.add_subsystem('hpc_centri', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec),
+        self.add_subsystem('bld25', pyc.BleedOut(bleed_names=['cool1','cool2']))
+        self.add_subsystem('hpc_centri', pyc.Compressor(map_data=pyc.HPCMap),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.add_subsystem('bld3', pyc.BleedOut(design=design, bleed_names=['cool3','cool4']))
-        self.add_subsystem('duct6', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                                   fuel_type='Jet-A(g)'))
-        self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec,
-                                              bleed_names=['cool3','cool4']),
+        self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['cool3','cool4']))
+        self.add_subsystem('duct6', pyc.Duct())
+        self.add_subsystem('burner', pyc.Combustor(fuel_type='Jet-A(g)'))
+        self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap, bleed_names=['cool3','cool4']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.add_subsystem('duct43', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec,
-                                              bleed_names=['cool1','cool2']),
+        self.add_subsystem('duct43', pyc.Duct())
+        self.add_subsystem('lpt', pyc.Turbine(map_data=pyc.LPTMap, bleed_names=['cool1','cool2']),
                            promotes_inputs=[('Nmech','IP_Nmech')])
-        self.add_subsystem('itduct', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec),
+        self.add_subsystem('itduct', pyc.Duct())
+        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPTMap),
                            promotes_inputs=[('Nmech','LP_Nmech')])
-        self.add_subsystem('duct12', pyc.Duct(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('nozzle', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec))
+        self.add_subsystem('duct12', pyc.Duct())
+        self.add_subsystem('nozzle', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
 
         self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('ip_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','IP_Nmech')])
