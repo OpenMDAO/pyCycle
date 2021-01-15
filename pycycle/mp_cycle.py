@@ -6,6 +6,7 @@ import openmdao.api as om
 import networkx as nx
 
 from pycycle.element_base import Element
+from pycycle.thermo.cea import species_data
 
 
 class Cycle(om.Group): 
@@ -16,6 +17,10 @@ class Cycle(om.Group):
                               desc='Switch between on-design and off-design calculation.')
         self.options.declare('thermo_method', values=('CEA',), default='CEA',
                               desc='Method for computing thermodynamic properties')
+
+        self.options.declare('thermo_data', default=species_data.janaf,
+                              desc='thermodynamic data set.', 
+                              recordable=False)
 
         self._elements = set()
 
@@ -100,8 +105,10 @@ class Cycle(om.Group):
 
                 if node_type == 'element': 
                     node_element = self._get_subsystem(node)
+                    node_element.options['thermo_method'] = self.options['thermo_method']
+                    node_element.options['thermo_data'] = self.options['thermo_data']
                     node_element.pyc_setup_output_ports()
-                
+
                 # connection will be out_port -> in_port
                 elif node_type == 'out_port': 
                     src_element = self._get_subsystem(node_parents[node])
