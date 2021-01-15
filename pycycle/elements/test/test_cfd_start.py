@@ -7,6 +7,7 @@ from openmdao.utils.assert_utils import assert_near_equal
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.cfd_start import CFDStart
+from pycycle.mp_cycle import Cycle
 
 
 class CFDStartTestCase(unittest.TestCase): 
@@ -15,8 +16,11 @@ class CFDStartTestCase(unittest.TestCase):
 
         p = om.Problem()
 
+        p.model = Cycle()
+
+
         cfd_start = p.model.add_subsystem('cfd_start', CFDStart(), promotes=['*'])
-        cfd_start.pyc_setup_output_ports()
+
         p.model.set_input_defaults('Ps', units='kPa', val=100)
         p.model.set_input_defaults('V', units='m/s', val=100.)
         p.model.set_input_defaults('area', units='m**2', val=1)

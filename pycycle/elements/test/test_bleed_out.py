@@ -9,10 +9,8 @@ from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.mp_cycle import Cycle
-from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.bleed_out import BleedOut
 from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_ELEMENTS
 from pycycle import constants
 
 
@@ -22,9 +20,8 @@ class BleedOutTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
-        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf,
-                                                    elements=AIR_ELEMENTS), promotes=['MN', 'P', 'T'])
-        cycle.pyc_add_element('bleed', BleedOut(bleed_names=['bld1', 'bld2']), promotes=['MN'])
+        cycle.add_subsystem('flow_start', FlowStart(), promotes=['MN', 'P', 'T'])
+        cycle.add_subsystem('bleed', BleedOut(bleed_names=['bld1', 'bld2']), promotes=['MN'])
 
         cycle.pyc_connect_flow('flow_start.Fl_O', 'bleed.Fl_I')
 

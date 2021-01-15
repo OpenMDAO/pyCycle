@@ -1,7 +1,7 @@
 import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
-from pycycle.constants import AIR_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
 from pycycle.element_base import Element
@@ -11,7 +11,7 @@ class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
-        self.options.declare('elements', default=AIR_ELEMENTS,
+        self.options.declare('elements', default=CEA_AIR_COMPOSITION,
                               desc='set of elements present in the flow')
         self.options.declare('use_WAR', default=False, values=[True, False], 
                               desc='If True, includes WAR calculation')

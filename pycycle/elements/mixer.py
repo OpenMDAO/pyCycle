@@ -4,7 +4,6 @@ import openmdao.api as om
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 
 from pycycle.thermo.cea.species_data import janaf
-from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.element_base import Element
 

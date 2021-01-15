@@ -8,7 +8,6 @@ import numpy as np
 from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.thermo.thermo import Thermo
 from pycycle.thermo.cea import species_data
 from pycycle.elements.combustor import Combustor
@@ -38,8 +37,8 @@ class BurnerTestCase(unittest.TestCase):
         model.add_subsystem('ivc', IndepVarComp('in_composition', [3.23319235e-04, 1.10132233e-05, 
                                                      5.39157698e-02, 1.44860137e-02]))
 
-        model.pyc_add_element('flow_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
-        model.pyc_add_element('combustor', Combustor())
+        model.add_subsystem('flow_start', FlowStart())
+        model.add_subsystem('combustor', Combustor())
 
         model.pyc_connect_flow('flow_start.Fl_O', 'combustor.Fl_I')
         

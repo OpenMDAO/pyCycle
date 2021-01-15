@@ -7,8 +7,6 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
 from pycycle.mp_cycle import Cycle
-from pycycle.constants import AIR_ELEMENTS
-from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
 
 from pycycle.elements.compressor import Compressor
@@ -23,9 +21,10 @@ class CompressorODTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['design'] = False
 
-        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.pyc_add_element('compressor', Compressor(
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('compressor', Compressor(
                 map_data=AXI5, design=False, map_extrap=False))
 
         cycle.set_input_defaults('compressor.s_PR', val=1.)

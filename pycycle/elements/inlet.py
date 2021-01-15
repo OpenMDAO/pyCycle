@@ -2,7 +2,7 @@
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_ELEMENTS, g_c
+from pycycle.constants import g_c
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
@@ -220,26 +220,3 @@ class Inlet(Element):
             'Fl_O': upstream['Fl_I']
         }
 
-if __name__ == "__main__":
-    from pycycle import constants
-
-    p = om.Problem()
-    p.model = Inlet(MilSpec=True)
-
-    thermo = species_data.Properties(species_data.janaf, constants.AIR_ELEMENTS)
-    p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
-    p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
-    p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
-    p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
-    p.model.set_input_defaults('Fl_I:stat:MN', 1.3, units=None)
-    p.model.set_input_defaults('ram_recovery', 0.93, units=None)
-
-    p.setup()
-
-    #view_model(p)
-    p.run_model()
-    # print(p.get_val('Fl_I:tot:T', units='degK'))
-    p.model.list_outputs(units=True)
-
-    # generates regression testing setup
-    #regression_generator(p)

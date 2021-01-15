@@ -3,7 +3,7 @@ import openmdao.api as om
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 
-from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
 from pycycle.flow_in import FlowIn
 from pycycle.element_base import Element
 
@@ -186,10 +186,7 @@ class Row(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)
-        # self.options.declare('main_flow_elements', default=AIR_FUEL_ELEMENTS,
-        #                       desc='set of elements present in the flow')
-        # self.options.declare('bld_flow_elements', default=AIR_ELEMENTS,
-        #                       desc='set of elements present in the flow')
+       
 
     def setup(self):
 
@@ -205,20 +202,11 @@ class Row(om.Group):
         consts = self.add_subsystem('consts', om.IndepVarComp()) # values that should not be changed ever
         consts.add_output('bld_frac_P', val=1)
 
-        # self.add_subsystem('mix_n', ThermoAdd(thermo_data=self.options['thermo_data'], 
-        #                                      inflow_elements=AIR_FUEL_ELEMENTS, 
-        #                                      mix_mode='flow',
-        #                                      mix_elements=AIR_ELEMENTS, 
-        #                                      mix_names='cool'),
-        #                    promotes_inputs=[('Fl_I:stat:W','W_primary'), 
-        #                                     ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
-        #                    promotes_outputs=[('Wout','W_out'),]
-        #                    )
 
         self.add_subsystem('mix_n', ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
                                               thermo_kwargs={'spec':self.options['thermo_data'], 
-                                                             'inflow_elements':AIR_FUEL_ELEMENTS, 
-                                                             'mix_elements':AIR_ELEMENTS,}),
+                                                             'inflow_elements':CEA_AIR_FUEL_COMPOSITION, 
+                                                             'mix_elements':CEA_AIR_COMPOSITION,}),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
                                             ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
                            promotes_outputs=[('Wout','W_out'),]
@@ -227,7 +215,7 @@ class Row(om.Group):
 
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                             method=thermo_method, 
-                            thermo_kwargs={'elements':AIR_FUEL_ELEMENTS, 
+                            thermo_kwargs={'elements':CEA_AIR_FUEL_COMPOSITION, 
                                            'spec':self.options['thermo_data']})
         self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])

@@ -7,7 +7,6 @@ import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
-from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
 from pycycle.element_base import Element
@@ -83,8 +82,7 @@ class BleedOut(Element):
     """
 
     def initialize(self):
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
+        
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',

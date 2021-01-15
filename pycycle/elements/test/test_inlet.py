@@ -12,7 +12,6 @@ from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.inlet import Inlet, MilSpecRecovery
 from pycycle.elements.flow_start import FlowStart
-from pycycle.constants import AIR_ELEMENTS
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -96,8 +95,8 @@ class InletTestCase(unittest.TestCase):
         cycle.set_input_defaults('inlet.Fl_I:stat:V', 1., units='ft/s')
         cycle.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
-        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.pyc_add_element('inlet', Inlet())
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('inlet', Inlet())
 
         # total and static
         fl_src = "flow_start.Fl_O"

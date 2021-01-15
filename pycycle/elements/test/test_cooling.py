@@ -112,34 +112,10 @@ from pycycle.mp_cycle import Cycle
 from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import ThermoAdd
-from pycycle.constants import AIR_FUEL_ELEMENTS
 
 
 class Tests(unittest.TestCase):
 
-    # def setUp(self):
-    #     p = Problem()
-    #     p.model = Cycle()
-
-    #     # values needed for the flow initialization from the burner exit
-    #     p.model.set_input_defaults('mix_fuel.Fl_I:stat:W', val=60.32, units="lbm/s")
-    #     p.model.set_input_defaults('mix_fuel.mix:ratio', val=0.0304)
-    #     p.model.set_input_defaults('mix_fuel.Fl_I:tot:h', val=298.48, units='Btu/lbm')
-
-    #     # p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
-    #     p.model.set_input_defaults('burner_flow.P', val=616.736, units='psi')
-    #     p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
-
-    #     # needed to get the FAR right to match NPSS numbers
-    #     p.model.add_subsystem('mix_fuel', ThermoAdd(method='CEA', thermo_kwargs={'spec':species_data.janaf}))
-
-
-    #     fs = p.model.pyc_add_element('burner_flow', flow_start.FlowStart(thermo_data=species_data.janaf,
-    #                                                             elements=AIR_FUEL_ELEMENTS))
-    #     fs.pyc_setup_output_ports()
-    #     p.model.connect('mix_fuel.composition_out', 'burner_flow.composition')
-
-    #     self.prob = p
 
     def test_cooling_calcs(self):
         """test the basic cooling requirement calculations"""

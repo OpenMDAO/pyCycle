@@ -5,7 +5,7 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.api import Cycle, FlowStart, AIR_ELEMENTS, WET_AIR_ELEMENTS, species_data
+from pycycle.api import Cycle, FlowStart, CEA_AIR_COMPOSITION, CEA_WET_AIR_COMPOSITION, species_data
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/flowstart.csv",
@@ -41,7 +41,7 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
         self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
-        fl_start = self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=AIR_ELEMENTS))
+        fl_start = self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, elements=CEA_AIR_COMPOSITION))
         fl_start.pyc_setup_output_ports() #note: must manually call this for stand alone element tests without a cycle group
 
         self.prob.set_solver_print(level=-1)
@@ -150,7 +150,7 @@ class FlowStartTestCase(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
 
             p = Problem()
-            fl_start = p.model = FlowStart(elements=AIR_ELEMENTS, use_WAR=True, thermo_data=species_data.janaf)
+            fl_start = p.model = FlowStart(elements=CEA_AIR_COMPOSITION, use_WAR=True, thermo_data=species_data.janaf)
             fl_start.pyc_setup_output_ports()
 
             p.model.set_input_defaults('WAR', .01)
@@ -162,7 +162,7 @@ class FlowStartTestCase(unittest.TestCase):
         # with self.assertRaises(ValueError) as cm:
 
         #     prob = Problem()
-        #     prob.model = FlowStart(elements=WET_AIR_ELEMENTS, use_WAR=False, thermo_data=species_data.janaf)
+        #     prob.model = FlowStart(elements=CEA_WET_AIR_COMPOSITION, use_WAR=False, thermo_data=species_data.janaf)
         #     prob.setup()
 
         # self.assertEqual(str(cm.exception), 'In order to provide elements containing H, a nonzero water to air ratio (WAR) must be specified. Set the option use_WAR to True and give a non zero WAR.')
@@ -179,7 +179,7 @@ class WARTestCase(unittest.TestCase):
         prob.model.set_input_defaults('fl_start.WAR', .01)
 
         fl_start = prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
-                                                                  elements=WET_AIR_ELEMENTS, use_WAR=True))
+                                                                  elements=CEA_WET_AIR_COMPOSITION, use_WAR=True))
         fl_start.pyc_setup_output_ports()
 
         prob.set_solver_print(level=-1)

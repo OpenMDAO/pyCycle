@@ -11,7 +11,7 @@ from openmdao.api import Problem, Group
 
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
-from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
 from pycycle.mp_cycle import Cycle
 from pycycle.elements.mixer import Mixer
 from pycycle.elements.flow_start import FlowStart
@@ -33,10 +33,10 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('MN', 0.5)
         cycle.set_input_defaults('W', 100., units='lbm/s')
 
-        cycle.pyc_add_element('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
-        cycle.pyc_add_element('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
+        cycle.add_subsystem('start1', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
+        cycle.add_subsystem('start2', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
 
-        cycle.pyc_add_element('mixer', Mixer(design=True))
+        cycle.add_subsystem('mixer', Mixer(design=True))
 
         cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
         cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
@@ -63,10 +63,10 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('MN', 0.5)
         cycle.set_input_defaults('W', 100., units='lbm/s')
 
-        cycle.pyc_add_element('start1', FlowStart(), promotes=['MN', 'T', 'W'])
-        cycle.pyc_add_element('start2', FlowStart(), promotes=['MN', 'T', 'W'])
+        cycle.add_subsystem('start1', FlowStart(), promotes=['MN', 'T', 'W'])
+        cycle.add_subsystem('start2', FlowStart(), promotes=['MN', 'T', 'W'])
 
-        cycle.pyc_add_element('mixer', Mixer(design=True))
+        cycle.add_subsystem('mixer', Mixer(design=True))
 
         cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
         cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
@@ -97,10 +97,10 @@ class MixerTestcase(unittest.TestCase):
             cycle.set_input_defaults('start2.MN', 0.4463)
             cycle.set_input_defaults('start2.W', 158., units='lbm/s')
 
-            cycle.pyc_add_element('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
-            cycle.pyc_add_element('start2', FlowStart(elements=AIR_ELEMENTS))
+            cycle.add_subsystem('start1', FlowStart(elements=CEA_AIR_FUEL_COMPOSITION))
+            cycle.add_subsystem('start2', FlowStart(elements=CEA_AIR_COMPOSITION))
 
-            cycle.pyc_add_element('mixer', Mixer(design=True, designed_stream=designed_stream))
+            cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream))
 
             cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
             cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
@@ -127,10 +127,10 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('start2.MN', 0.4463)
         cycle.set_input_defaults('start2.W', 158., units='lbm/s')
 
-        cycle.pyc_add_element('start1', FlowStart(elements=AIR_FUEL_ELEMENTS))
-        cycle.pyc_add_element('start2', FlowStart(elements=AIR_ELEMENTS))
+        cycle.add_subsystem('start1', FlowStart(elements=CEA_AIR_FUEL_COMPOSITION))
+        cycle.add_subsystem('start2', FlowStart(elements=CEA_AIR_COMPOSITION))
 
-        cycle.pyc_add_element('mixer', Mixer(design=True, designed_stream=1))
+        cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=1))
 
         cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
         cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')

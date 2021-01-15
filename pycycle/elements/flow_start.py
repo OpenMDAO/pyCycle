@@ -4,14 +4,14 @@ from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
-from pycycle.constants import AIR_ELEMENTS, WET_AIR_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_WET_AIR_COMPOSITION
 from pycycle.element_base import Element
 
 
 class FlowStart(Element):
 
     def initialize(self):
-        self.options.declare('elements', default=AIR_ELEMENTS,
+        self.options.declare('elements', default=CEA_AIR_COMPOSITION,
                               desc='set of elements present in the flow')
 
         self.options.declare('use_WAR', default=False, values=[True, False], 

@@ -7,6 +7,7 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flight_conditions import FlightConditions
+from pycycle.mp_cycle import Cycle
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -23,12 +24,13 @@ class FlightConditionsTestCase(unittest.TestCase):
     def setUp(self):
         self.prob = om.Problem()
 
+        self.prob.model = Cycle()
+
         self.prob.model.set_input_defaults('fc.MN', 0.0)
         self.prob.model.set_input_defaults('fc.alt', 0.0, units="ft")
         self.prob.model.set_input_defaults('fc.dTs', 0.0, units='degR')
 
         fc = self.prob.model.add_subsystem('fc', FlightConditions())
-        fc.pyc_setup_output_ports()
 
         self.prob.setup(check=False, force_alloc_complex=True)
         self.prob.set_solver_print(level=-1)

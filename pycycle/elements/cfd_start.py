@@ -1,6 +1,6 @@
 import openmdao.api as om
 
-from pycycle.constants import AIR_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
 from pycycle.element_base import Element
@@ -8,7 +8,9 @@ from pycycle.element_base import Element
 class CFDStart(Element):
 
     def initialize(self):
-        pass
+        self.options.declare('elements', default=CEA_AIR_COMPOSITION,
+                              desc='set of elements present in the flow')
+        super().initialize()
         
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']

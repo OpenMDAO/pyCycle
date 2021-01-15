@@ -11,7 +11,6 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
-from pycycle.constants import AIR_ELEMENTS
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
@@ -51,9 +50,8 @@ class TurbineTestCase(unittest.TestCase):
         self.prob = Problem()
         self.prob.model = Cycle()
 
-        self.prob.model.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        self.prob.model.pyc_add_element('turbine', Turbine(map_data=LPT2269, design=True,
-                                                         elements=AIR_ELEMENTS))
+        self.prob.model.add_subsystem('flow_start', FlowStart())
+        self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True))
 
         self.prob.model.pyc_connect_flow('flow_start.Fl_O', 'turbine.Fl_I')
 

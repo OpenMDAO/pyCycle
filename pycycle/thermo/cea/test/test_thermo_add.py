@@ -7,7 +7,7 @@ import openmdao.api as om
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from pycycle.thermo.cea import species_data
-from pycycle.constants import AIR_ELEMENTS, AIR_FUEL_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
 
 from pycycle.thermo.cea.thermo_add import ThermoAdd
 
@@ -17,13 +17,13 @@ class ThermoAddTestCase(unittest.TestCase):
 
         thermo_spec = species_data.janaf
 
-        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+        air_thermo = species_data.Properties(thermo_spec, init_elements=CEA_AIR_COMPOSITION)
 
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = ThermoAdd(thermo_data=thermo_spec,
-                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
+        p.model = ThermoAdd(spec=thermo_spec,
+                            inflow_elements=CEA_AIR_COMPOSITION, mix_mode='reactant', 
                             mix_elements=fuel, mix_names='fuel')
 
 
@@ -53,13 +53,13 @@ class ThermoAddTestCase(unittest.TestCase):
 
         thermo_spec = species_data.janaf
 
-        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+        air_thermo = species_data.Properties(thermo_spec, init_elements=CEA_AIR_COMPOSITION)
 
         p = om.Problem()
 
         fuel = 'JP-7'
-        p.model = ThermoAdd(thermo_data=thermo_spec,
-                            inflow_elements=AIR_ELEMENTS, mix_mode='reactant', 
+        p.model = ThermoAdd(spec=thermo_spec,
+                            inflow_elements=CEA_AIR_COMPOSITION, mix_mode='reactant', 
                             mix_elements=[fuel, fuel], mix_names=['fuel1','fuel2'])
 
 
@@ -95,9 +95,9 @@ class ThermoAddTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = ThermoAdd(thermo_data=thermo_spec,
-                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
-                            mix_elements=AIR_ELEMENTS, mix_names='mix')
+        p.model = ThermoAdd(spec=thermo_spec,
+                            inflow_elements=CEA_AIR_FUEL_COMPOSITION, mix_mode='flow', 
+                            mix_elements=CEA_AIR_COMPOSITION, mix_names='mix')
 
         p.setup(force_alloc_complex=True)
 
@@ -120,9 +120,9 @@ class ThermoAddTestCase(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = ThermoAdd(thermo_data=thermo_spec,
-                            inflow_elements=AIR_FUEL_ELEMENTS, mix_mode='flow', 
-                            mix_elements=[AIR_ELEMENTS, AIR_ELEMENTS], mix_names=['mix1', 'mix2'])
+        p.model = ThermoAdd(spec=thermo_spec,
+                            inflow_elements=CEA_AIR_FUEL_COMPOSITION, mix_mode='flow', 
+                            mix_elements=[CEA_AIR_COMPOSITION, CEA_AIR_COMPOSITION], mix_names=['mix1', 'mix2'])
 
         p.setup(force_alloc_complex=True)
 
@@ -153,10 +153,10 @@ class ThermoAddTestCase(unittest.TestCase):
 
         thermo_spec = species_data.wet_air
 
-        air_thermo = species_data.Properties(thermo_spec, init_elements=AIR_ELEMENTS)
+        air_thermo = species_data.Properties(thermo_spec, init_elements=CEA_AIR_COMPOSITION)
 
-        prob.model.add_subsystem('war', ThermoAdd(thermo_data=thermo_spec,
-                                                 inflow_elements=AIR_ELEMENTS, mix_elements='Water'), 
+        prob.model.add_subsystem('war', ThermoAdd(spec=thermo_spec,
+                                                 inflow_elements=CEA_AIR_COMPOSITION, mix_elements='Water'), 
                                  promotes=['*'])
         
 

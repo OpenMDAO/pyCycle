@@ -12,7 +12,6 @@ from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.flow_start import FlowStart
 from pycycle.elements.nozzle import Nozzle
-from pycycle.constants import AIR_ELEMENTS
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/nozzle.csv", delimiter=",", skiprows=1)
@@ -30,9 +29,8 @@ class NozzleTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf,
-                                                    elements=AIR_ELEMENTS))
-        cycle.pyc_add_element('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True))
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True))
 
         cycle.set_input_defaults('nozzle.Ps_exhaust', 10.0, units='lbf/inch**2')
         cycle.set_input_defaults('flow_start.MN', 0.0)

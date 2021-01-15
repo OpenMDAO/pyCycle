@@ -9,7 +9,6 @@ from pycycle.mp_cycle import Cycle
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.combustor import Combustor
-from pycycle.constants import AIR_FUEL_ELEMENTS, AIR_ELEMENTS
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.lpt2269 import LPT2269
 
@@ -79,12 +78,14 @@ class TurbineODTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
 
-        cycle.pyc_add_element('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.pyc_add_element('burner', Combustor(thermo_data=janaf, fuel_type="JP-7"))
-        cycle.pyc_add_element('turbine', Turbine( map_data=LPT2269, design=False))
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
+        cycle.options['design'] = False
 
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('burner', Combustor(fuel_type="JP-7"))
+        cycle.add_subsystem('turbine', Turbine( map_data=LPT2269))
 
-        cycle.set_input_defaults('burner.MN', .01, units=None)
         cycle.set_input_defaults('burner.Fl_I:FAR', .01, units=None)
         cycle.set_input_defaults('turbine.Nmech', 1000., units='rpm'),
         cycle.set_input_defaults('flow_start.P', 17., units='psi'),
@@ -115,7 +116,6 @@ class TurbineODTestCase(unittest.TestCase):
             self.prob['flow_start.P'] = data[h_map['burn.Fl_I.Pt']]
             self.prob['flow_start.T'] = data[h_map['burn.Fl_I.Tt']]
             self.prob['flow_start.W'] = data[h_map['burn.Fl_I.W']]
-            self.prob['burner.MN'] = data[h_map['burn.Fl_I.MN']]
             self.prob['turbine.PR'] = data[h_map['turb.PR']]
 
             # input shaft variable
