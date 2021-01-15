@@ -8,25 +8,21 @@ class SingleSpoolTurboshaft(pyc.Cycle):
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(thermo_data=thermo_spec))
-        self.add_subsystem('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec))
-        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, map_extrap=True),
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                    fuel_type='JP-7'))
-        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, map_extrap=True),
+        self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, map_extrap=True),
+        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
-                                    thermo_data=thermo_spec))
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
         self.add_subsystem('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
         self.add_subsystem('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))

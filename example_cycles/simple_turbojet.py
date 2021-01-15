@@ -15,12 +15,11 @@ class Turbojet(pyc.Cycle):
 
         # Add engine elements
         self.add_subsystem('fc', pyc.FlightConditions())
-        self.add_subsystem('inlet', pyc.Inlet(design=design))
-        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    map_extrap=True),
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('burner', pyc.Combustor(design=design,fuel_type='JP-7'))
-        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design),
+        self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269),
                                     promotes_inputs=['Nmech'])
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))
         self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])

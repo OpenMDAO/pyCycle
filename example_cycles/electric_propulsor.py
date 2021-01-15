@@ -13,8 +13,8 @@ class Propulsor(pyc.Cycle):
 
         self.add_subsystem('fc', pyc.FlightConditions())
 
-        self.add_subsystem('inlet', pyc.Inlet(design=design))
-        self.add_subsystem('fan', pyc.Compressor(design=design, map_data=pyc.FanMap, map_extrap=True))
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
         self.add_subsystem('nozz', pyc.Nozzle())
         
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
