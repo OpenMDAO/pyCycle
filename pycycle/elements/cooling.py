@@ -254,15 +254,10 @@ class TurbineCooling(Element):
         self.options.declare('n_stages', types=int, desc="number of stages in the turbine")
         self.options.declare('T_metal', types=float, default=2460., desc='safety factor applied') # units=degR
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('primary_elements', default=AIR_FUEL_ELEMENTS,
-                              desc='set of elements present in the flow')
-        self.options.declare('cool_elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
 
         self.options.declare('owns_x_factor', types=bool, default=True, desc='if True, x_factor will be connected to an IndepVarComp inside this element')
 
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
 

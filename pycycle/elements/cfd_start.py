@@ -8,13 +8,8 @@ from pycycle.element_base import Element
 class CFDStart(Element):
 
     def initialize(self):
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                             desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                             desc='set of elements present in the flow')
-
+        pass
+        
     def pyc_setup_output_ports(self): 
         elements = self.options['elements']
         self.init_output_flow('Fl_O', elements)

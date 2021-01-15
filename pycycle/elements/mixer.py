@@ -138,17 +138,12 @@ class Mixer(Element):
 
     def initialize(self):
 
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=janaf,
-                              desc='thmodynamic data set', recordable=False)
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('designed_stream', default=1, values=(1,2),
                               desc='control for which stream has its area varied to match static pressure (1 means, you vary Fl_I1)')
         self.options.declare('internal_solver', default=True,
                               desc='If True, a newton solver is used inside the mixer to converge the impulse balance')
 
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
 

@@ -59,18 +59,12 @@ class Combustor(Element):
 
     def initialize(self):
 
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('inflow_thermo_data', default=None,
-                             desc='Thermodynamic data set for incoming flow. This only needs to be set if different thermo data is used for incoming flow and outgoing flow.', recordable=False)
-        self.options.declare('thermo_data', default=janaf,
-                             desc='Thermodynamic data set for the flow', recordable=False)
-        self.options.declare('design', default=True,
-                             desc='Switch between on-design and off-design calculation.')
         self.options.declare('statics', default=True,
                              desc='If True, calculate static properties.')
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
+
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
 

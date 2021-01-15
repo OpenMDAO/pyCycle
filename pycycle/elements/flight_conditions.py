@@ -11,10 +11,6 @@ class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('use_WAR', default=False, values=[True, False], 

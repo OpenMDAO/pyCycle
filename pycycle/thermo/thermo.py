@@ -49,6 +49,10 @@ class Thermo(om.Group):
         #     # base_thermo = TabularThermo(thermo_data=xx)
         #     pass
 
+
+        # elif method == 'Tabular':
+        #       base_thermo = tab_thermo.SetTotalTP(**thermo_kwargs)
+
         in_vars = ('T', 'composition')
         # TODO: remove 'n', 'n_moles' variable from flow station
         out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n', 'n_moles')

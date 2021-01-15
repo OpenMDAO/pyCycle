@@ -24,7 +24,7 @@ class WetTurbojet(pyc.Cycle):
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5),
                                     promotes_inputs=['Nmech'])
 
-        self.add_subsystem('burner', pyc.Combustor(, fuel_type='JP-7'))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
         self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269),
                                     promotes_inputs=['Nmech'])
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))

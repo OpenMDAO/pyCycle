@@ -83,16 +83,10 @@ class BleedOut(Element):
     """
 
     def initialize(self):
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_ELEMENTS,
                               desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',
                               default=[])
         
@@ -100,6 +94,8 @@ class BleedOut(Element):
             # (design src, off-design target)
             ('Fl_O:stat:area', 'area')
         ]
+
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
         self.copy_flow('Fl_I', 'Fl_O')
@@ -110,10 +106,10 @@ class BleedOut(Element):
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
         design = self.options['design']
         bleeds = self.options['bleed_names']
+        elements = self.Fl_I_data['Fl_I']
 
         num_element = len(elements)
 

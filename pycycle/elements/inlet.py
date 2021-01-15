@@ -125,19 +125,15 @@ class Inlet(Element):
     """
 
     def initialize(self):
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
 
         self.default_des_od_conns = [
             # (design src, off-design target)
             ('Fl_O:stat:area', 'area'),
         ]
+
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
         

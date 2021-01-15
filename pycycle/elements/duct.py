@@ -148,17 +148,9 @@ class Duct(Element):
     """
 
     def initialize(self):
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties. '
-                                   'Note that this will be set automatically by the containing Cycle group.')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set. Note that this will be set automatically by the containing Cycle group.', 
-                              recordable=False)
-        
+      
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('expMN', default=0.0,
                               desc='Mach number exponent for dPqP_MN calculations.'
                                    '0 means it has no effect. Only has impact in off-design')
@@ -167,6 +159,8 @@ class Duct(Element):
             # (design src, off-design target)
             ('Fl_O:stat:area', 'area')
         ]
+
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
         self.copy_flow('Fl_I','Fl_O')

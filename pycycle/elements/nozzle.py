@@ -306,10 +306,6 @@ class Nozzle(Element):
                               desc='Nozzle type: CD, CV, or CD_CV.')
         self.options.declare('lossCoef', default='Cv',
                               desc='If set to "Cfg", then Gross Thrust Coefficient is an input.')
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
         self.options.declare('internal_solver', default=False)
 
         super().initialize()

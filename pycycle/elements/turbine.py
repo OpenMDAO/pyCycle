@@ -416,18 +416,8 @@ class Turbine(Element):
 
     def initialize(self):
         self.options.declare('map_data', default=LPT2269)
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
-                              desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
-        self.options.declare('bleed_elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('bleed_names', types=(list,tuple), desc='list of names for the bleed ports',
                               default=[])
         self.options.declare('map_interp_method', default='slinear',
@@ -444,6 +434,7 @@ class Turbine(Element):
             ('Fl_O:stat:area', 'area')
         ]
 
+        super().initialize()
 
     def pyc_setup_output_ports(self): 
 
