@@ -8,7 +8,7 @@ from pycycle.element_base import Element
 class CFDStart(Element):
 
     def initialize(self):
-        self.options.declare('elements', default=CEA_AIR_COMPOSITION,
+        self.options.declare('composition', default=CEA_AIR_COMPOSITION,
                               desc='set of elements present in the flow')
         super().initialize()
         

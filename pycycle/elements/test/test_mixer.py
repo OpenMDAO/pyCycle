@@ -97,8 +97,8 @@ class MixerTestcase(unittest.TestCase):
             cycle.set_input_defaults('start2.MN', 0.4463)
             cycle.set_input_defaults('start2.W', 158., units='lbm/s')
 
-            cycle.add_subsystem('start1', FlowStart(elements=CEA_AIR_FUEL_COMPOSITION))
-            cycle.add_subsystem('start2', FlowStart(elements=CEA_AIR_COMPOSITION))
+            cycle.add_subsystem('start1', FlowStart(composition=CEA_AIR_FUEL_COMPOSITION))
+            cycle.add_subsystem('start2', FlowStart(composition=CEA_AIR_COMPOSITION))
 
             cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream))
 
@@ -127,8 +127,8 @@ class MixerTestcase(unittest.TestCase):
         cycle.set_input_defaults('start2.MN', 0.4463)
         cycle.set_input_defaults('start2.W', 158., units='lbm/s')
 
-        cycle.add_subsystem('start1', FlowStart(elements=CEA_AIR_FUEL_COMPOSITION))
-        cycle.add_subsystem('start2', FlowStart(elements=CEA_AIR_COMPOSITION))
+        cycle.add_subsystem('start1', FlowStart(composition=CEA_AIR_FUEL_COMPOSITION))
+        cycle.add_subsystem('start2', FlowStart(composition=CEA_AIR_COMPOSITION))
 
         cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=1))
 
