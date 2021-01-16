@@ -48,7 +48,10 @@ class Element(om.Group):
         Initialize the given output port with the pord_data
         """
 
-        self.Fl_O_data[port_name] = port_data
+        if isinstance(port_data, ThermoAdd): 
+            self.Fl_O_data[port_name] = port_data.output_port_data()
+        else: 
+            self.Fl_O_data[port_name] = port_data
 
 
     # TODO: at end of setup, compare all the ports to whats in the port data and make sure that there is nothing missing

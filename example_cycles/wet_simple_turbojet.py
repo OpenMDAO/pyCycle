@@ -16,9 +16,9 @@ class WetTurbojet(pyc.Cycle):
 
 
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(use_WAR=True,
-                                                      composition=pyc.CEA_WET_AIR_COMPOSITION)) 
-                                                      # CEA_WET_AIR_COMPOSITION contains standard dry air compounds as well as H2O
+        self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
+                                                      reactant='Water',
+                                                      mix_ratio_name='WAR')) 
 
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5),
