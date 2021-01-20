@@ -52,3 +52,6 @@ P_STDeng = 14.695951 #psi
 
 P_REF = 1.01325 # 1 atm
 # P_REF = 1.0162 # Not sure why, but this seems to match the SP set to the TP better
+
+
+ALLOWED_THERMOS = ('CEA', )

@@ -3,7 +3,7 @@ import openmdao.api as om
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 
-from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION, ALLOWED_THERMOS
 from pycycle.flow_in import FlowIn
 from pycycle.element_base import Element
 
@@ -182,7 +182,7 @@ class Row(om.Group):
         self.options.declare('T_metal', types=float, default=2460., desc='safety factor applied') # units=degR
         self.options.declare('T_safety', types=float, default=150., desc='safety factor applied') # units=degR
 
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+        self.options.declare('thermo_method', default='CEA', values=ALLOWED_THERMOS,
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)

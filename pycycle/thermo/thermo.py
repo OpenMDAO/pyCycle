@@ -6,6 +6,7 @@ from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
 
 from pycycle.thermo.cea import chem_eq as cea_thermo
 from pycycle.thermo.cea import thermo_add as cea_thermo_add
+from pycycle.constants import ALLOWED_THERMOS
 
 
 class Thermo(om.Group):
@@ -19,7 +20,7 @@ class Thermo(om.Group):
                               default='total_TP',
                               values=('total_TP', 'total_SP', 'total_hP', 
                                       'static_MN', 'static_A', 'static_Ps'))
-        self.options.declare('method', values=('CEA', ))
+        self.options.declare('method', values=ALLOWED_THERMOS)
         # thermo_kwargs should be a dictionary containing all the information needed to setup
         # the thermo calculations:
         #       - For CEA this would be the elements and thermo_data
@@ -188,7 +189,7 @@ class ThermoAdd(om.Group):
     # The group is not really needed, and we could skip the delegation crap
 
     def initialize(self):
-        self.options.declare('method', default='CEA', values=('CEA',),
+        self.options.declare('method', default='CEA', values=ALLOWED_THERMOS,
                               desc='Method for computing thermodynamic properties')
 
         self.options.declare('thermo_kwargs', default={},
