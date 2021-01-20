@@ -17,6 +17,7 @@ class WetSimpleTurbojetTestCase(unittest.TestCase):
         prob = om.Problem()
 
         prob.model = mp_wet_turbojet = MPWetTurbojet()
+        
 
         prob.setup()
 

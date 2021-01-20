@@ -28,6 +28,8 @@ class NozzleTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
         cycle.add_subsystem('flow_start', FlowStart())
         cycle.add_subsystem('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True))

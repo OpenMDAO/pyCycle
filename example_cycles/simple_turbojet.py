@@ -10,8 +10,6 @@ class Turbojet(pyc.Cycle):
     def setup(self):
 
         design = self.options['design']
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         # Add engine elements
         self.add_subsystem('fc', pyc.FlightConditions())
@@ -146,9 +144,13 @@ def map_plots(prob, pt):
     pyc.plot_turbine_maps(prob, turb_full_names)
 
 
+
 class MPTurbojet(pyc.MPCycle):
 
     def setup(self):
+
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', Turbojet(thermo_method='CEA'))
@@ -179,6 +181,8 @@ class MPTurbojet(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
 
 if __name__ == "__main__":
 

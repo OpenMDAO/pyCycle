@@ -41,7 +41,7 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.model.set_input_defaults('fl_start.MN', 0.5)
         self.prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
 
-        fl_start = self.prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.janaf, composition=CEA_AIR_COMPOSITION))
+        fl_start = self.prob.model.add_subsystem('fl_start', FlowStart(thermo_method='CEA', thermo_data=species_data.janaf, composition=CEA_AIR_COMPOSITION))
         fl_start.pyc_setup_output_ports() #note: must manually call this for stand alone element tests without a cycle group
 
         self.prob.set_solver_print(level=-1)

@@ -286,6 +286,9 @@ class MPhbtf(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         self.pyc_add_pnt('DESIGN', HBTF(thermo_method='CEA')) # Create an instace of the High Bypass ratio Turbofan
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
@@ -363,6 +366,8 @@ class MPhbtf(pyc.MPCycle):
         #Set up the RHS of the balances!
         self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
         self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
+
+        super().setup()
 
 
 if __name__ == "__main__":

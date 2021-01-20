@@ -25,6 +25,8 @@ class FlightConditionsTestCase(unittest.TestCase):
         self.prob = om.Problem()
 
         self.prob.model = Cycle()
+        self.prob.model.options['thermo_method'] = 'CEA'
+        self.prob.model.options['thermo_data'] = janaf
 
         self.prob.model.set_input_defaults('fc.MN', 0.0)
         self.prob.model.set_input_defaults('fc.alt', 0.0, units="ft")

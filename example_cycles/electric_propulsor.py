@@ -8,8 +8,6 @@ class Propulsor(pyc.Cycle):
     def setup(self):
 
         design = self.options['design']
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.add_subsystem('fc', pyc.FlightConditions())
 
@@ -105,6 +103,9 @@ class MPpropulsor(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         design = self.pyc_add_pnt('design', Propulsor(design=True, thermo_method='CEA'))
         self.pyc_add_cycle_param('pwr_target', 100.)
 
@@ -124,6 +125,8 @@ class MPpropulsor(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
         
 
 

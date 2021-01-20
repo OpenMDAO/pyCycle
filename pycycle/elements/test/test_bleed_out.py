@@ -12,6 +12,7 @@ from pycycle.mp_cycle import Cycle
 from pycycle.elements.bleed_out import BleedOut
 from pycycle.elements.flow_start import FlowStart
 from pycycle import constants
+from pycycle.thermo.cea import species_data
 
 
 class BleedOutTestCase(unittest.TestCase):
@@ -20,6 +21,9 @@ class BleedOutTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = species_data.janaf
+
         cycle.add_subsystem('flow_start', FlowStart(), promotes=['MN', 'P', 'T'])
         cycle.add_subsystem('bleed', BleedOut(bleed_names=['bld1', 'bld2']), promotes=['MN'])
 

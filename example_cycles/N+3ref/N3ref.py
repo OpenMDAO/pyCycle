@@ -344,6 +344,9 @@ class MPN3(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         # TOC POINT (DESIGN)
         self.pyc_add_pnt('TOC', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
                                                         ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes')])
@@ -507,6 +510,8 @@ class MPN3(pyc.MPCycle):
         newton.linesearch.options['iprint'] = -1
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        super().setup()
 
 def N3ref_model():
 

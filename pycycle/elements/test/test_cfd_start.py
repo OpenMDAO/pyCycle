@@ -17,7 +17,8 @@ class CFDStartTestCase(unittest.TestCase):
         p = om.Problem()
 
         p.model = Cycle()
-
+        p.model.options['thermo_method'] = 'CEA'
+        p.model.options['thermo_data'] = janaf
 
         cfd_start = p.model.add_subsystem('cfd_start', CFDStart(), promotes=['*'])
 

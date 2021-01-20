@@ -10,8 +10,6 @@ class ABTurbojet(pyc.Cycle):
     def setup(self):
 
         design = self.options['design']
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.add_subsystem('fc', pyc.FlightConditions())
         self.add_subsystem('inlet', pyc.Inlet())
@@ -156,6 +154,9 @@ class MPABTurbojet(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         # DESIGN CASE
         self.pyc_add_pnt('DESIGN', ABTurbojet(design=True, thermo_method='CEA'))
 
@@ -214,6 +215,8 @@ class MPABTurbojet(pyc.MPCycle):
         self.pyc_connect_des_od('burner.Fl_O:stat:area', 'burner.area')
         self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
         self.pyc_connect_des_od('ab.Fl_O:stat:area', 'ab.area')
+
+        super().setup()
 
 if __name__ == "__main__":
 

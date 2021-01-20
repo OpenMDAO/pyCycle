@@ -27,6 +27,8 @@ class MixerTestcase(unittest.TestCase):
         p = Problem()
 
         cycle = p.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
         cycle.set_input_defaults('P', 17., units='psi')
         cycle.set_input_defaults('T', 500., units='degR')
@@ -56,6 +58,8 @@ class MixerTestcase(unittest.TestCase):
 
         p = Problem()
         cycle = p.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
         cycle.set_input_defaults('start1.P', 17., units='psi')
         cycle.set_input_defaults('start2.P', 15., units='psi')
@@ -80,42 +84,13 @@ class MixerTestcase(unittest.TestCase):
         assert_near_equal(p['mixer.Fl_O:tot:P'], 15.7943609, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
 
-
-    def _build_problem(self, designed_stream=1, complex=False):
-
-            p = Problem()
-
-            cycle = p.model = Cycle()
-            
-            cycle.set_input_defaults('start1.P', 9.218, units='psi')
-            cycle.set_input_defaults('start1.T', 1524.32, units='degR')
-            cycle.set_input_defaults('start1.MN', 0.4463)
-            cycle.set_input_defaults('start1.W', 161.49, units='lbm/s')
-
-            cycle.set_input_defaults('start2.P', 8.68, units='psi')
-            cycle.set_input_defaults('start2.T', 524., units='degR')
-            cycle.set_input_defaults('start2.MN', 0.4463)
-            cycle.set_input_defaults('start2.W', 158., units='lbm/s')
-
-            cycle.add_subsystem('start1', FlowStart(composition=CEA_AIR_FUEL_COMPOSITION))
-            cycle.add_subsystem('start2', FlowStart(composition=CEA_AIR_COMPOSITION))
-
-            cycle.add_subsystem('mixer', Mixer(design=True, designed_stream=designed_stream))
-
-            cycle.pyc_connect_flow('start1.Fl_O', 'mixer.Fl_I1')
-            cycle.pyc_connect_flow('start2.Fl_O', 'mixer.Fl_I2')
-
-            p.setup(force_alloc_complex=complex)
-
-            p.set_solver_print(level=-1)
-
-            return p
-
     def test_mix_air_with_airfuel(self):
 
         p = Problem()
 
         cycle = p.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
         
         cycle.set_input_defaults('start1.P', 9.218, units='psi')
         cycle.set_input_defaults('start1.T', 1524.32, units='degR')

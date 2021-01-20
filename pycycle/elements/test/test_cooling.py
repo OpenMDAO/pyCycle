@@ -108,7 +108,6 @@ from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
 
-from pycycle.mp_cycle import Cycle
 from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import ThermoAdd
@@ -169,6 +168,7 @@ class Tests(unittest.TestCase):
                 i_row=0,
                 T_metal=2460.,
                 T_safety=150.,
+                thermo_method='CEA',
                 thermo_data=species_data.janaf),
             promotes=[
                 'Pt_in',
@@ -221,6 +221,7 @@ class Tests(unittest.TestCase):
                 n_stages=2,
                 T_metal=2460.,
                 T_safety=150.,
+                thermo_method='CEA',
                 thermo_data=species_data.janaf))
 
         p.model.connect('ivc.mix_composition', ['turb_cool.Fl_turb_I:tot:composition', 

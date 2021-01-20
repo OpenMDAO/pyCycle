@@ -10,8 +10,6 @@ class MixedFlowTurbofan(pyc.Cycle):
 
     def setup(self):
         design = self.options['design']
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.add_subsystem('fc', pyc.FlightConditions())
         # Inlet Components
@@ -217,6 +215,9 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         self.pyc_add_pnt('DESIGN', MixedFlowTurbofan(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.balance.rhs:BPR', 1.05 ,units=None) # defined as 1 over 2
@@ -316,6 +317,9 @@ class MPMixedFlowTurbofan(pyc.MPCycle):
         self.pyc_connect_des_od('mixer.Fl_I1_calc:stat:area', 'mixer.Fl_I1_stat_calc.area')
         self.pyc_connect_des_od('mixer_duct.Fl_O:stat:area', 'mixer_duct.area')
         self.pyc_connect_des_od('afterburner.Fl_O:stat:area', 'afterburner.area')
+
+
+        super().setup()
 
 
 if __name__ == "__main__":

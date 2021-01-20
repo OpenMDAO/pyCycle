@@ -88,6 +88,8 @@ class InletTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
         cycle.set_input_defaults('flow_start.P', 17, units='psi')
         cycle.set_input_defaults('flow_start.T', 500.0, units='degR')
