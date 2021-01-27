@@ -146,7 +146,7 @@ class N3(pyc.Cycle):
             self.connect('lpt.eff_poly', 'balance.lhs:lpt_eff')
 
             self.add_subsystem('hpc_CS',
-                    om.ExecComp('CS = Win *(pow(Tout/518.67,0.5)/(Pout/14.696))',
+                    om.ExecComp('CS = Win *(power(Tout/518.67,0.5)/(Pout/14.696))',
                             Win= {'value': 10.0, 'units':'lbm/s'},
                             Tout={'value': 14.696, 'units':'degR'},
                             Pout={'value': 518.67, 'units':'psi'},
