@@ -253,7 +253,7 @@ class TurbineCooling(Element):
         n_rows = 2 * n_stages
         for i in range(n_rows):
             row_port_name = r'row_{i}.Fl_O'
-            self.copy_flow('Fl_turb_O', row_port_name)
+            self.copy_flow('Fl_turb_I', row_port_name)
 
     def setup(self):
 
