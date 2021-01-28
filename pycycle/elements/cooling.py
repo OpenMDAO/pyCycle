@@ -186,10 +186,17 @@ class Row(om.Group):
                               desc='Method for computing thermodynamic properties')
         self.options.declare('thermo_data', default=species_data.janaf,
                                desc='thermodynamic data set', recordable=False)
+        self.options.declare('main_flow_composition')
+        self.options.declare('bld_flow_composition')
+        self.options.declare('mix_flow_composition')
 
     def setup(self):
 
         thermo_method = self.options['thermo_method']
+
+        main_flow_composition = self.options['main_flow_composition']
+        bld_flow_composition = self.options['bld_flow_composition']
+        mix_flow_composition = self.options['mix_flow_composition']
 
         self.add_subsystem('cooling_calcs', CoolingCalcs(n_stages=self.options['n_stages'],
                                                          i_row=self.options['i_row'],
@@ -203,8 +210,8 @@ class Row(om.Group):
 
         self.add_subsystem('mix_n', ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
                                               thermo_kwargs={'spec':self.options['thermo_data'], 
-                                                             'inflow_composition':CEA_AIR_FUEL_COMPOSITION, 
-                                                             'mix_composition':CEA_AIR_COMPOSITION,}),
+                                                             'inflow_composition':main_flow_composition, 
+                                                             'mix_composition':bld_flow_composition,}),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
                                             ('Fl_I:tot:composition', 'composition_primary'), 'cool:composition'], 
                            promotes_outputs=[('Wout','W_out'),]
@@ -212,7 +219,7 @@ class Row(om.Group):
 
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                             method=thermo_method, 
-                            thermo_kwargs={'composition':CEA_AIR_FUEL_COMPOSITION, 
+                            thermo_kwargs={'composition':mix_flow_composition, 
                                            'spec':self.options['thermo_data']})
         self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])
@@ -246,8 +253,8 @@ class TurbineCooling(Element):
 
     def pyc_setup_output_ports(self): 
 
-        inflow_composition = self.Fl_I_data['Fl_turb_I']
-        mix_composition = self.Fl_I_data['Fl_cool']
+        # inflow_composition = self.Fl_I_data['Fl_turb_I']
+        # mix_composition = self.Fl_I_data['Fl_cool']
 
         n_stages = self.options['n_stages']
         n_rows = 2 * n_stages
@@ -285,7 +292,10 @@ class TurbineCooling(Element):
                         ('composition_primary',  'Fl_turb_I:tot:composition')]
         self.add_subsystem('row_0', Row(n_stages=n_stages, i_row=0,
                                         T_safety=self.options['T_safety'], T_metal=self.options['T_metal'],
-                                        thermo_data=thermo_data),
+                                        thermo_data=thermo_data, 
+                                        main_flow_composition=self.Fl_I_data['Fl_turb_I'], 
+                                        bld_flow_composition=self.Fl_I_data['Fl_cool'], 
+                                        mix_flow_composition=self.Fl_I_data['Fl_turb_O']),
                            promotes_inputs=p_inputs_all+p_row_inputs)
 
         for i in range(1,n_rows):
@@ -295,7 +305,10 @@ class TurbineCooling(Element):
             self.add_subsystem('row_{}'.format(i),
                                Row(n_stages=n_stages, i_row=i,
                                    T_safety=self.options['T_safety'], T_metal=self.options['T_metal'],
-                                   thermo_data=thermo_data),
+                                   thermo_data=thermo_data, 
+                                   main_flow_composition=self.Fl_I_data['Fl_turb_I'], 
+                                   bld_flow_composition=self.Fl_I_data['Fl_cool'], 
+                                   mix_flow_composition=self.Fl_I_data['Fl_turb_O']),
                                promotes_inputs=p_inputs_all)
 
             self.connect('{}.W_out'.format(prev_row), '{}.W_primary'.format(curr_row))
