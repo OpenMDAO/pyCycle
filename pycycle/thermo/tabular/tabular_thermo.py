@@ -2,19 +2,21 @@ import numpy as np
 import openmdao.api as om
 import pickle
 
-from pycycle.constants import TAB_AIR_FUEL_COMPOSITION
+from pycycle.constants import TAB_AIR_FUEL_COMPOSITION, AIR_JETA_TAB_SPEC
 
 class SetTotalTP(om.Group):
 
     def initialize(self):
         self.options.declare('interp_method', default='slinear')
-        self.options.declare('thermo_data', recordable=False)
+        self.options.declare('thermo_spec', recordable=False)
         self.options.declare('composition')
 
     def setup(self):
         interp_method = self.options['interp_method']
-        thermo_data = self.options['thermo_data']
+        thermo_spec = self.options['thermo_spec']
         composition = self.options['composition']
+
+        thermo_data = pickle.load(open(thermo_spec, 'rb'))
 
         interp = om.MetaModelStructuredComp(method=interp_method)
         for param in composition: 
@@ -32,26 +34,3 @@ class SetTotalTP(om.Group):
         interp.add_output('R', 0.0, units='J/kg/degK', training_data=thermo_data['R'])
 
         self.add_subsystem('tab', interp, promotes=['*'])
-
-if __name__ == '__main__':
-
-    thermo_data = pickle.load(open('air_jetA.pkl', 'rb'))
-
-    p = om.Problem()
-    p.model = SetTotalTP(thermo_data=thermo_data, composition=TAB_AIR_FUEL_COMPOSITION)
-
-    p.setup()
-
-    p['FAR'] = 0.04
-    p['P'] = 101325*3
-    p['T'] = 1000
-
-    p.run_model()
-
-    print('h:', p.get_val('h')[0])
-    print('S:', p.get_val('S')[0])
-    print('gamma:', p.get_val('gamma')[0])
-    print('Cp:', p.get_val('Cp')[0])
-    print('Cv:', p.get_val('Cv')[0])
-    print('rho:', p.get_val('rho')[0])
-    print('R:', p.get_val('R')[0])

@@ -1,5 +1,6 @@
 import warnings
-
+import os
+import os.path
 
 class DeprecatedDict(dict): 
 
@@ -24,6 +25,10 @@ CEA_WET_AIR_COMPOSITION = {'Ar':3.21320739e-04, 'C':1.09451485e-05, 'H':6.862162
 CEA_CO2_CO_O2_COMPOSITION = {'C':0.02272237, 'O':0.04544473}
 
 TAB_AIR_FUEL_COMPOSITION = {'FAR': 0.0}
+# A little fancy code to find the default thermo data in the python package, wherever its installed
+pkg_path = os.path.dirname(os.path.realpath(__file__))
+AIR_JETA_TAB_SPEC = os.path.join(pkg_path, 'thermo', 'tabular', 'air_jetA_coarse.pkl')
+
 
 # these elemental ratios matter! 
 AIR_FUEL_ELEMENTS = DeprecatedDict('AIR_FUEL_ELEMENTS', 'CEA_AIR_FUEL_COMPOSITION', CEA_AIR_FUEL_COMPOSITION)
@@ -55,4 +60,4 @@ P_REF = 1.01325 # 1 atm
 # P_REF = 1.0162 # Not sure why, but this seems to match the SP set to the TP better
 
 
-ALLOWED_THERMOS = ('CEA', )
+ALLOWED_THERMOS = ('CEA', 'TABULAR')
