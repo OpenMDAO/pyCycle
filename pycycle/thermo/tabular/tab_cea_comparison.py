@@ -3,17 +3,15 @@ import openmdao.api as om
 import pickle
 
 from pycycle.thermo.cea import chem_eq as cea_thermo
-from pycycle.thermo.tabulated import tabulated_thermo as tab_thermo
-from pycycle.thermo.tabulated import tab_thermo_gen as tab_thermo_gen
+from pycycle.thermo.tabular import tabular_thermo as tab_thermo
+from pycycle.thermo.tabular import tab_thermo_gen as tab_thermo_gen
 from pycycle.thermo.cea.species_data import janaf
 from pycycle.constants import TAB_AIR_FUEL_COMPOSITION
-
-thermo_data = pickle.load(open('air_jetA.pkl', 'rb'))
 
 p = om.Problem()
 p.model = om.Group()
 
-p.model.add_subsystem('tab', tab_thermo.SetTotalTP(thermo_data=thermo_data, composition=TAB_AIR_FUEL_COMPOSITION), promotes_inputs=['*'])
+p.model.add_subsystem('tab', tab_thermo.SetTotalTP(thermo_spec='air_jetA.pkl', composition=TAB_AIR_FUEL_COMPOSITION), promotes_inputs=['*'])
 
 p.model.add_subsystem('cea', tab_thermo_gen.TabThermoGenAirFuel(thermo_data=janaf, thermo_method='CEA'), promotes_inputs=['*'])
 
@@ -37,13 +35,29 @@ for i, row in enumerate(temp):
 
     tab = p.get_val('tab.h')[0]
     cea = p.get_val('cea.flow:h', units='J/kg')[0]
-    print('h:', tab, cea, abs(tab-cea)/cea)
+    print('h:', abs((tab-cea)/cea))
 
+    tab = p.get_val('tab.S')[0]
+    cea = p.get_val('cea.flow:S', units='J/kg/degK')[0]
+    print('S:', abs((tab-cea)/cea))
 
-    print('S:', p.get_val('tab.S')[0], p.get_val('cea.flow:S', units='J/kg/degK')[0])
-    print('gamma:', p.get_val('tab.gamma')[0], p.get_val('cea.flow:gamma')[0])
-    print('Cp:', p.get_val('tab.Cp')[0], p.get_val('cea.flow:Cp', units='J/kg/degK')[0])
-    print('Cv:', p.get_val('tab.Cv')[0], p.get_val('cea.flow:Cv', units='J/kg/degK')[0])
-    print('rho:', p.get_val('tab.rho')[0], p.get_val('cea.flow:rho', units='kg/m**3')[0])
-    print('R:', p.get_val('tab.R')[0], p.get_val('cea.flow:R', units='J/kg/degK')[0])
+    tab = p.get_val('tab.gamma')[0]
+    cea = p.get_val('cea.flow:gamma')[0]
+    print('gamma:', abs((tab-cea)/cea))
+
+    tab = p.get_val('tab.Cp')[0]
+    cea = p.get_val('cea.flow:Cp', units='J/kg/degK')[0]
+    print('Cp:', abs((tab-cea)/cea))
+
+    tab = p.get_val('tab.Cv')[0]
+    cea = p.get_val('cea.flow:Cv', units='J/kg/degK')[0]
+    print('Cv:', abs((tab-cea)/cea))
+
+    tab = p.get_val('tab.rho')[0]
+    cea = p.get_val('cea.flow:rho', units='kg/m**3')[0]
+    print('rho:', abs((tab-cea)/cea))
+    
+    tab = p.get_val('tab.R')[0]
+    cea = p.get_val('cea.flow:R', units='J/kg/degK')[0]
+    print('R:', abs((tab-cea)/cea))
     print()

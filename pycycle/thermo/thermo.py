@@ -7,7 +7,7 @@ from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
 from pycycle.thermo.cea import chem_eq as cea_thermo
 from pycycle.thermo.cea import thermo_add as cea_thermo_add
 from pycycle.constants import ALLOWED_THERMOS
-from pycycle.thermo.tabulated import tabulated_thermo as tab_thermo
+from pycycle.thermo.tabular import tabular_thermo as tab_thermo
 
 
 class Thermo(om.Group):
