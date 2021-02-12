@@ -7,7 +7,7 @@ from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
 from pycycle.thermo.cea import chem_eq as cea_thermo
 from pycycle.thermo.cea import thermo_add as cea_thermo_add
 from pycycle.constants import ALLOWED_THERMOS
-from pycycle.thermo.tabulated import tabulated_thermo as tab_thermo
+from pycycle.thermo.tabular import tabular_thermo as tab_thermo
 
 
 class Thermo(om.Group):
@@ -47,7 +47,7 @@ class Thermo(om.Group):
         # elif method == 'Ideal':
         #     # base_thermo = IdealThermo(thermo_data=xx)
         #     pass
-        elif method == 'Tabular':
+        elif method == 'TABULAR':
               base_thermo = tab_thermo.SetTotalTP(**thermo_kwargs)
 
         in_vars = ('T', 'composition')
