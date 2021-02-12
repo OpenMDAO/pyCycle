@@ -64,6 +64,7 @@ class TabThermoGenAirFuel(om.Group):
                                          'spec':thermo_data})
         self.add_subsystem('vitiated_flow', vit_flow, promotes_inputs=['T','P'],
                                         promotes_outputs=['flow:*'])
+        self.connect("mix_fuel.composition_out", "vitiated_flow.composition")
 
         self.set_input_defaults('W', val=1.0, units='kg/s')
         self.set_input_defaults('FAR', val=0.02)
@@ -77,10 +78,15 @@ if __name__ == "__main__":
     # P - lower: 0.886280 Pa,  upper: 10132500 Pa
     # T - lower: 196.650 degK,  upper: 2500 degK
 
-    FAR_range = np.linspace(0.0, 0.05, num=7)
+    # FAR_range = [0, 0.03]
+    # P_range = [1e6]
+    # T_range = [1500]
+
+    FAR_range = np.linspace(0.0, 0.05, num=20)
     # WAR_range = np.linspace(0.0, 1.0, num=5)
-    P_range = np.linspace(1, 1e7, num=15)
-    T_range = np.linspace(150, 2500, num=10)
+    # P_range = np.linspace(1, 1e7, num=30)
+    P_range = np.logspace(0, 6, num=40)
+    T_range = np.linspace(150, 2500, num=40)
     numFAR = len(FAR_range)
     numP = len(P_range)
     numT = len(T_range)
@@ -110,7 +116,7 @@ if __name__ == "__main__":
             S[0,j,k] = p.get_val('flow:S', units='J/kg/degK')[0]
             gamma[0,j,k] = p.get_val('flow:gamma')[0]
             Cp[0,j,k] = p.get_val('flow:Cp', units='J/kg/degK')[0]
-            Cv[0,j,k] = p.get_val('flow:Cp', units='J/kg/degK')[0]
+            Cv[0,j,k] = p.get_val('flow:Cv', units='J/kg/degK')[0]
             rho[0,j,k] = p.get_val('flow:rho', units='kg/m**3')[0]
             R[0,j,k] = p.get_val('flow:R', units='J/kg/degK')[0]
 
@@ -132,16 +138,19 @@ if __name__ == "__main__":
                     p2['T'] = T
                     p2.run_model()
 
-                    print('FAR: %.3f, P: %.1f, T: %.1f' %(p2['FAR'],p2['P'][0],p2['T'][0]))
+                    print('FAR: %.3f, P: %.1f, T: %.1f' %(p2['FAR'][0],p2['P'][0],p2['T'][0]))
                     h[i,j,k] = p2.get_val('flow:h', units='J/kg')[0]
                     S[i,j,k] = p2.get_val('flow:S', units='J/kg/degK')[0]
                     gamma[i,j,k] = p2.get_val('flow:gamma')[0]
                     Cp[i,j,k] = p2.get_val('flow:Cp', units='J/kg/degK')[0]
-                    Cv[i,j,k] = p2.get_val('flow:Cp', units='J/kg/degK')[0]
+                    Cv[i,j,k] = p2.get_val('flow:Cv', units='J/kg/degK')[0]
                     rho[i,j,k] = p2.get_val('flow:rho', units='kg/m**3')[0]
                     R[i,j,k] = p2.get_val('flow:R', units='J/kg/degK')[0]
 
     thermo_data_dict = {'T':T_range, 'P':P_range, 'FAR':FAR_range, 'h':h, 'S':S, 'gamma':gamma, 'Cp':Cp,
                         'Cv':Cv, 'rho':rho, 'R':R}
 
+
+    # print(p.get_val('flow:h', units='J/kg')[0], p2.get_val('flow:h', units='J/kg')[0])
+    # print(p.get_val('flow:S', units='J/kg/degK')[0], p2.get_val('flow:S', units='J/kg/degK')[0])
     pickle.dump( thermo_data_dict, open('air_jetA.pkl', 'wb'))
