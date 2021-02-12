@@ -55,7 +55,7 @@ class SetTotalTP(om.Group):
         interp.add_output('rho', 0.0, units='kg/m**3', training_data=thermo_data['rho'])
         interp.add_output('R', 0.0, units='J/kg/degK', training_data=thermo_data['R'])
 
-
+        # self.set_input_defaults('composition', val=composition.values())
 
         # required part of the SetTotalTP API for flow setup
         self.composition = np.zeros(1) # not used for tabular

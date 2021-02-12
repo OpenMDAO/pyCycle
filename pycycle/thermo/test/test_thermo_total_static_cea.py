@@ -16,11 +16,14 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
     def test_set_total_TP(self):
         p = om.Problem()
+        ivc = p.model.add_subsystem('ivc', om.IndepVarComp(), promotes=['*'])
+        ivc.add_output('composition', val=np.zeros(1))
         p.model.add_subsystem('thermo', Thermo(mode='total_TP', 
                                                method='CEA', 
                                                thermo_kwargs={'composition': constants.CEA_CO2_CO_O2_COMPOSITION, 
                                                               'spec': species_data.co2_co_o2 }), 
                               promotes=['*'])
+
 
         p.setup(check=False)
         p.set_solver_print(level=-1)

@@ -52,7 +52,7 @@ class Thermo(om.Group):
 
         in_vars = ('T', 'composition')
         # TODO: remove 'n', 'n_moles' variable from flow station
-        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n_moles')
+        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R')
 
         if 'TP' in mode: 
             in_vars += ('P', )
