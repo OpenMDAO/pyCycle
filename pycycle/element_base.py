@@ -3,7 +3,7 @@ import openmdao.api as om
 
 from pycycle.flow_in import FlowIn
 from pycycle.thermo.thermo import Thermo, ThermoAdd
-
+from pycycle.constants import ALLOWED_THERMOS
 
 
 class Element(om.Group): 
@@ -24,7 +24,7 @@ class Element(om.Group):
                               desc='Switch between on-design and off-design calculation.')
         self.options.declare('thermo_data', default=False,
                               desc='thermodynamic data specific to this element', recordable=False)
-        self.options.declare('thermo_method', default='CEA', values=('CEA',),
+        self.options.declare('thermo_method', default='CEA', values=ALLOWED_THERMOS,
                               desc='Method for computing thermodynamic properties')
 
     def copy_flow(self, src_port, output_port): 
@@ -48,7 +48,10 @@ class Element(om.Group):
         Initialize the given output port with the pord_data
         """
 
-        self.Fl_O_data[port_name] = port_data
+        if isinstance(port_data, ThermoAdd): 
+            self.Fl_O_data[port_name] = port_data.output_port_data()
+        else: 
+            self.Fl_O_data[port_name] = port_data
 
 
     # TODO: at end of setup, compare all the ports to whats in the port data and make sure that there is nothing missing

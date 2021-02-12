@@ -4,6 +4,7 @@ from pycycle.thermo.cea import species_data
 from pycycle.constants import CEA_AIR_COMPOSITION
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
+from pycycle.thermo.thermo import ThermoAdd
 from pycycle.element_base import Element
 
 
@@ -13,34 +14,54 @@ class FlightConditions(Element):
     def initialize(self):
         self.options.declare('composition', default=CEA_AIR_COMPOSITION,
                               desc='composition of the flow')
-        self.options.declare('use_WAR', default=False, values=[True, False], 
-                              desc='If True, includes WAR calculation')
+        self.options.declare('reactant', default=False, types=(bool, str), 
+                              desc='If False, flow matches base composition. If a string, then that reactant '
+                                   'is mixed into the flow at at the ratio set by the `mix_ratio` input')
+        self.options.declare('mix_ratio_name', default='mix:ratio', 
+                             desc='The name of the input that governs the mix ratio of the reactant to the primary flow')
 
         super().initialize()
         
     def pyc_setup_output_ports(self): 
         composition = self.options['composition']
+        thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
+        reactant = self.options['reactant']
+
+        if reactant is not False: 
+            # just make a local ThermoAdd, since the FS will make the real one for us later
+            thermo_add = ThermoAdd(method=thermo_method, mix_mode='reactant', 
+                                   thermo_kwargs={'spec':thermo_data, 
+                                                  'inflow_composition':composition, 
+                                                  'mix_composition':reactant, })
+          
+            self.init_output_flow('Fl_O', thermo_add)
+
+        else: 
+            self.init_output_flow('Fl_O', composition)
         
-        self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        use_WAR = self.options['use_WAR']
+        reactant = self.options['reactant']
+        mix_ratio_name = self.options['mix_ratio_name']
 
-        composition = self.Fl_O_data['Fl_O']
+        # composition = self.Fl_O_data['Fl_O']
+        composition = self.options['composition']
 
         self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
 
         conv = self.add_subsystem('conv', om.Group(), promotes=['*'])
-        if use_WAR == True:
-            proms = ['Fl_O:*', 'MN', 'W', 'WAR']
+        if reactant is not False:
+            proms = ['Fl_O:*', 'MN', 'W', mix_ratio_name]
         else:
             proms = ['Fl_O:*', 'MN', 'W']
         fs_start = conv.add_subsystem('fs', FlowStart(thermo_method=thermo_method,
                                                       thermo_data=thermo_data, 
                                                       composition=composition, 
-                                                      use_WAR=use_WAR), 
+                                                      reactant=reactant, 
+                                                      mix_ratio_name=mix_ratio_name), 
                                       promotes=proms)
 
         # need to manually call this in this setup, because we have an element within an element

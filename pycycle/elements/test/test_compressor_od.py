@@ -13,6 +13,7 @@ from pycycle.elements.compressor import Compressor
 from pycycle.elements.flow_start import FlowStart
 from pycycle.maps.axi5 import AXI5
 from pycycle import constants
+from pycycle.thermo.cea import species_data
 
 
 class CompressorODTestCase(unittest.TestCase):
@@ -22,6 +23,8 @@ class CompressorODTestCase(unittest.TestCase):
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
         cycle.options['design'] = False
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = species_data.janaf
 
         cycle.add_subsystem('flow_start', FlowStart())
         cycle.add_subsystem('compressor', Compressor(

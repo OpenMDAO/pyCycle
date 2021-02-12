@@ -108,10 +108,10 @@ from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
 
-from pycycle.mp_cycle import Cycle
 from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import ThermoAdd
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
 
 
 class Tests(unittest.TestCase):
@@ -169,7 +169,11 @@ class Tests(unittest.TestCase):
                 i_row=0,
                 T_metal=2460.,
                 T_safety=150.,
-                thermo_data=species_data.janaf),
+                thermo_method='CEA',
+                thermo_data=species_data.janaf,
+                main_flow_composition=CEA_AIR_FUEL_COMPOSITION, 
+                bld_flow_composition=CEA_AIR_COMPOSITION, 
+                mix_flow_composition=CEA_AIR_FUEL_COMPOSITION),
             promotes=[
                 'Pt_in',
                 'Pt_out'])
@@ -215,13 +219,18 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:h', val=250.097, units='Btu/lbm')
         p.model.set_input_defaults('turb_cool.Fl_cool:tot:h', val=298.48, units='Btu/lbm')
 
-        p.model.add_subsystem(
-            'turb_cool',
-            cooling.TurbineCooling(
-                n_stages=2,
-                T_metal=2460.,
-                T_safety=150.,
-                thermo_data=species_data.janaf))
+        cool_comp = p.model.add_subsystem('turb_cool',
+                                          cooling.TurbineCooling(
+                                            n_stages=2,
+                                            T_metal=2460.,
+                                            T_safety=150.,
+                                            thermo_method='CEA',
+                                            thermo_data=species_data.janaf))
+
+        cool_comp.Fl_I_data['Fl_turb_I'] = CEA_AIR_FUEL_COMPOSITION
+        cool_comp.Fl_I_data['Fl_cool'] = CEA_AIR_COMPOSITION
+        cool_comp.Fl_I_data['Fl_turb_O'] = CEA_AIR_FUEL_COMPOSITION
+        cool_comp.pyc_setup_output_ports()
 
         p.model.connect('ivc.mix_composition', ['turb_cool.Fl_turb_I:tot:composition', 
                                                      'turb_cool.Fl_turb_I:stat:composition' ])

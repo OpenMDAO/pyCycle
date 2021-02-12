@@ -32,7 +32,8 @@ class BurnerTestCase(unittest.TestCase):
 
         prob = Problem()
         model = prob.model = Cycle()
-
+        model.options['thermo_method'] = 'CEA'
+        model.options['thermo_data'] = species_data.janaf
 
         model.add_subsystem('ivc', IndepVarComp('in_composition', [3.23319235e-04, 1.10132233e-05, 
                                                      5.39157698e-02, 1.44860137e-02]))

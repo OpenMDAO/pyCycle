@@ -47,16 +47,15 @@ class WetPropulsorTestCase(unittest.TestCase):
         prob.run_model()
 
         tol = 1e-5
-        assert_near_equal(prob['design.fc.Fl_O:stat:W'], 405.1550137, tol)
-        assert_near_equal(prob['design.nozz.Fg'], 12044.4518811, tol)
-        assert_near_equal(prob['design.fan.SMN'], 36.64058, tol)
-        assert_near_equal(prob['design.fan.SMW'], 29.88607, tol)
+        assert_near_equal(prob['design.fc.Fl_O:stat:W'], 406.5629775, tol)
+        assert_near_equal(prob['design.nozz.Fg'], 12066.680, tol)
+        assert_near_equal(prob['design.fan.SMN'], 36.6405753, tol)
+        assert_near_equal(prob['design.fan.SMW'], 29.886, tol)
 
-
-        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 405.1550137, tol)
-        assert_near_equal(prob['off_design.nozz.Fg'], 12044.4518811, tol)
-        assert_near_equal(prob['off_design.fan.SMN'], 36.64058, tol)
-        assert_near_equal(prob['off_design.fan.SMW'], 29.88607, tol)
+        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 406.5629775, tol)
+        assert_near_equal(prob['off_design.nozz.Fg'], 12066.680, tol)
+        assert_near_equal(prob['off_design.fan.SMN'], 36.6405753, tol)
+        assert_near_equal(prob['off_design.fan.SMW'], 29.886, tol)
 
 if __name__ == "__main__":
     unittest.main()

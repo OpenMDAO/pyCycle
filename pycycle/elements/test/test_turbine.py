@@ -49,6 +49,8 @@ class TurbineTestCase(unittest.TestCase):
 
         self.prob = Problem()
         self.prob.model = Cycle()
+        self.prob.model.options['thermo_method'] = 'CEA'
+        self.prob.model.options['thermo_data'] = janaf
 
         self.prob.model.add_subsystem('flow_start', FlowStart())
         self.prob.model.add_subsystem('turbine', Turbine(map_data=LPT2269, design=True))

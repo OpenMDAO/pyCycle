@@ -77,7 +77,6 @@ class TurbineODTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
-
         cycle.options['thermo_method'] = 'CEA'
         cycle.options['thermo_data'] = janaf
         cycle.options['design'] = False

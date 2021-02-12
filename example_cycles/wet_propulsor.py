@@ -9,12 +9,11 @@ class WetPropulsor(pyc.Cycle):
 
         design = self.options['design']
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.wet_air
+    
 
-        self.add_subsystem('fc', pyc.FlightConditions(use_WAR=True,
-                                                      composition=pyc.CEA_WET_AIR_COMPOSITION))
-                                                      #CEA_WET_AIR_COMPOSITION contains standard dry air compounds as well as H2O
+        self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
+                                                      reactant='Water',
+                                                      mix_ratio_name='WAR'))
 
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
@@ -99,6 +98,9 @@ class MPWetPropulsor(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
+
         design = self.pyc_add_pnt('design', WetPropulsor(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('design.fc.alt', 10000., units="m")
@@ -123,6 +125,8 @@ class MPWetPropulsor(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
 
 if __name__ == "__main__":
     import time

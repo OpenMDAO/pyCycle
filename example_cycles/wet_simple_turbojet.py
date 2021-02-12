@@ -11,14 +11,10 @@ class WetTurbojet(pyc.Cycle):
 
         design = self.options['design']
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.wet_air
-
-
         # Add engine elements
-        self.add_subsystem('fc', pyc.FlightConditions(use_WAR=True,
-                                                      composition=pyc.CEA_WET_AIR_COMPOSITION)) 
-                                                      # CEA_WET_AIR_COMPOSITION contains standard dry air compounds as well as H2O
+        self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
+                                                      reactant='Water',
+                                                      mix_ratio_name='WAR')) 
 
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5),
@@ -150,6 +146,9 @@ class MPWetTurbojet(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
+
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', WetTurbojet(thermo_method='CEA'))
 
@@ -182,6 +181,8 @@ class MPWetTurbojet(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
 
 
 if __name__ == "__main__":

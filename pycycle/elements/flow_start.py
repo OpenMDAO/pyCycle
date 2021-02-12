@@ -15,35 +15,47 @@ class FlowStart(Element):
         self.options.declare('composition', default=CEA_AIR_COMPOSITION,
                               desc='composition of the flow')
 
-        self.options.declare('use_WAR', default=False, values=[True, False], 
-                              desc='If True, includes WAR calculation')
+        self.options.declare('reactant', default=False, types=(bool, str), 
+                              desc='If False, flow matches base composition. If a string, then that reactant '
+                                   'is mixed into the flow at at the ratio set by the `mix_ratio` input')
+
+        self.options.declare('mix_ratio_name', default='mix:ratio', 
+                             desc='The name of the input that governs the mix ratio of the reactant to the primary flow')
 
         super().initialize()
 
     def pyc_setup_output_ports(self): 
+        thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
         composition = self.options['composition']
-        
-        self.init_output_flow('Fl_O', composition)
+        reactant = self.options['reactant']
+
+        if reactant is not False: 
+          self.thermo_add = ThermoAdd(method=thermo_method, mix_mode='reactant', 
+                                      thermo_kwargs={'spec':thermo_data, 
+                                                     'inflow_composition':composition, 
+                                                     'mix_composition':reactant, })
+          
+          self.init_output_flow('Fl_O', self.thermo_add)
+
+        else: 
+          self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        use_WAR = self.options['use_WAR']
+        reactant = self.options['reactant']
 
         composition = self.Fl_O_data['Fl_O']
 
-        if use_WAR == True:
-            if 'H' not in composition or 'O' not in composition:
-                raise ValueError('The provided composition to FlightConditions does not contain H or O. In order to specify a nonzero WAR the composition must contain both H and O.')
-
+       
         # inputs
-        if use_WAR == True:
+        if reactant is not False :
+            mix_ratio_name = self.options['mix_ratio_name']
 
-            mix = ThermoAdd(method=thermo_method, thermo_kwargs={'spec':thermo_data, 
-                                                                 'inflow_composition':composition, 
-                                                                 'mix_composition':'Water', })
-            self.add_subsystem('WAR', mix, 
-                                promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', 'WAR')), 
+            
+            self.add_subsystem('thermo_add', self.thermo_add, 
+                                promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', mix_ratio_name)), 
                                 promotes_outputs=(('composition_out', 'composition'), ))
         
 

@@ -198,6 +198,9 @@ class MPMultiSpool(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.4),
@@ -294,6 +297,8 @@ class MPMultiSpool(pyc.MPCycle):
         self.pyc_connect_des_od('pt.Fl_O:stat:area', 'pt.area')
         self.pyc_connect_des_od('duct12.Fl_O:stat:area', 'duct12.area')
         self.pyc_connect_des_od('nozzle.Throat:stat:area','balance.rhs:W')
+
+        super().setup()
 
 if __name__ == "__main__":
 

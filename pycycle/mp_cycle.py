@@ -7,6 +7,7 @@ import networkx as nx
 
 from pycycle.element_base import Element
 from pycycle.thermo.cea import species_data
+from pycycle.constants import ALLOWED_THERMOS
 
 
 class Cycle(om.Group): 
@@ -15,7 +16,7 @@ class Cycle(om.Group):
     def initialize(self):
         self.options.declare('design', default=True,
                               desc='Switch between on-design and off-design calculation.')
-        self.options.declare('thermo_method', values=('CEA',), default='CEA',
+        self.options.declare('thermo_method', values=ALLOWED_THERMOS, default='CEA',
                               desc='Method for computing thermodynamic properties')
 
         self.options.declare('thermo_data', default=species_data.janaf,
@@ -191,6 +192,23 @@ class MPCycle(om.Group):
         self._des_od_connections = []
         self._use_default_des_od_conns = False
         super(MPCycle, self).__init__(**kwargs)
+
+
+    def initialize(self): 
+
+        self.options.declare('thermo_method', values=ALLOWED_THERMOS, default='CEA',
+                              desc='Method for computing thermodynamic properties')
+
+        self.options.declare('thermo_data', default=species_data.janaf,
+                              desc='thermodynamic data set.', 
+                              recordable=False)
+
+
+    def setup(self): 
+
+        for pnt in self._od_pnts + [self._des_pnt]: 
+            pnt.options['thermo_method'] = self.options['thermo_method']
+            pnt.options['thermo_data'] = self.options['thermo_data']
 
     def pyc_add_cycle_param(self, name, val, units=None): 
 

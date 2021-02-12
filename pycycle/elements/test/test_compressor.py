@@ -49,6 +49,8 @@ class CompressorTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
         cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf))
         cycle.add_subsystem('compressor', Compressor(design=True))

@@ -12,6 +12,7 @@ from pycycle.mp_cycle import Cycle
 from pycycle.elements.duct import Duct
 from pycycle.elements.flow_start import FlowStart
 from pycycle import constants
+from pycycle.thermo.cea import species_data
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -52,6 +53,9 @@ class DuctTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = species_data.janaf
+
         cycle.add_subsystem('flow_start', FlowStart(), promotes=['MN', 'P', 'T'])
         cycle.add_subsystem('duct', Duct(), promotes=['MN'])
 
@@ -110,9 +114,13 @@ class DuctTestCase(unittest.TestCase):
 
         # need two cycles, because we can't mix design and off-design
         cycle_DES = self.prob.model.add_subsystem('DESIGN', Cycle())
+        cycle_DES.options['thermo_method'] = 'CEA'
+        cycle_DES.options['thermo_data'] = species_data.janaf
         
         cycle_OD = self.prob.model.add_subsystem('OFF_DESIGN', Cycle())
         cycle_OD.options['design'] = False
+        cycle_OD.options['thermo_method'] = 'CEA'
+        cycle_OD.options['thermo_data'] = species_data.janaf
 
 
         cycle_DES.add_subsystem('flow_start', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
