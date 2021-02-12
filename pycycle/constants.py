@@ -27,7 +27,7 @@ CEA_CO2_CO_O2_COMPOSITION = {'C':0.02272237, 'O':0.04544473}
 TAB_AIR_FUEL_COMPOSITION = {'FAR': 0.0}
 # A little fancy code to find the default thermo data in the python package, wherever its installed
 pkg_path = os.path.dirname(os.path.realpath(__file__))
-AIR_JETA_TAB_SPEC = os.path.join(pkg_path, 'thermo', 'tabular', 'air_jetA_coarse.pkl')
+AIR_JETA_TAB_SPEC = os.path.join(pkg_path, 'thermo', 'tabular', 'air_jetA.pkl')
 
 
 # these elemental ratios matter! 

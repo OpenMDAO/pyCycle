@@ -96,9 +96,11 @@ class PsResid(om.ImplicitComponent):
 
             M_guess = inputs['guess:MN']
             ps_guess = inputs['guess:Pt'] * (1 + (gamt-1)/2 * M_guess**2)**(-gamt/(gamt-1))
+            # print('here', ps_guess, M_guess)
             ps_guess, M_guess = fsolve(equations, (ps_guess, M_guess))
 
             if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
+                print('ps_guess', ps_guess)
                 outputs['Ps'] = ps_guess
                 self._ps_guess_cache = ps_guess
 
@@ -278,10 +280,10 @@ class PsResid(om.ImplicitComponent):
             J['V', 'Ts'] = -(dMN_dVs*dVs_dTs*Vsonic + MN*dVs_dTs)
             J['MN', 'Ts'] = dMN_dVs*dVs_dTs
 
-            dVs_dnmoles = 0.5*gamma*Ts/Vsonic
-            J['Ps', 'R'] = -gamma*(MN*RT_q_MW*dMN_dVs*dVs_dnmoles + MN_squared_q2*Ts)/ht
-            J['V', 'R'] = dMN_dVs*dVs_dnmoles*Vsonic + dVs_dnmoles*MN  # works out to exactly 0
-            J['MN', 'R'] = dMN_dVs*dVs_dnmoles
+            dVs_dR = 0.5*gamma*Ts/Vsonic
+            J['Ps', 'R'] = -gamma*(MN*RT_q_MW*dMN_dVs*dVs_dR + MN_squared_q2*Ts)/ht
+            J['V', 'R'] = dMN_dVs*dVs_dR*Vsonic + dVs_dR*MN  # works out to exactly 0
+            J['MN', 'R'] = dMN_dVs*dVs_dR
 
             dMN_dW = (1/rho/Vsonic/area)
             J['Ps', 'W'] = dMN_dW*dresid_dMN/ht

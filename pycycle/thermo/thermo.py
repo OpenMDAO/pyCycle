@@ -159,7 +159,7 @@ class Thermo(om.Group):
         newton.options['stall_tol'] = 1e-10
         newton.options['solve_subsystems'] = True
 
-        newton.options['iprint'] = 2
+        newton.options['iprint'] = -1
 
         self.options['assembled_jac_type'] = 'dense'
         self.linear_solver = om.DirectSolver()
@@ -167,7 +167,7 @@ class Thermo(om.Group):
         # ln_bt = newton.linesearch = om.BoundsEnforceLS()
         ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
         ln_bt.options['maxiter'] = 2
-        ln_bt.options['iprint'] = -1
+        ln_bt.options['iprint'] = 2
 
     def configure(self): 
         composition = self.base_thermo.composition

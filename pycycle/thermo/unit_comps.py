@@ -47,7 +47,6 @@ class UnitCompBase(ExplicitComponent):
     def compute(self, inputs, outputs):
         outputs._data[:] = inputs._data
 
-
 class EngUnitProps(UnitCompBase):
     """only job is to provide flow in english units"""
 

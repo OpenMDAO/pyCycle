@@ -36,7 +36,7 @@ class SetTotalTP(om.Group):
 
         thermo_data = pickle.load(open(spec, 'rb'))
 
-        interp = om.MetaModelStructuredComp(method=interp_method)
+        interp = om.MetaModelStructuredComp(method=interp_method, extrapolate=True)
         self.add_subsystem('tab', interp, promotes_inputs=['P', 'T'], 
                                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R'])
 
@@ -49,11 +49,11 @@ class SetTotalTP(om.Group):
 
         interp.add_output('h', 0.0, units='J/kg', training_data=thermo_data['h'])
         interp.add_output('S', 0.0, units='J/kg/degK', training_data=thermo_data['S'])
-        interp.add_output('gamma', 0.0, units=None, training_data=thermo_data['gamma'])
+        interp.add_output('gamma', 1.4, units=None, training_data=thermo_data['gamma'])
         interp.add_output('Cp', 0.0, units='J/kg/degK', training_data=thermo_data['Cp'])
         interp.add_output('Cv', 0.0, units='J/kg/degK', training_data=thermo_data['Cv'])
-        interp.add_output('rho', 0.0, units='kg/m**3', training_data=thermo_data['rho'])
-        interp.add_output('R', 0.0, units='J/kg/degK', training_data=thermo_data['R'])
+        interp.add_output('rho', 1.0, units='kg/m**3', training_data=thermo_data['rho'])
+        interp.add_output('R', 287.0, units='J/kg/degK', training_data=thermo_data['R'])
 
         # self.set_input_defaults('composition', val=composition.values())
 
