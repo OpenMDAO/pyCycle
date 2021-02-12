@@ -47,7 +47,7 @@ class Thermo(om.Group):
         # elif method == 'Ideal':
         #     # base_thermo = IdealThermo(thermo_data=xx)
         #     pass
-        elif method == 'Tabular':
+        elif method == 'TABULAR':
               base_thermo = tab_thermo.SetTotalTP(**thermo_kwargs)
 
         in_vars = ('T', 'composition')

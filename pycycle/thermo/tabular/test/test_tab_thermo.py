@@ -15,7 +15,7 @@ class TabThermoUnitTest(unittest.TestCase):
 
         p = om.Problem()
 
-        p.model = SetTotalTP(thermo_spec=AIR_JETA_TAB_SPEC, composition=TAB_AIR_FUEL_COMPOSITION)
+        p.model = SetTotalTP(spec=AIR_JETA_TAB_SPEC, composition=TAB_AIR_FUEL_COMPOSITION)
 
         p.setup()
 
@@ -24,7 +24,6 @@ class TabThermoUnitTest(unittest.TestCase):
         p['T'] = 1000
 
         p.run_model()
-
 
         TOL = 1e-5
         assert_near_equal(p.get_val('h'), -940543.7934515374, tolerance=TOL)
