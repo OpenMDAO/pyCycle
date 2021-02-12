@@ -17,7 +17,8 @@ class PsResid(om.ImplicitComponent):
         self.add_input('Ts', val=518., units="degK", desc="Static temp")
         self.add_input('ht', val=1., units="J/kg", desc="Total enthalpy reference condition")
         self.add_input('hs', val=1., units="J/kg", desc="Static enthalpy")
-        self.add_input('n_moles', shape=1)
+        # self.add_input('n_moles', shape=1)
+        self.add_input('R', val=0.0, units='J/kg/degK')
         self.add_input('gamma', val=1.4)
         self.add_input('W', val=1., desc="mass flow rate", units="kg/s")
         self.add_input('rho', val=1., desc="density", units="kg/m**3")
@@ -35,7 +36,7 @@ class PsResid(om.ImplicitComponent):
                         res_ref=1e3)
 
         self.declare_partials('Ps', ['ht', 'hs'])
-        self.declare_partials('Vsonic', ['gamma', 'n_moles', 'Ts', 'Vsonic'])
+        self.declare_partials('Vsonic', ['gamma', 'R', 'Ts', 'Vsonic'])
         self.declare_partials('V', 'V', val=-1.0)
 
         mode = self.options['mode']
@@ -43,18 +44,18 @@ class PsResid(om.ImplicitComponent):
             self.add_input('MN', val=.5, desc="target mach number")
             self.add_output('area', shape=1, desc="flow area", units="m**2", lower=1e-5)
 
-            self.declare_partials('area', ['area', 'W', 'rho', 'gamma', 'n_moles', 'Ts', 'MN'])
-            self.declare_partials('Ps', ['MN', 'n_moles', 'gamma', 'Ts'])
-            self.declare_partials('V', ['MN', 'n_moles', 'gamma', 'Ts'])
+            self.declare_partials('area', ['area', 'W', 'rho', 'gamma', 'R', 'Ts', 'MN'])
+            self.declare_partials('Ps', ['MN', 'R', 'gamma', 'Ts'])
+            self.declare_partials('V', ['MN', 'R', 'gamma', 'Ts'])
 
         elif mode == "area":
             self.add_output('MN', val=.5, desc="target mach number", lower=1e-3)
             self.add_input('guess:MN', val=0.5, desc="Guess for Mach number.")
             self.add_input('area', val=np.inf, desc="flow area", units="m**2")
 
-            self.declare_partials('MN', ['MN', 'area', 'Ts', 'n_moles', 'W', 'gamma', 'rho'])
-            self.declare_partials('Ps', ['area', 'Ts', 'n_moles', 'W', 'gamma', 'rho'])
-            self.declare_partials('V', ['area', 'Ts', 'n_moles', 'W', 'gamma', 'rho'])
+            self.declare_partials('MN', ['MN', 'area', 'Ts', 'R', 'W', 'gamma', 'rho'])
+            self.declare_partials('Ps', ['area', 'Ts', 'R', 'W', 'gamma', 'rho'])
+            self.declare_partials('V', ['area', 'Ts', 'R', 'W', 'gamma', 'rho'])
 
         else:
             raise ValueError('mode must be either "MN" or "area", but "%s" was given' % mode)
@@ -103,14 +104,14 @@ class PsResid(om.ImplicitComponent):
 
     def _compute_outputs_MN(self, i):
 
-        Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
+        Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
         try:
             np.seterr(all='raise')
-            Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
+            Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
             np.seterr(all='warn')
         except:
             np.seterr(all='warn')
-            print(self.pathname, i['gamma'], i['n_moles'], i['Ts'])
+            print(self.pathname, i['gamma'], i['R'], i['Ts'])
 
         MN = i['MN']
         if MN < 1e-16:
@@ -122,7 +123,7 @@ class PsResid(om.ImplicitComponent):
         return Vsonic, V, area
 
     def _compute_outputs_area(self, i):
-        Vsonic = (i['gamma']*R_UNIVERSAL_SI*i['n_moles']*i['Ts'])**0.5
+        Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
         area = i['area']
         if area == np.inf:
             MN = 0.
@@ -156,7 +157,7 @@ class PsResid(om.ImplicitComponent):
     def apply_nonlinear(self, inputs, outputs, resids):
 
         Ts = inputs['Ts']
-        n_moles = inputs['n_moles']
+        R = inputs['R']
         gamma = inputs['gamma']
 
         # explicit vars
@@ -177,7 +178,7 @@ class PsResid(om.ImplicitComponent):
         # print(resids['Vsonic'], resids['V'], resids['area'])
 
         # actual residual for Ps
-        RT_q_MW = R_UNIVERSAL_SI*Ts*n_moles
+        RT_q_MW = Ts*R
         MN_squared_q2 = (MN**2)/2.
         # self.dh_dlnP = RT_q_MW*(1+MN_squared_q2*(inputs['gamma']-1))
         ht_calc = inputs['hs'] + MN_squared_q2 * gamma * RT_q_MW
@@ -202,7 +203,7 @@ class PsResid(om.ImplicitComponent):
 
         gamma = inputs['gamma']
         Ts = inputs['Ts']
-        n_moles = inputs['n_moles']
+        R = inputs['R']
         rho = inputs['rho']
         W = inputs['W']
         ht = inputs['ht']
@@ -213,17 +214,17 @@ class PsResid(om.ImplicitComponent):
         else:
             MN_squared_q2 = outputs['MN']**2/2.
 
-        RT_q_MW = R_UNIVERSAL_SI*Ts*n_moles
+        RT_q_MW = R*Ts
         ht_calc = inputs['hs'] + MN_squared_q2 * gamma * RT_q_MW
 
         J['Ps', 'ht'] = -ht_calc/ht**2
         J['Ps', 'hs'] = 1/ht
 
         # Derivatives of outputs
-        part = .5*(gamma*R_UNIVERSAL_SI*n_moles*Ts)**-.5
-        J['Vsonic', 'gamma'] = dVs_dgamma = part*R_UNIVERSAL_SI*n_moles*Ts
-        J['Vsonic', 'n_moles'] = part*gamma*R_UNIVERSAL_SI*Ts
-        J['Vsonic', 'Ts'] = part*gamma*R_UNIVERSAL_SI*n_moles
+        part = .5*(gamma*R*Ts)**-.5
+        J['Vsonic', 'gamma'] = dVs_dgamma = part*R*Ts
+        J['Vsonic', 'R'] = part*gamma*Ts
+        J['Vsonic', 'Ts'] = part*gamma*R
         J['Vsonic', 'Vsonic'] = -1.
         # J['V', 'V'] = -1.
 
@@ -235,23 +236,23 @@ class PsResid(om.ImplicitComponent):
             J['area', 'area'] = -1.
 
             J['Ps', 'MN'] = MN*gamma*RT_q_MW/ht
-            J['Ps', 'n_moles'] = R_UNIVERSAL_SI*Ts*MN_squared_q2*gamma/ht
+            J['Ps', 'R'] = Ts*MN_squared_q2*gamma/ht
             J['Ps', 'gamma'] = RT_q_MW*MN_squared_q2/ht
-            J['Ps', 'Ts'] = MN_squared_q2*gamma*R_UNIVERSAL_SI*n_moles/ht
+            J['Ps', 'Ts'] = MN_squared_q2*gamma*R/ht
 
             if MN >= 1e-16:
                 J['area', 'W'] = 1.0/(rho*Vsonic*MN)
                 J['area', 'rho'] = -W/(Vsonic*MN*rho**2)
 
-                part = -W/(rho*Vsonic**2*MN) * 0.5*(R_UNIVERSAL_SI*gamma*n_moles*Ts)**-.5*R_UNIVERSAL_SI
-                J['area', 'gamma'] = part*n_moles*Ts
-                J['area', 'n_moles'] = part*gamma*Ts
-                J['area', 'Ts'] = part*gamma*n_moles
+                part = -W/(rho*Vsonic**2*MN) * 0.5*(R*gamma*Ts)**-.5
+                J['area', 'gamma'] = part*R*Ts
+                J['area', 'R'] = part*gamma*Ts
+                J['area', 'Ts'] = part*gamma*R
                 J['area', 'MN'] = -W/rho/Vsonic/MN**2
 
                 J['V', 'MN'] = Vsonic
                 J['V', 'Ts'] = MN * J['Vsonic', 'Ts']
-                J['V', 'n_moles'] = MN * J['Vsonic', 'n_moles']
+                J['V', 'R'] = MN * J['Vsonic', 'R']
                 J['V', 'gamma'] = MN * J['Vsonic', 'gamma']
 
         else:
@@ -272,15 +273,15 @@ class PsResid(om.ImplicitComponent):
             J['MN', 'area'] = dMN_dA
 
             dMN_dVs = -W/(rho*area*Vsonic**2)
-            dVs_dTs = 0.5*gamma*R_UNIVERSAL_SI*n_moles/Vsonic
-            J['Ps', 'Ts'] = gamma*(MN*dMN_dVs*dVs_dTs*RT_q_MW + MN_squared_q2*R_UNIVERSAL_SI*n_moles)/ht
+            dVs_dTs = 0.5*gamma*R/Vsonic
+            J['Ps', 'Ts'] = gamma*(MN*dMN_dVs*dVs_dTs*RT_q_MW + MN_squared_q2*R)/ht
             J['V', 'Ts'] = -(dMN_dVs*dVs_dTs*Vsonic + MN*dVs_dTs)
             J['MN', 'Ts'] = dMN_dVs*dVs_dTs
 
-            dVs_dnmoles = 0.5*gamma*R_UNIVERSAL_SI*Ts/Vsonic
-            J['Ps', 'n_moles'] = -gamma*(MN*RT_q_MW*dMN_dVs*dVs_dnmoles + MN_squared_q2*R_UNIVERSAL_SI*Ts)/ht
-            J['V', 'n_moles'] = dMN_dVs*dVs_dnmoles*Vsonic + dVs_dnmoles*MN  # works out to exactly 0
-            J['MN', 'n_moles'] = dMN_dVs*dVs_dnmoles
+            dVs_dnmoles = 0.5*gamma*Ts/Vsonic
+            J['Ps', 'R'] = -gamma*(MN*RT_q_MW*dMN_dVs*dVs_dnmoles + MN_squared_q2*Ts)/ht
+            J['V', 'R'] = dMN_dVs*dVs_dnmoles*Vsonic + dVs_dnmoles*MN  # works out to exactly 0
+            J['MN', 'R'] = dMN_dVs*dVs_dnmoles
 
             dMN_dW = (1/rho/Vsonic/area)
             J['Ps', 'W'] = dMN_dW*dresid_dMN/ht
@@ -293,6 +294,6 @@ class PsResid(om.ImplicitComponent):
             J['V', 'gamma'] = dMN_dgamma*Vsonic + dVs_dgamma*MN
 
             dMN_drho = -W/(area*Vsonic*rho**2)
-            J['Ps', 'rho'] = MN*gamma*R_UNIVERSAL_SI*n_moles*Ts*dMN_drho/ht
+            J['Ps', 'rho'] = MN*gamma*R*Ts*dMN_drho/ht
             J['V', 'rho'] = dMN_drho*Vsonic
             J['MN', 'rho'] = dMN_drho

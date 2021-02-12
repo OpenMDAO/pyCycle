@@ -52,7 +52,7 @@ class Thermo(om.Group):
 
         in_vars = ('T', 'composition')
         # TODO: remove 'n', 'n_moles' variable from flow station
-        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n', 'n_moles')
+        out_vars = ('gamma', 'Cp', 'Cv', 'rho', 'R', 'n_moles')
 
         if 'TP' in mode: 
             in_vars += ('P', )
@@ -93,19 +93,19 @@ class Thermo(om.Group):
             ##############################################
             if 'Ps' in mode: 
                 self.add_subsystem('ps_calc', PsCalc(),
-                                   promotes_inputs=['gamma', 'n_moles', 'ht', 'W', 'rho',
+                                   promotes_inputs=['gamma', 'R', 'ht', 'W', 'rho',
                                                     ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['MN', 'V', 'Vsonic', 'area']
                                    )
             elif 'A' in mode: 
                 self.add_subsystem('ps_resid', PsResid(mode='area'),
-                                   promotes_inputs=['ht', 'n_moles', 'gamma', 'W',
+                                   promotes_inputs=['ht', 'R', 'gamma', 'W',
                                                     'rho', 'area', 'guess:*', ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['V', 'Vsonic', 'MN', 'Ps']) 
 
             elif 'MN' in mode: 
                 self.add_subsystem('ps_resid', PsResid(mode='MN'),
-                                   promotes_inputs=['ht', 'n_moles', 'gamma', 'W',
+                                   promotes_inputs=['ht', 'R', 'gamma', 'W',
                                                     'rho', 'MN', 'guess:*', ('Ts', 'T'), ('hs', 'h')],
                                    promotes_outputs=['V', 'Vsonic', 'area', 'Ps']) 
 

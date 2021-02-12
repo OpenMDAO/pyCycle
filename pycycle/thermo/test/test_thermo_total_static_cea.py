@@ -31,30 +31,12 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         
         p.run_model()
 
-        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.03293137
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19054697, 1e-4)
 
         p.set_val('T', 1500, units='degK')
         p.set_val('P', 1.034210, units='bar')
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        expected_n_moles = 0.0227262
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16379233, 1e-4)
 
 
@@ -75,33 +57,12 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.run_model()
 
-        expected_concentrations = np.array([0.61989858, 0.07015213, 0.30994929])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.0329281722301
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19039688581, 1e-4)
 
         # 1500K
         p['h'] = -1801.35537381
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.022726185333
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16379012007, 1e-4)
 
     def test_set_total_SP(self):
@@ -136,16 +97,6 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.run_model()
 
-        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.0329313730421
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19054696779, 1e-4)
 
         # 1500K
@@ -154,15 +105,6 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p['S'] = 1.5852424435
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.022726185333
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16396871, 1e-4)
 
 
