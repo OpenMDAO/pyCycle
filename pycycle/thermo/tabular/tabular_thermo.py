@@ -5,21 +5,6 @@ import pickle
 from pycycle.constants import TAB_AIR_FUEL_COMPOSITION, AIR_JETA_TAB_SPEC
 
 
-class Dummy(om.ExplicitComponent): 
-    """ 
-    dummy component to hold the composition 
-    vector input so it can be promoted to that name
-    """
-
-    def initialize(self): 
-        self.options.declare('composition')
-
-    def setup(self): 
-        size = len(self.options['composition'])
-
-        self.add_input('composition', val=np.zeros(size))
-        self.add_output('foo')
-
 class SetTotalTP(om.Group):
 
     def initialize(self):
@@ -32,9 +17,8 @@ class SetTotalTP(om.Group):
         spec = self.options['spec']
         composition = self.options['composition']
 
-        # self.add_subsystem('dummy', Dummy(composition=composition), promotes_inputs=['composition'])
-
-        thermo_data = pickle.load(open(spec, 'rb'))
+        with open(spec, 'rb') as spec_data:
+            thermo_data = pickle.load(spec_data)
 
         interp = om.MetaModelStructuredComp(method=interp_method, extrapolate=True)
         self.add_subsystem('tab', interp, promotes_inputs=['P', 'T'], 
@@ -43,6 +27,7 @@ class SetTotalTP(om.Group):
         for i, param in enumerate(composition): 
             interp.add_input(param, composition[param], training_data=thermo_data[param])
             self.promotes('tab', inputs=[(param, 'composition')], src_indices=[i,])
+        self.set_input_defaults('composition', src_shape=len(composition))
 
         interp.add_input('P', 101325.0, units='Pa', training_data=thermo_data['P'])
         interp.add_input('T', 273.0, units='degK', training_data=thermo_data['T'])
