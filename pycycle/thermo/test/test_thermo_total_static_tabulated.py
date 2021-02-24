@@ -13,6 +13,7 @@ from pycycle import constants
 
 
 class SetTotalSimpleTestCase(unittest.TestCase):
+    """Sanity check that compares TP, hP, SP sets manually""" 
 
     def test_set_total_TP(self):
         p = om.Problem()
@@ -33,14 +34,11 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.set_val('P', 1.034210, units='bar')
         p.run_model()
         assert_near_equal(p['gamma'], 1.27532298, 1e-4)
-        print(p['S'])
-
 
         p.set_val('T', 1500, units='degK')
         p.set_val('P', 1.034210, units='bar')
         p.run_model()
         assert_near_equal(p['gamma'], 1.30444708, 1e-4)
-        print(p['S'])
 
     def test_set_total_hP(self):
 
@@ -87,12 +85,11 @@ class SetTotalSimpleTestCase(unittest.TestCase):
        
         r = p.model
 
-
         p.setup(check=False)
 
         p.set_solver_print(level=-2)
 
-        p.set_val('S', 8983.29454295, units="J/kg/degK")
+        p.set_val('S', 8982.03057206, units="J/kg/degK")
         p.set_val('P', 1.034210, units="bar")
 
         p.run_model()
@@ -102,7 +99,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         # 1500K
 
-        p.set_val('S', 8616.28653354, units="J/kg/degK")
+        p.set_val('S', 8615.116554906986, units="J/kg/degK")
         p.run_model()
 
         assert_near_equal(p['gamma'], 1.30444708, 1e-4)
@@ -110,6 +107,11 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
 
 class TestSetTotalTabular(unittest.TestCase): 
+    """
+    Run TP and then compare hp and SP 
+    outputs to make sure they get the same value at a 
+    range of temp and pressure
+    """ 
 
     def test_set_total_equivalence(self): 
 
@@ -243,8 +245,6 @@ class TestStaticTabular(unittest.TestCase):
         assert_near_equal(p['set_static_area.flow:P'], 30, 1e-4)
         assert_near_equal(p['set_static_area.flow:MN'], p['set_static_Ps.flow:MN'], 1e-4)
 
-
-        # p.check_partials(compact_print=True, method='cs')
 
 
 if __name__ == "__main__": 

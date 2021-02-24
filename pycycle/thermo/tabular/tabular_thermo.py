@@ -43,4 +43,5 @@ class SetTotalTP(om.Group):
         # self.set_input_defaults('composition', val=composition.values())
 
         # required part of the SetTotalTP API for flow setup
+        # TODO: remove this once OM can support auto_ivc from set_input_defaults
         self.composition = np.zeros(1) # not used for tabular
