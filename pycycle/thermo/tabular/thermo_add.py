@@ -22,9 +22,9 @@ class ThermoAdd(om.ExplicitComponent):
 
         self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
 
-        self.options.declare('mix_composition',
+        self.options.declare('mix_composition', default=None, 
                              desc='name of the mixing reactant; must match one of the keys from the inflow composition dictionary', 
-                             types=str)
+                             types=str, allow_none=True)
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
     def output_port_data(self):
