@@ -8,7 +8,7 @@ from pycycle.thermo.cea.species_data import Properties, janaf
 
 class ThermoAdd(om.ExplicitComponent):
     """
-    ThermoAdd calculates a new b0 given inflow, a reactant to add, and a mix ratio.
+    ThermoAdd calculates a new composition given inflow, a reactant to add, and a mix ratio.
     """
 
     def initialize(self):
@@ -56,10 +56,7 @@ class ThermoAdd(om.ExplicitComponent):
     def setup(self):
 
         spec = self.options['spec']
-        
         mix_mode = self.options['mix_mode']
-
-        
         mix_names = self.options['mix_names']
         if isinstance(mix_names, str): # cast it to tuple 
             mix_names = (mix_names,)    
