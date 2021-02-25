@@ -5,7 +5,9 @@ import os
 from openmdao.api import Problem, Group
 from openmdao.utils.assert_utils import assert_near_equal
 
-from pycycle.api import Cycle, FlowStart, CEA_AIR_COMPOSITION, CEA_WET_AIR_COMPOSITION, species_data
+from pycycle.api import (Cycle, FlowStart, CEA_AIR_COMPOSITION, 
+                         CEA_WET_AIR_COMPOSITION, species_data, AIR_JETA_TAB_SPEC, 
+                         TAB_AIR_FUEL_COMPOSITION)
 
 fpath = os.path.dirname(os.path.realpath(__file__))
 ref_data = np.loadtxt(fpath + "/reg_data/flowstart.csv",
@@ -145,6 +147,40 @@ class FlowStartTestCase(unittest.TestCase):
             assert_near_equal(pyc, npss, tol)
             print()
 
+    def test_case_tabular_thermo(self):
+
+        prob = Problem()
+        prob.model.set_input_defaults('fl_start.P', 17., units='psi')
+        prob.model.set_input_defaults('fl_start.T', 500., units='degR')
+        prob.model.set_input_defaults('fl_start.MN', 0.5)
+        prob.model.set_input_defaults('fl_start.W', 100., units='lbm/s')
+
+        fl_start = prob.model.add_subsystem('fl_start', FlowStart(thermo_method='TABULAR', 
+                                                                       thermo_data=AIR_JETA_TAB_SPEC, 
+                                                                       composition=TAB_AIR_FUEL_COMPOSITION))
+        fl_start.pyc_setup_output_ports() #note: must manually call this for stand alone element tests without a cycle group
+
+        prob.set_solver_print(level=-1)
+        prob.setup(check=False)
+
+        prob['fl_start.P'] = 5.27
+        prob['fl_start.T'] = 444.23
+        prob['fl_start.W'] = 100.0
+        prob['fl_start.MN'] = 0.8
+
+        prob.run_model()
+
+        tol = 1e-6
+        assert_near_equal(prob['fl_start.Fl_O:tot:P'], 5.27, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:T'], 444.23, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:h'], -24.02113889, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:S'], 1.66369748, tol)
+        assert_near_equal(prob['fl_start.Fl_O:tot:gamma'], 1.40079834, tol)
+
+        assert_near_equal(prob['fl_start.Fl_O:stat:W'], 100.0, tol)
+        assert_near_equal(prob['fl_start.Fl_O:stat:MN'], 0.8, tol)
+        assert_near_equal(prob['fl_start.Fl_O:stat:area'], 764.91886239, tol)
+
    
 class WARTestCase(unittest.TestCase):
 
@@ -158,11 +194,14 @@ class WARTestCase(unittest.TestCase):
         prob.model.set_input_defaults('fl_start.WAR', .01)
 
         fl_start = prob.model.add_subsystem('fl_start', FlowStart(thermo_data=species_data.wet_air, 
-                                                                  composition=CEA_WET_AIR_COMPOSITION, reactant="Water", mix_ratio_name='WAR'))
+                                                                  composition=CEA_WET_AIR_COMPOSITION, 
+                                                                  reactant="Water", mix_ratio_name='WAR'))
         fl_start.pyc_setup_output_ports()
 
         prob.set_solver_print(level=-1)
         prob.setup(check=False)
+
+
 
         prob.run_model()
 

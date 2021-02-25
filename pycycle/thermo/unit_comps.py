@@ -50,7 +50,7 @@ class UnitCompBase(ExplicitComponent):
 class EngUnitProps(UnitCompBase):
     """only job is to provide flow in english units"""
 
-    def setup_io(self, b0):
+    def setup_io(self, composition):
 
         self.add_input('T', val=284., units="degR", desc="Temperature")
         self.add_input('P', val=1., units='lbf/inch**2', desc="Pressure")
@@ -61,7 +61,7 @@ class EngUnitProps(UnitCompBase):
         self.add_input('Cv', val=1., units="Btu/(lbm*degR)", desc="Specific heat at constant volume")
         self.add_input('rho', val=1., units="lbm/ft**3", desc="density")
         self.add_input('R', val=1.0, units="Btu/(lbm*degR)", desc='Total specific gas constant')
-        self.add_input('composition', val=b0, desc='moles of atoms present for each element')
+        self.add_input('composition', val=composition, desc='moles of atoms present for each element')
 
         super().setup_io()
 

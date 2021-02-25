@@ -9,6 +9,9 @@ class Propulsor(pyc.Cycle):
 
         design = self.options['design']
 
+        self.options['thermo_method'] = 'TABULAR'
+        self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+
         self.add_subsystem('fc', pyc.FlightConditions())
 
         self.add_subsystem('inlet', pyc.Inlet())

@@ -25,6 +25,7 @@ class FlowStart(Element):
         super().initialize()
 
     def pyc_setup_output_ports(self): 
+
         thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
         composition = self.options['composition']
@@ -39,6 +40,7 @@ class FlowStart(Element):
           self.init_output_flow('Fl_O', self.thermo_add)
 
         else: 
+
           self.init_output_flow('Fl_O', composition)
 
     def setup(self):
@@ -58,7 +60,6 @@ class FlowStart(Element):
                                 promotes_inputs=(('Fl_I:stat:W', 'W'), ('mix:ratio', mix_ratio_name)), 
                                 promotes_outputs=(('composition_out', 'composition'), ))
         
-
         set_TP = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
                         method=thermo_method, 
                         thermo_kwargs={'composition':composition, 

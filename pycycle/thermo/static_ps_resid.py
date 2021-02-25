@@ -100,7 +100,6 @@ class PsResid(om.ImplicitComponent):
             ps_guess, M_guess = fsolve(equations, (ps_guess, M_guess))
 
             if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
-                print('ps_guess', ps_guess)
                 outputs['Ps'] = ps_guess
                 self._ps_guess_cache = ps_guess
 

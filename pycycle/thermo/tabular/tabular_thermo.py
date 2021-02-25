@@ -17,7 +17,7 @@ class SetTotalTP(om.Group):
         spec = self.options['spec']
         composition = self.options['composition']
 
-        sorted_comp = sorted(composition.keys())
+        sorted_compo = sorted(composition.keys())
 
         with open(spec, 'rb') as spec_data:
             thermo_data = pickle.load(spec_data)
@@ -26,7 +26,7 @@ class SetTotalTP(om.Group):
         self.add_subsystem('tab', interp, promotes_inputs=['P', 'T'], 
                                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R'])
 
-        for i, param in enumerate(sorted_comp): 
+        for i, param in enumerate(sorted_compo): 
             interp.add_input(param, composition[param], training_data=thermo_data[param])
             self.promotes('tab', inputs=[(param, 'composition')], src_indices=[i,])
         self.set_input_defaults('composition', src_shape=len(composition))
@@ -43,5 +43,6 @@ class SetTotalTP(om.Group):
         interp.add_output('R', 287.0, units='J/kg/degK', training_data=thermo_data['R'])
 
         # required part of the SetTotalTP API for flow setup
-        # pass the sorted list of keys from the composition dictionary downstream, so all comps use the same ordering
-        self.composition = sorted_comp
+        # use a sorted list of keys, so dictionary hash ordering doesn't bite us 
+        # loop over keys and create a vector of mass fractions
+        self.composition = [composition[k] for k in sorted_compo]

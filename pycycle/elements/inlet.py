@@ -136,7 +136,6 @@ class Inlet(Element):
         super().initialize()
 
     def pyc_setup_output_ports(self): 
-        
         self.copy_flow('Fl_I', 'Fl_O')
 
     def setup(self):

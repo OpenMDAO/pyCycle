@@ -7,7 +7,9 @@ from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
 from pycycle.thermo.cea import chem_eq as cea_thermo
 from pycycle.thermo.cea import thermo_add as cea_thermo_add
 from pycycle.constants import ALLOWED_THERMOS
+
 from pycycle.thermo.tabular import tabular_thermo as tab_thermo
+from pycycle.thermo.tabular import thermo_add as tab_thermo_add
 
 
 class Thermo(om.Group):
@@ -172,12 +174,9 @@ class Thermo(om.Group):
     def configure(self): 
         composition = self.base_thermo.composition
         mode = self.options['mode']
-
         self.flow.setup_io(composition)
-        
         if 'static' in mode: 
             self.flow_static.setup_io()
-
 
 class ThermoAdd(om.Group): 
 
@@ -206,7 +205,14 @@ class ThermoAdd(om.Group):
 
         if self.thermo_adder is None: # just in case output_port_data is not called
             if method == 'CEA': 
-                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs)
+                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, 
+                                                             mix_names=mix_names, 
+                                                             **thermo_kwargs)
+
+            if method == 'TABULAR': 
+                self.thermo_adder = tab_thermo_add.ThermoAdd(mix_mode=mix_mode, 
+                                                             mix_names=mix_names, 
+                                                             **thermo_kwargs)
 
         self.add_subsystem('thermo_add', self.thermo_adder, promotes=['*'])
 
@@ -221,8 +227,15 @@ class ThermoAdd(om.Group):
 
         if self.thermo_adder is None: # they might call this twice, so just in case we check to make sure it hasn't been set already
             if method == 'CEA': 
-                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, mix_names=mix_names, **thermo_kwargs)
+                self.thermo_adder = cea_thermo_add.ThermoAdd(mix_mode=mix_mode, 
+                                                             mix_names=mix_names, 
+                                                             **thermo_kwargs)
 
+            if method == 'TABULAR': 
+                self.thermo_adder = tab_thermo_add.ThermoAdd(mix_mode=mix_mode, 
+                                                             mix_names=mix_names, 
+                                                             **thermo_kwargs)
+        
         return self.thermo_adder.output_port_data()
 
 
