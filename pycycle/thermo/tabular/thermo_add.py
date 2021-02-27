@@ -17,20 +17,24 @@ class ThermoAdd(om.ExplicitComponent):
 
     def initialize(self):
         self.options.declare('spec', types=str, default=AIR_JETA_TAB_SPEC)
-        self.options.declare('inflow_composition', default=TAB_AIR_FUEL_COMPOSITION, 
+        self.options.declare('inflow_composition', default=None, 
                              desc='composition present in the inflow')
 
         self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
 
         self.options.declare('mix_composition', default=None, 
                              desc='name of the mixing reactant; must match one of the keys from the inflow composition dictionary', 
-                             types=str, allow_none=True)
+                             types=(dict, str, list, tuple), allow_none=True)
         self.options.declare('mix_names', default='mix', types=(str, list, tuple))
 
     def output_port_data(self):
 
         spec = self.options['spec']
+        
         inflow_composition = self.options['inflow_composition']
+        if inflow_composition is None: 
+            inflow_composition = TAB_AIR_FUEL_COMPOSITION
+
         mix_mode = self.options['mix_mode']
 
         self.sorted_compo = sorted(inflow_composition.keys())
@@ -38,9 +42,6 @@ class ThermoAdd(om.ExplicitComponent):
         if mix_mode == "reactant":
             reactant = self.options['mix_composition']
             self.idx_compo = self.sorted_compo.index(reactant)
-
-        else: # flow mode
-            pass
 
     def setup(self):
 
@@ -53,6 +54,9 @@ class ThermoAdd(om.ExplicitComponent):
         self.mix_names = mix_names
 
         inflow_composition = self.options['inflow_composition']
+        if inflow_composition is None: 
+            inflow_composition = TAB_AIR_FUEL_COMPOSITION
+
         inflow_composition_vec = list(inflow_composition.values())
 
         self.output_port_data()
@@ -99,7 +103,7 @@ class ThermoAdd(om.ExplicitComponent):
         W_out = 0 
         W_out += W_in
 
-        W_other_out = np.zeros(n_compo)
+        W_other_out = np.zeros_like(compo_in)
         W_other_out += W_other_in
 
         W_air_out = W_air_in

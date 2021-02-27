@@ -9,8 +9,15 @@ class Propulsor(pyc.Cycle):
 
         design = self.options['design']
 
-        self.options['thermo_method'] = 'TABULAR'
-        self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+        USE_TABULAR = True
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'JP-7'
+
 
         self.add_subsystem('fc', pyc.FlightConditions())
 
@@ -73,11 +80,10 @@ class Propulsor(pyc.Cycle):
         # newton.linesearch = om.ArmijoGoldsteinLS()
         # newton.linesearch.options['maxiter'] = 3
         newton.linesearch = om.BoundsEnforceLS()
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         # newton.linesearch.options['print_bound_enforce'] = True
         # newton.linesearch.options['iprint'] = -1
         #
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
         # base_class setup should be called as the last thing in your setup
         super().setup()

@@ -9,7 +9,10 @@ class WetPropulsor(pyc.Cycle):
 
         design = self.options['design']
 
-    
+        # NOTE: DEFAULT TABULAR thermo doesn't include WAR, so must use CEA here
+        # (or build your own thermo tables)
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
 
         self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
                                                       reactant='Water',
@@ -97,9 +100,6 @@ def viewer(prob, pt):
 class MPWetPropulsor(pyc.MPCycle):
 
     def setup(self):
-
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.wet_air
 
         design = self.pyc_add_pnt('design', WetPropulsor(design=True, thermo_method='CEA'))
 

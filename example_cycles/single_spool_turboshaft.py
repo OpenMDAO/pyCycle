@@ -9,13 +9,23 @@ class SingleSpoolTurboshaft(pyc.Cycle):
     def setup(self):
 
         design = self.options['design']
+
+        USE_TABULAR = True
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'JP-7'
     
         # Add engine elements
         self.add_subsystem('fc', pyc.FlightConditions())
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
         self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
         self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
@@ -84,24 +94,24 @@ class SingleSpoolTurboshaft(pyc.Cycle):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['balance', 'fc', 'inlet', 'comp', 'burner', 'turb', 'pt', 'nozz', 'HP_shaft', 'LP_shaft', 'perf'])
+        self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'pt', 'nozz', 'HP_shaft', 'LP_shaft', 'perf', 'balance'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
         newton.options['iprint'] = 2
-        newton.options['maxiter'] = 10
+        newton.options['maxiter'] = 25
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
 
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
+        newton.linesearch.options['maxiter'] = 3
+        newton.linesearch.options['rho'] = 0.75
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
         super().setup()
 

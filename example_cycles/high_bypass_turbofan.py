@@ -21,8 +21,17 @@ class HBTF(pyc.Cycle):
         
         #Create any relavent short hands here:
         design = self.options['design']
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
+        
+        USE_TABULAR = False
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = 'FAR'
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'Jet-A(g)'
+
         
         #Add subsystems to build the engine deck:
         self.add_subsystem('fc', pyc.FlightConditions())
@@ -42,7 +51,7 @@ class HBTF(pyc.Cycle):
         self.add_subsystem('hpc', pyc.Compressor(map_data=pyc.HPCMap,
                                         bleed_names=['cool1','cool2','cust'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['cool3','cool4']))
-        self.add_subsystem('burner', pyc.Combustor(fuel_type='Jet-A(g)'))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
         self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap,
                                         bleed_names=['cool3','cool4'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('duct11', pyc.Duct())
@@ -216,7 +225,7 @@ class HBTF(pyc.Cycle):
         ls.options['rho'] = 0.75
         # ls.options['print_bound_enforce'] = True
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
         super().setup()
 
@@ -285,9 +294,6 @@ def viewer(prob, pt, file=sys.stdout):
 class MPhbtf(pyc.MPCycle):
 
     def setup(self):
-
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.pyc_add_pnt('DESIGN', HBTF(thermo_method='CEA')) # Create an instace of the High Bypass ratio Turbofan
 

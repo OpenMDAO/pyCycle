@@ -11,6 +11,17 @@ class MixedFlowTurbofan(pyc.Cycle):
     def setup(self):
         design = self.options['design']
 
+        USE_TABULAR = True
+
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
+
         self.add_subsystem('fc', pyc.FlightConditions())
         # Inlet Components
         self.add_subsystem('inlet', pyc.Inlet())
@@ -27,7 +38,9 @@ class MixedFlowTurbofan(pyc.Cycle):
         self.add_subsystem('hpc', pyc.Compressor(map_data=pyc.HPCMap, 
                                         bleed_names=['cool1'],map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['cool3']))
-        self.add_subsystem('burner', pyc.Combustor(fuel_type='Jet-A(g)'))
+
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+       
         self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap,
                                           bleed_names=['cool3'],map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('hpt_duct', pyc.Duct())
@@ -40,7 +53,8 @@ class MixedFlowTurbofan(pyc.Cycle):
         self.add_subsystem('mixer', pyc.Mixer(designed_stream=1))
         self.add_subsystem('mixer_duct', pyc.Duct())
         # Afterburner Components
-        self.add_subsystem('afterburner', pyc.Combustor(fuel_type='Jet-A(g)'))
+        self.add_subsystem('afterburner', pyc.Combustor(fuel_type=FUEL_TYPE))
+    
         # End CFD HERE
         # Nozzle
         self.add_subsystem('mixed_nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cfg'))
@@ -214,9 +228,6 @@ def page_viewer(point):
 class MPMixedFlowTurbofan(pyc.MPCycle):
 
     def setup(self):
-
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         self.pyc_add_pnt('DESIGN', MixedFlowTurbofan(design=True, thermo_method='CEA'))
 

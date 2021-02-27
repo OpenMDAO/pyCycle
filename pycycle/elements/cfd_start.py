@@ -1,6 +1,6 @@
 import openmdao.api as om
 
-from pycycle.constants import CEA_AIR_COMPOSITION
+from pycycle.constants import THERMO_DEFAULT_COMPOSITIONS
 from pycycle.thermo.cea import species_data
 from pycycle.elements.flow_start import FlowStart
 from pycycle.element_base import Element
@@ -8,14 +8,17 @@ from pycycle.element_base import Element
 class CFDStart(Element):
 
     def initialize(self):
-        self.options.declare('composition', default=CEA_AIR_COMPOSITION,
-                              desc='set of elements present in the flow')
+        self.options.declare('composition', default=None,
+                              desc='composition of the flow. If None, default for thermo package is used')
         super().initialize()
         
 
     def pyc_setup_output_ports(self): 
         composition = self.options['composition']
+        if composition is None: 
+            composition = THERMO_DEFAULT_COMPOSITIONS[thermo_method]
         self.init_output_flow('Fl_O', composition)
+
 
     def setup(self):
         thermo_method = self.options['thermo_method']

@@ -1,10 +1,21 @@
+"""
+Sample script showing how to generate tabular thermodynamic
+data for use with tabular thermodynamics
+
+This scrip generates a pickle file called 'air_jetA.pkl' which is 
+equivalent to the default tabular thermo data in pyCycle. 
+
+You can generate a custom pickle file, then provide the path to that file 
+as the thermo_spec for tabular therm
+"""
+
 import numpy as np
 import openmdao.api as om
 import pickle
 
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION, ALLOWED_THERMOS
-from pycycle.thermo.cea.species_data import janaf
+from pycycle.thermo.cea.species_data import janaf, wet_air
 
 
 class TabThermoGenAir(om.Group):
@@ -85,8 +96,8 @@ if __name__ == "__main__":
     FAR_range = np.linspace(0.0, 0.05, num=20)
     # WAR_range = np.linspace(0.0, 1.0, num=5)
     # P_range = np.linspace(1, 1e7, num=30)
-    P_range = np.logspace(0, 6, num=40)
-    T_range = np.linspace(150, 2500, num=40)
+    P_range = np.logspace(0, 6, num=100)
+    T_range = np.linspace(150, 2500, num=100)
     numFAR = len(FAR_range)
     numP = len(P_range)
     numT = len(T_range)
@@ -98,6 +109,11 @@ if __name__ == "__main__":
     Cv = np.empty([numFAR,numP,numT])
     rho = np.empty([numFAR,numP,numT])
     R = np.empty([numFAR,numP,numT])
+
+
+    #############################################
+    # Pure Air  - Run this for FAR=0 cases
+    #############################################
 
     p = om.Problem()
     p.model = TabThermoGenAir(thermo_data=janaf, thermo_method='CEA')
@@ -121,6 +137,9 @@ if __name__ == "__main__":
             R[0,j,k] = p.get_val('flow:R', units='J/kg/degK')[0]
 
 
+    #############################################
+    # Vitiated Air  - Run this for FAR>0 cases
+    #############################################
     p2 = om.Problem()
     p2.model = TabThermoGenAirFuel(fuel_type='Jet-A(g)', thermo_data=janaf, thermo_method='CEA')
 
@@ -151,6 +170,4 @@ if __name__ == "__main__":
                         'Cv':Cv, 'rho':rho, 'R':R}
 
 
-    # print(p.get_val('flow:h', units='J/kg')[0], p2.get_val('flow:h', units='J/kg')[0])
-    # print(p.get_val('flow:S', units='J/kg/degK')[0], p2.get_val('flow:S', units='J/kg/degK')[0])
     pickle.dump( thermo_data_dict, open('air_jetA.pkl', 'wb'))

@@ -2,7 +2,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION
+from pycycle.constants import P_REF, R_UNIVERSAL_ENG, MIN_VALID_CONCENTRATION, CEA_AIR_COMPOSITION
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.cea.props_rhs import PropsRHS
@@ -334,8 +334,12 @@ class SetTotalTP(om.Group):
 
     def setup(self):
 
+        init_elements = self.options['composition']
+        if init_elements is None: 
+            init_elements = CEA_AIR_COMPOSITION
+
         self.thermo = species_data.Properties(self.options['spec'], 
-                                              init_elements=self.options['composition'])
+                                              init_elements=init_elements)
         
         # these have to be part of the API for the unit_comps to use
         self.composition = self.thermo.b0

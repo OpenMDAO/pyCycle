@@ -29,6 +29,11 @@ TAB_AIR_FUEL_COMPOSITION = {'FAR': 0.0}
 pkg_path = os.path.dirname(os.path.realpath(__file__))
 AIR_JETA_TAB_SPEC = os.path.join(pkg_path, 'thermo', 'tabular', 'air_jetA.pkl')
 
+THERMO_DEFAULT_COMPOSITIONS = {
+    'CEA': CEA_AIR_COMPOSITION, 
+    'TABULAR': TAB_AIR_FUEL_COMPOSITION
+}
+
 
 # these elemental ratios matter! 
 AIR_FUEL_ELEMENTS = DeprecatedDict('AIR_FUEL_ELEMENTS', 'CEA_AIR_FUEL_COMPOSITION', CEA_AIR_FUEL_COMPOSITION)

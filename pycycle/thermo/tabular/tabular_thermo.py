@@ -17,6 +17,9 @@ class SetTotalTP(om.Group):
         spec = self.options['spec']
         composition = self.options['composition']
 
+        if composition is None: 
+            composition = TAB_AIR_FUEL_COMPOSITION
+
         sorted_compo = sorted(composition.keys())
 
         with open(spec, 'rb') as spec_data:
@@ -34,11 +37,11 @@ class SetTotalTP(om.Group):
         interp.add_input('P', 101325.0, units='Pa', training_data=thermo_data['P'])
         interp.add_input('T', 273.0, units='degK', training_data=thermo_data['T'])
 
-        interp.add_output('h', 0.0, units='J/kg', training_data=thermo_data['h'])
-        interp.add_output('S', 0.0, units='J/kg/degK', training_data=thermo_data['S'])
+        interp.add_output('h', 1.0, units='J/kg', training_data=thermo_data['h'])
+        interp.add_output('S', 1.0, units='J/kg/degK', training_data=thermo_data['S'])
         interp.add_output('gamma', 1.4, units=None, training_data=thermo_data['gamma'])
-        interp.add_output('Cp', 0.0, units='J/kg/degK', training_data=thermo_data['Cp'])
-        interp.add_output('Cv', 0.0, units='J/kg/degK', training_data=thermo_data['Cv'])
+        interp.add_output('Cp', 1.0, units='J/kg/degK', training_data=thermo_data['Cp'])
+        interp.add_output('Cv', 1.0, units='J/kg/degK', training_data=thermo_data['Cv'])
         interp.add_output('rho', 1.0, units='kg/m**3', training_data=thermo_data['rho'])
         interp.add_output('R', 287.0, units='J/kg/degK', training_data=thermo_data['R'])
 

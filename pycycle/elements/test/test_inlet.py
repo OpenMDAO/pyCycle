@@ -89,11 +89,11 @@ class InletTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
-        # cycle.options['thermo_method'] = 'CEA'
-        # cycle.options['thermo_data'] = janaf
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
-        cycle.options['thermo_method'] = 'TABULAR'
-        cycle.options['thermo_data'] = AIR_JETA_TAB_SPEC
+        # cycle.options['thermo_method'] = 'TABULAR'
+        # cycle.options['thermo_data'] = AIR_JETA_TAB_SPEC
 
         cycle.set_input_defaults('flow_start.P', 17, units='psi')
         cycle.set_input_defaults('flow_start.T', 500.0, units='degR')
@@ -101,7 +101,7 @@ class InletTestCase(unittest.TestCase):
         cycle.set_input_defaults('inlet.Fl_I:stat:V', 1., units='ft/s')
         cycle.set_input_defaults('flow_start.W', 1., units='lbm/s')
 
-        cycle.add_subsystem('flow_start', FlowStart(composition=TAB_AIR_FUEL_COMPOSITION))
+        cycle.add_subsystem('flow_start', FlowStart())
         cycle.add_subsystem('inlet', Inlet())
 
         # total and static

@@ -4,7 +4,7 @@ from openmdao.api import Group, ExplicitComponent
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
-from pycycle.constants import CEA_AIR_COMPOSITION
+from pycycle.constants import THERMO_DEFAULT_COMPOSITIONS
 from pycycle.element_base import Element
 
 
@@ -12,8 +12,8 @@ class FlowStart(Element):
 
     def initialize(self):
 
-        self.options.declare('composition', default=CEA_AIR_COMPOSITION,
-                              desc='composition of the flow')
+        self.options.declare('composition', default=None,
+                              desc='composition of the flow. None means using the default for the thermo package')
 
         self.options.declare('reactant', default=False, types=(bool, str), 
                               desc='If False, flow matches base composition. If a string, then that reactant '
@@ -32,16 +32,18 @@ class FlowStart(Element):
         reactant = self.options['reactant']
 
         if reactant is not False: 
-          self.thermo_add = ThermoAdd(method=thermo_method, mix_mode='reactant', 
-                                      thermo_kwargs={'spec':thermo_data, 
-                                                     'inflow_composition':composition, 
-                                                     'mix_composition':reactant, })
+            self.thermo_add = ThermoAdd(method=thermo_method, mix_mode='reactant', 
+                                        thermo_kwargs={'spec':thermo_data, 
+                                                       'inflow_composition':composition, 
+                                                       'mix_composition':reactant, })
           
-          self.init_output_flow('Fl_O', self.thermo_add)
+            self.init_output_flow('Fl_O', self.thermo_add)
 
         else: 
+            if composition is None: 
+                composition = THERMO_DEFAULT_COMPOSITIONS[thermo_method]
+            self.init_output_flow('Fl_O', composition)
 
-          self.init_output_flow('Fl_O', composition)
 
     def setup(self):
         thermo_method = self.options['thermo_method']

@@ -2,7 +2,7 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_ELEMENTS
+from pycycle.constants import CEA_AIR_COMPOSITION
 from pycycle.thermo.cea.species_data import Properties, janaf
 
 
@@ -15,7 +15,7 @@ class ThermoAdd(om.ExplicitComponent):
         self.options.declare('spec', default=janaf,
                              desc=('Thermodynamic data set for flow.'), 
                              recordable=False)
-        self.options.declare('inflow_composition', default=AIR_ELEMENTS,
+        self.options.declare('inflow_composition', default=None,
                              desc='composition present in the flow')
 
         self.options.declare('mix_mode', values=['reactant', 'flow'], default='reactant')
@@ -33,6 +33,9 @@ class ThermoAdd(om.ExplicitComponent):
         spec = self.options['spec']
 
         inflow_composition = self.options['inflow_composition']
+        if inflow_composition is None: 
+            inflow_composition = CEA_AIR_COMPOSITION
+            
         mix_mode = self.options['mix_mode']
 
         mix_composition = self.options['mix_composition']

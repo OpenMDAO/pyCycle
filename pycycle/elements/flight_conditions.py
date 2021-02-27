@@ -1,10 +1,10 @@
 import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
-from pycycle.constants import CEA_AIR_COMPOSITION
+from pycycle.constants import THERMO_DEFAULT_COMPOSITIONS
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
-from pycycle.thermo.thermo import ThermoAdd
+from pycycle.thermo.thermo import ThermoAdd, Thermo
 from pycycle.element_base import Element
 
 
@@ -12,8 +12,8 @@ class FlightConditions(Element):
     """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
 
     def initialize(self):
-        self.options.declare('composition', default=CEA_AIR_COMPOSITION,
-                              desc='composition of the flow')
+        self.options.declare('composition', default=None,
+                              desc='composition of the flow. If None, default for thermo package is used')
         self.options.declare('reactant', default=False, types=(bool, str), 
                               desc='If False, flow matches base composition. If a string, then that reactant '
                                    'is mixed into the flow at at the ratio set by the `mix_ratio` input')
@@ -38,6 +38,8 @@ class FlightConditions(Element):
             self.init_output_flow('Fl_O', thermo_add)
 
         else: 
+            if composition is None: 
+                composition = THERMO_DEFAULT_COMPOSITIONS[thermo_method]
             self.init_output_flow('Fl_O', composition)
         
 

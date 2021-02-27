@@ -9,6 +9,17 @@ class Turbojet(pyc.Cycle):
 
     def setup(self):
 
+        USE_TABULAR = True
+
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
+
         design = self.options['design']
 
         # Add engine elements
@@ -16,7 +27,7 @@ class Turbojet(pyc.Cycle):
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=['Nmech'])
-        self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
         self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269),
                                     promotes_inputs=['Nmech'])
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))
@@ -75,9 +86,7 @@ class Turbojet(pyc.Cycle):
             self.connect('balance.W', 'inlet.Fl_I:stat:W')
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
-        # Setup solver to converge engine
-        # self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
-
+       
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
@@ -148,9 +157,6 @@ def map_plots(prob, pt):
 class MPTurbojet(pyc.MPCycle):
 
     def setup(self):
-
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
 
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', Turbojet(thermo_method='CEA'))
@@ -227,7 +233,13 @@ if __name__ == "__main__":
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
+
+    # prob.model.OD1.nonlinear_solver.options['maxiter'] = 1
+
     prob.run_model()
+
+    # prob.model.OD1.list_outputs(residuals=True)
+    # exit()
 
     for pt in ['DESIGN']+mp_turbojet.od_pts:
         viewer(prob, pt)

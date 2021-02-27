@@ -11,6 +11,12 @@ class WetTurbojet(pyc.Cycle):
 
         design = self.options['design']
 
+        # NOTE: DEFAULT TABULAR thermo doesn't include WAR, so must use CEA here
+        # (or build your own thermo tables)
+
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
+
         # Add engine elements
         self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
                                                       reactant='Water',
@@ -145,9 +151,6 @@ def viewer(prob, pt, file=sys.stdout):
 class MPWetTurbojet(pyc.MPCycle):
 
     def setup(self):
-
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.wet_air
 
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', WetTurbojet(thermo_method='CEA'))

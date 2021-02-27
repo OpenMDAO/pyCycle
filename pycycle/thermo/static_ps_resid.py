@@ -96,9 +96,9 @@ class PsResid(om.ImplicitComponent):
 
             M_guess = inputs['guess:MN']
             ps_guess = inputs['guess:Pt'] * (1 + (gamt-1)/2 * M_guess**2)**(-gamt/(gamt-1))
-            # print('here', ps_guess, M_guess)
             ps_guess, M_guess = fsolve(equations, (ps_guess, M_guess))
 
+            # print('foobar', self.pathname, np.abs(ps_guess - self._ps_guess_cache), inputs['W'], inputs['area'], inputs['Ts'])
             if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
                 outputs['Ps'] = ps_guess
                 self._ps_guess_cache = ps_guess
@@ -124,6 +124,7 @@ class PsResid(om.ImplicitComponent):
         return Vsonic, V, area
 
     def _compute_outputs_area(self, i):
+        # print('foo', i['gamma'], i['R'], i['Ts'])
         Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
         area = i['area']
         if area == np.inf:
