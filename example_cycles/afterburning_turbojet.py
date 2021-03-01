@@ -110,11 +110,10 @@ class ABTurbojet(pyc.Cycle):
         newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
-        # newton.linesearch.options['bound_enforcement'] = 'scalar'
+        newton.linesearch.options['rho'] = .75
         newton.linesearch.options['iprint'] = -1
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
         super().setup()
 
