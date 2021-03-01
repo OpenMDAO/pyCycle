@@ -12,7 +12,36 @@ We suggest you look in the examples folder for some indications of how to run th
 Also, you can read [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/pdf) which goes into a lot of detail that is very relevant. 
 
 
-# OpenMDAO Version Compatibility
+## Version 4.0 Announcements
+Version 4.0 officially supports multiple thermodynamic packages. 
+Currently there are two: CEA (the original thermo solver) and the new TABULAR option. 
+Although these are the only two current thermo packages, the code has been setup so that it is expandable to more later. 
+
+The tabular thermodynamic is much simpler to use, and much faster to run. 
+The downside is that it is tied to a specific pre-computed thermodynamic data set that is valid for a specific fuel type, and within a specific temperature range. 
+We have included an [example script that shows how to generate your own tabular data set](example_cycles/tab_thermo_data_generator.py), which you would need to do for anything other than Jet-A fuel. 
+Additionally the default tabular thermo data only support fuel (no water injection). 
+If you want to use tabular thermo for a water injection case, you'll need to generate a new thermo data table. 
+
+### V4 is modestly backwards incompatible 
+In order to modular thermodynamic happens, some modest changes to the API were needed. 
+
+- The `Cycle`, introduced in V3.5.0, is now mandatory. You must build your cycle in this, instead of a basic OpenMDAO `Group`. 
+- The `pyc_add_element` method has been deprecated (to be removed in version 4.1). 
+  Improvements to the cycle class made it possible to stick with standard `add_subsystem` calls instead. 
+- The arguments needed to be passed into Elements during instantiation have been changed (and for the most part significantly simplified). 
+  The biggest change is that you no longer need to pass element lists to each Element any more. All of the thermodynamic arguments have now been moved up to the `Cycle` group. 
+- There is a new `Element` class which must be the base class (or at least an ancestor class) for any component that contain flow-ports (anything you would point to in a call to `connect_flow` is an element). 
+  This new base class has one additional method, `pyc_setup_output_ports` that is required for initialization of the fluid port data. 
+  If you have developed any of your own custom Elements beyond the standard library, then note that you'll need to update them and define the new method in them. 
+
+
+Over all the, changes are pretty minor, but their impact is significant. 
+The changes to the Element initialization not only make models simpler, 
+they also make them thermo-agnostic. 
+
+
+## OpenMDAO Version Compatibility
 ----------------------------------
 pyCycle is built on top of OpenMDAO, and thus depends on it. 
 Here is the OpenMDAO version you need for the specific versions of pyCycle
@@ -20,9 +49,10 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | pyCycle version  | OpenMDAO version  |
 | -----------------| ----------------  |
 | 3.0.0            | 2.8.0 thru 3.1.1  |
-| 3.2.0            | 3.2.0 or greater  |
-| 3.4.0            | 3.3.0 or greater  |
-| 3.5.0            | 3.5.0 or greater  |
+| 3.2.0            | 3.2.0 thru 3.5.0  |
+| 3.4.0            | 3.3.0 thru 3.5.0  |
+| 3.5.0            | 3.5.0 thru 3.7.0  |
+| 4.0.0            | 3.7.0 or greater  |
 
 
 ## Citation
