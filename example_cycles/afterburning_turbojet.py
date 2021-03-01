@@ -9,15 +9,18 @@ class ABTurbojet(pyc.Cycle):
 
     def setup(self):
 
-        # TODO: Tabular is unstable for this cycle... figure out why
-        USE_TABULAR = False
+        # Note: Tabular is unstable for this cycle with default thermo data. 
+        # Need a finer grid for the OD2 point
+        USE_TABULAR = True
 
         if USE_TABULAR: 
             self.options['thermo_method'] = 'TABULAR'
             self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
         else: 
             self.options['thermo_method'] = 'CEA'
             self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
 
         design = self.options['design']
 
@@ -26,18 +29,13 @@ class ABTurbojet(pyc.Cycle):
         self.add_subsystem('duct1', pyc.Duct())
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
-        if USE_TABULAR: 
-            self.add_subsystem('burner', pyc.Combustor(fuel_type='FAR'))
-        else: 
-            self.add_subsystem('burner', pyc.Combustor(fuel_type='JP-7'))
+
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
         
         self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269,  
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
         
-        if USE_TABULAR: 
-            self.add_subsystem('ab', pyc.Combustor(fuel_type='FAR'))
-        else: 
-            self.add_subsystem('ab', pyc.Combustor(fuel_type='JP-7'))
+        self.add_subsystem('ab', pyc.Combustor(fuel_type=FUEL_TYPE))
 
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', internal_solver=True))
         self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])

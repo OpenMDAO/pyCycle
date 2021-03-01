@@ -96,8 +96,8 @@ if __name__ == "__main__":
     FAR_range = np.linspace(0.0, 0.05, num=20)
     # WAR_range = np.linspace(0.0, 1.0, num=5)
     # P_range = np.linspace(1, 1e7, num=30)
-    P_range = np.logspace(0, 6, num=100)
-    T_range = np.linspace(150, 2500, num=100)
+    P_range = np.logspace(0, 7, num=110)
+    T_range = np.linspace(100, 3500, num=100)
     numFAR = len(FAR_range)
     numP = len(P_range)
     numT = len(T_range)
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     # Vitiated Air  - Run this for FAR>0 cases
     #############################################
     p2 = om.Problem()
-    p2.model = TabThermoGenAirFuel(fuel_type='Jet-A(g)', thermo_data=janaf, thermo_method='CEA')
+    p2.model = TabThermoGenAirFuel(fuel_type='Jet-A(g)', thermo_data=wet_air, thermo_method='CEA')
 
     p2.setup(check=False)
     p2.set_solver_print(level=-1)

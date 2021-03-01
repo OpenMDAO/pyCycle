@@ -45,6 +45,11 @@ if __name__ == "__main__":
 
     prob.setup()
 
+    # prob.model.RTO.nonlinear_solver.options['maxiter'] = 0
+    # prob.model.SLS.nonlinear_solver.options['maxiter'] = 0
+    # prob.model.CRZ.nonlinear_solver.options['maxiter'] = 0
+    # prob.model.nonlinear_solver.options['maxiter'] = 0
+
     # Define the design point
     prob.set_val('TOC.splitter.BPR', 23.94514401),
     prob.set_val('TOC.balance.rhs:hpc_PR', 53.6332)
@@ -67,15 +72,14 @@ if __name__ == "__main__":
     prob['TOC.fc.balance.Tt'] = 444.41
 
     FAR_guess = [0.02832, 0.02541, 0.02510]
-    W_guess = [1916.13, 2000. , 802.79]
+    W_guess = [1916.13, 1900. , 802.79]
     BPR_guess = [25.5620, 27.3467, 24.3233]
+    hpc_PR_guess = [14., 14., 14.]
     fan_Nmech_guess = [2132.6, 1953.1, 2118.7]
     lp_Nmech_guess = [6611.2, 6054.5, 6567.9]
     hp_Nmech_guess = [22288.2, 21594.0, 20574.1]
-    Pt_guess = [15.349, 14.696, 5.272]
-    Tt_guess = [552.49, 545.67, 444.41]
     hpt_PR_guess = [4.210, 4.245, 4.197]
-    lpt_PR_guess = [8.161, 7.001, 10.803]
+    lpt_PR_guess = [8.161, 8., 10.803]
     fan_Rline_guess = [1.7500, 1.7500, 1.9397]
     lpc_Rline_guess = [2.0052, 1.8632, 2.1075]
     hpc_Rline_guess = [2.0589, 2.0281, 1.9746]
@@ -87,11 +91,11 @@ if __name__ == "__main__":
         prob[pt+'.balance.FAR'] = FAR_guess[i]
         prob[pt+'.balance.W'] = W_guess[i]
         prob[pt+'.balance.BPR'] = BPR_guess[i]
+        prob[pt+'.balance.BPR'] = BPR_guess[i]
         prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
         prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
         prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
-        prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
-        prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
+        prob[pt+'.hpc.PR'] = hpc_PR_guess[i]
         prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
         prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
         prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]
@@ -104,6 +108,10 @@ if __name__ == "__main__":
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
     prob.run_model()
+
+    # prob.model.RTO.list_outputs(residuals=True, prom_name=True)
+    # prob.model.RTO.hpc.ideal_flow.list_inputs(units=True, prom_name=True)
+    # exit()
 
     for pt in ['TOC']+prob.model.od_pts:
         viewer(prob, pt)

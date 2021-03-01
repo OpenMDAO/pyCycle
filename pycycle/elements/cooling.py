@@ -3,7 +3,7 @@ import openmdao.api as om
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 
-from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION, ALLOWED_THERMOS
+from pycycle.constants import ALLOWED_THERMOS, THERMO_DEFAULT_COMPOSITIONS
 from pycycle.flow_in import FlowIn
 from pycycle.element_base import Element
 
@@ -88,6 +88,8 @@ class CoolingCalcs(om.ExplicitComponent):
             phi = (T_gas - self.options['T_metal'])/(T_gas-inputs['Tt_cool'])
             phi_prime = (phi + profile_factor)/(profile_factor + 1.)
 
+            # print(self.pathname, W_primary, inputs['Tt_primary'], inputs['Tt_cool'], phi_prime)
+
             try:
                 outputs['W_cool'] = W_cool = .022*inputs['x_factor']*(4./3.)*W_primary*(phi_prime/(1-phi_prime))**1.25
             except FloatingPointError:
@@ -99,9 +101,6 @@ class CoolingCalcs(om.ExplicitComponent):
         Pt_in = inputs['Pt_in']
         outputs['Pt_stage'] = Pt_out + (Pt_in-Pt_out)*self.i_stage
 
-        # print('foobar', self.pathname, Pt_in, Pt_out)
-
-        # print('foobar', self.pathname, W_primary, phi_prime, T_gas, inputs['Tt_cool'])
 
     def compute_partials(self, inputs, J):
 
@@ -184,7 +183,7 @@ class Row(om.Group):
 
         self.options.declare('thermo_method', default='CEA', values=ALLOWED_THERMOS,
                               desc='Method for computing thermodynamic properties')
-        self.options.declare('thermo_data', default=species_data.janaf,
+        self.options.declare('thermo_data', default=None,
                                desc='thermodynamic data set', recordable=False)
         self.options.declare('main_flow_composition')
         self.options.declare('bld_flow_composition')
@@ -193,6 +192,10 @@ class Row(om.Group):
     def setup(self):
 
         thermo_method = self.options['thermo_method']
+        thermo_data = self.options['thermo_data']
+
+        if thermo_data is None: 
+            thermo_data = THERMO_DEFAULT_COMPOSITIONS[thermo_method]
 
         main_flow_composition = self.options['main_flow_composition']
         bld_flow_composition = self.options['bld_flow_composition']
@@ -209,7 +212,7 @@ class Row(om.Group):
         consts.add_output('bld_frac_P', val=1)
 
         self.add_subsystem('mix_n', ThermoAdd(method=thermo_method, mix_mode='flow', mix_names='cool',
-                                              thermo_kwargs={'spec':self.options['thermo_data'], 
+                                              thermo_kwargs={'spec':thermo_data, 
                                                              'inflow_composition':main_flow_composition, 
                                                              'mix_composition':bld_flow_composition,}),
                            promotes_inputs=[('Fl_I:stat:W','W_primary'), 
@@ -220,7 +223,7 @@ class Row(om.Group):
         mixed_flow = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                             method=thermo_method, 
                             thermo_kwargs={'composition':mix_flow_composition, 
-                                           'spec':self.options['thermo_data']})
+                                           'spec':thermo_data})
         self.add_subsystem('mixed_flow', mixed_flow,
                            promotes_outputs=['Fl_O:tot:*'])
 
@@ -293,6 +296,7 @@ class TurbineCooling(Element):
         self.add_subsystem('row_0', Row(n_stages=n_stages, i_row=0,
                                         T_safety=self.options['T_safety'], T_metal=self.options['T_metal'],
                                         thermo_data=thermo_data, 
+                                        thermo_method=self.options['thermo_method'],
                                         main_flow_composition=self.Fl_I_data['Fl_turb_I'], 
                                         bld_flow_composition=self.Fl_I_data['Fl_cool'], 
                                         mix_flow_composition=self.Fl_I_data['Fl_turb_O']),
@@ -306,6 +310,7 @@ class TurbineCooling(Element):
                                Row(n_stages=n_stages, i_row=i,
                                    T_safety=self.options['T_safety'], T_metal=self.options['T_metal'],
                                    thermo_data=thermo_data, 
+                                   thermo_method=self.options['thermo_method'],
                                    main_flow_composition=self.Fl_I_data['Fl_turb_I'], 
                                    bld_flow_composition=self.Fl_I_data['Fl_cool'], 
                                    mix_flow_composition=self.Fl_I_data['Fl_turb_O']),

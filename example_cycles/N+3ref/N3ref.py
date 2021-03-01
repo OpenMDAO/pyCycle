@@ -24,8 +24,16 @@ class N3(pyc.Cycle):
 
     def setup(self):
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
+        USE_TABULAR = False
+
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
         
         cooling = self.options['cooling']
         design = self.options['design']
@@ -45,7 +53,7 @@ class N3(pyc.Cycle):
                                         bleed_names=['bld_inlet','bld_exit','cust']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['bld_inlet','bld_exit']))
-        self.add_subsystem('burner', pyc.Combustor(fuel_type='Jet-A(g)'))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
         self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
@@ -107,17 +115,18 @@ class N3(pyc.Cycle):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
-            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', rhs_val=0., res_ref=1e4)
+            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lpt_PR', 'lpt.PR')
             self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
 
-            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
+            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hpt_PR', 'hpt.PR')
             self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
 
-            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', rhs_val=0.0)
+            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.gb_trq', 'gearbox.trq_base')
-            self.connect('fan_shaft.pwr_net', 'balance.lhs:gb_trq')
+            self.connect('fan_shaft.pwr_in', 'balance.lhs:gb_trq')
+            self.connect('fan_shaft.pwr_out', 'balance.rhs:gb_trq')
 
             balance.add_balance('hpc_PR', val=14.0, units=None, eq_units=None)
             self.connect('balance.hpc_PR', ['hpc.PR', 'opr_calc.HPCPR'])
@@ -189,17 +198,20 @@ class N3(pyc.Cycle):
             self.connect('balance.BPR', 'splitter.BPR')
             self.connect('fan.map.RlineMap', 'balance.lhs:BPR')
 
-            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.fan_Nmech', 'Fan_Nmech')
-            self.connect('fan_shaft.pwr_net', 'balance.lhs:fan_Nmech')
+            self.connect('fan_shaft.pwr_in', 'balance.lhs:fan_Nmech')
+            self.connect('fan_shaft.pwr_out', 'balance.rhs:fan_Nmech')
 
-            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lp_Nmech', 'LP_Nmech')
-            self.connect('lp_shaft.pwr_net', 'balance.lhs:lp_Nmech')
+            self.connect('lp_shaft.pwr_in', 'balance.lhs:lp_Nmech')
+            self.connect('lp_shaft.pwr_out', 'balance.rhs:lp_Nmech')
 
-            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hp_Nmech', 'HP_Nmech')
-            self.connect('hp_shaft.pwr_net', 'balance.lhs:hp_Nmech')
+            self.connect('hp_shaft.pwr_in', 'balance.lhs:hp_Nmech')
+            self.connect('hp_shaft.pwr_out', 'balance.rhs:hp_Nmech')
 
             order_add = []
 
@@ -260,7 +272,7 @@ class N3(pyc.Cycle):
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-4
-        newton.options['rtol'] = 1e-4
+        newton.options['rtol'] = 1e-99
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 10
         newton.options['solve_subsystems'] = True
@@ -268,15 +280,11 @@ class N3(pyc.Cycle):
         newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
+        newton.linesearch.options['rho'] = 0.75
         # newton.linesearch.options['maxiter'] = 2
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
-        # if design:
-        #     newton.linesearch.options['print_bound_enforce'] = True
 
-        # newton.options['debug_print'] = True
-
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
         super().setup()
 
@@ -342,10 +350,9 @@ class MPN3(pyc.MPCycle):
         self.options.declare('statics', default=True,
                               desc='Tells the model whether or not to connect areas.')
 
-    def setup(self):
+        super().initialize()
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
+    def setup(self):
 
         # TOC POINT (DESIGN)
         self.pyc_add_pnt('TOC', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
@@ -503,7 +510,7 @@ class MPN3(pyc.MPCycle):
         newton.options['maxiter'] = 20
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 10
-        newton.options['err_on_non_converge'] = True
+        newton.options['err_on_non_converge'] = False # True
         newton.options['reraise_child_analysiserror'] = False
         newton.linesearch =  om.BoundsEnforceLS()
         newton.linesearch.options['bound_enforcement'] = 'scalar'
@@ -568,8 +575,8 @@ if __name__ == "__main__":
     prob['TOC.fc.balance.Tt'] = 444.41
 
     FAR_guess = [0.02832, 0.02541, 0.02510]
-    W_guess = [1916.13, 2000., 802.79]
-    BPR_guess = [25.5620, 27.3467, 24.3233]
+    W_guess = [1916.13, 1900., 802.79]
+    BPR_guess = [25.5620, 22.3467, 24.3233]
     fan_Nmech_guess = [2132.6, 1953.1, 2118.7]
     lp_Nmech_guess = [6611.2, 6054.5, 6567.9]
     hp_Nmech_guess = [22288.2, 21594.0, 20574.1]
@@ -591,8 +598,8 @@ if __name__ == "__main__":
         prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
         prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
         prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
-        prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
-        prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
+        # prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
+        # prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
         prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
         prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
         prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]
