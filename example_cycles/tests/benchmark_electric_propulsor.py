@@ -36,12 +36,10 @@ class ElectricPropulsorTestCase(unittest.TestCase):
         # Set initial guesses for balances
         prob['design.balance.W'] = 200.
         
-        for i, pt in enumerate(mp_propulsor.od_pts):
-        
-            # initial guesses
-            prob['off_design.fan.PR'] = 1.2
-            prob['off_design.balance.W'] = 406.790
-            prob['off_design.balance.Nmech'] = 1. # normalized value
+        # initial guesses
+        prob['off_design.fan.PR'] = 1.2
+        prob['off_design.balance.W'] = 406.790
+        prob['off_design.balance.Nmech'] = 1. # normalized value
 
         
         prob.model.design.nonlinear_solver.options['atol'] = 1e-6
@@ -57,16 +55,16 @@ class ElectricPropulsorTestCase(unittest.TestCase):
         prob.run_model()
 
         tol = 1e-5
-        assert_near_equal(prob['design.fc.Fl_O:stat:W'], 406.790, tol)
-        assert_near_equal(prob['design.nozz.Fg'], 12070.380, tol)
+        assert_near_equal(prob['design.fc.Fl_O:stat:W'], 409.636, tol)
+        assert_near_equal(prob['design.nozz.Fg'], 12139.282, tol)
         assert_near_equal(prob['design.fan.SMN'], 36.64057531, tol)
         assert_near_equal(prob['design.fan.SMW'], 29.886, tol)
 
 
-        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 315.3438487 , tol)
-        assert_near_equal(prob['off_design.nozz.Fg'], 9653.17011134, tol)
-        assert_near_equal(prob['off_design.fan.SMN'], 22.13770028, tol)
-        assert_near_equal(prob['off_design.fan.SMW'], 18.95649308, tol)
+        assert_near_equal(prob['off_design.fc.Fl_O:stat:W'], 317.36096893 , tol)
+        assert_near_equal(prob['off_design.nozz.Fg'], 9696.45125337, tol)
+        assert_near_equal(prob['off_design.fan.SMN'], 22.98592129, tol)
+        assert_near_equal(prob['off_design.fan.SMW'], 19.52869122, tol)
 
 if __name__ == "__main__":
     unittest.main()

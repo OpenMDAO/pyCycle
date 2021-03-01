@@ -11,7 +11,7 @@ class MixedFlowTurbofan(pyc.Cycle):
     def setup(self):
         design = self.options['design']
 
-        USE_TABULAR = True
+        USE_TABULAR = False
 
         if USE_TABULAR: 
             self.options['thermo_method'] = 'TABULAR'

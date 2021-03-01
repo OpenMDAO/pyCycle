@@ -23,6 +23,11 @@ We have included an [example script that shows how to generate your own tabular 
 Additionally the default tabular thermo data only support fuel (no water injection). 
 If you want to use tabular thermo for a water injection case, you'll need to generate a new thermo data table. 
 
+## Different thermos will give different answers!
+Please note that when you switch thermodynamics packages, you will get slightly different answers. 
+Depending on how finely you sample your thermo data for the tabular package, the differences could be small to modest. 
+If you see changes greater than 1% on any critical values then you should consider refining your thermodynamic data tables. 
+
 ### V4 is modestly backwards incompatible 
 In order to modular thermodynamic happens, some modest changes to the API were needed. 
 
@@ -92,9 +97,9 @@ or for pyCycle V3.2.0:
 
     git checkout 3.2.0
 
-or for pyCycle V3.2.0: 
+or for pyCycle V4.0.0: 
 
-    git checkout 3.4.0
+    git checkout 4.0.0
 
 Use pip to install: 
 
