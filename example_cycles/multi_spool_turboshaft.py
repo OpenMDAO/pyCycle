@@ -8,51 +8,46 @@ import pycycle.api as pyc
 class MultiSpoolTurboshaft(pyc.Cycle):
 
     def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('maxiter', default=10,
                               desc='Maximum number of Newton solver iterations.')
+        super().initialize()
 
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
         maxiter = self.options['maxiter']
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('duct1', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS),
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('duct1', pyc.Duct())
+        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap),
                            promotes_inputs=[('Nmech','IP_Nmech')])
-        self.pyc_add_element('icduct', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('hpc_axi', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS),
+        self.add_subsystem('icduct', pyc.Duct())
+        self.add_subsystem('hpc_axi', pyc.Compressor(map_data=pyc.HPCMap),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld25', pyc.BleedOut(design=design, bleed_names=['cool1','cool2']))
-        self.pyc_add_element('hpc_centri', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS),
+        self.add_subsystem('bld25', pyc.BleedOut(bleed_names=['cool1','cool2']))
+        self.add_subsystem('hpc_centri', pyc.Compressor(map_data=pyc.HPCMap),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['cool3','cool4']))
-        self.pyc_add_element('duct6', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                                   inflow_elements=pyc.AIR_ELEMENTS,
-                                                   air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                                   fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
-                                              bleed_names=['cool3','cool4']),
+        self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['cool3','cool4']))
+        self.add_subsystem('duct6', pyc.Duct())
+        self.add_subsystem('burner', pyc.Combustor(fuel_type='Jet-A(g)'))
+        self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap, bleed_names=['cool3','cool4']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('duct43', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
-                                              bleed_names=['cool1','cool2']),
+        self.add_subsystem('duct43', pyc.Duct())
+        self.add_subsystem('lpt', pyc.Turbine(map_data=pyc.LPTMap, bleed_names=['cool1','cool2']),
                            promotes_inputs=[('Nmech','IP_Nmech')])
-        self.pyc_add_element('itduct', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('pt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS),
+        self.add_subsystem('itduct', pyc.Duct())
+        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPTMap),
                            promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct12', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('nozzle', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
+        self.add_subsystem('duct12', pyc.Duct())
+        self.add_subsystem('nozzle', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
 
-        self.pyc_add_element('lp_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('ip_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','IP_Nmech')])
-        self.pyc_add_element('hp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
+        self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech','LP_Nmech')])
+        self.add_subsystem('ip_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','IP_Nmech')])
+        self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','HP_Nmech')])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         self.connect('duct1.Fl_O:tot:P', 'perf.Pt2')
         self.connect('hpc_centri.Fl_O:tot:P', 'perf.Pt3')
@@ -147,6 +142,8 @@ class MultiSpoolTurboshaft(pyc.Cycle):
 
         self.linear_solver = om.DirectSolver()
 
+        super().setup()
+
 def viewer(prob, pt, file=sys.stdout):
     """
     print a report of all the relevant cycle properties
@@ -201,7 +198,10 @@ class MPMultiSpool(pyc.MPCycle):
 
     def setup(self):
 
-        self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft())
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
+        self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.4),
         self.set_input_defaults('DESIGN.duct1.MN', 0.4),
@@ -249,7 +249,7 @@ class MPMultiSpool(pyc.MPCycle):
         self.od_MNs = [.5,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, maxiter=10))
+            self.pyc_add_pnt(pt, MultiSpoolTurboshaft(design=False, thermo_method='CEA', maxiter=10))
 
             self.set_input_defaults(pt+'.balance.rhs:FAR', self.od_pwrs[i], units='hp')
             self.set_input_defaults(pt+'.LP_Nmech', self.od_Nmechs[i], units='rpm')
@@ -297,6 +297,8 @@ class MPMultiSpool(pyc.MPCycle):
         self.pyc_connect_des_od('pt.Fl_O:stat:area', 'pt.area')
         self.pyc_connect_des_od('duct12.Fl_O:stat:area', 'duct12.area')
         self.pyc_connect_des_od('nozzle.Throat:stat:area','balance.rhs:W')
+
+        super().setup()
 
 if __name__ == "__main__":
 

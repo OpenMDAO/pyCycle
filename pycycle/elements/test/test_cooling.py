@@ -107,60 +107,28 @@ from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal
 from openmdao.utils.assert_utils import assert_check_partials
 
+
 from pycycle.elements import cooling, flow_start
 from pycycle.thermo.cea import species_data
-from pycycle.thermo.cea import thermo_add
-from pycycle.constants import AIR_FUEL_ELEMENTS
+from pycycle.thermo.thermo import ThermoAdd
+from pycycle.constants import CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION
 
 
 class Tests(unittest.TestCase):
 
-    def setUp(self):
-        p = Problem()
-        p.model = Group()
-
-        # values needed for the flow initialization from the burner exit
-        p.model.set_input_defaults('mix_fuel.Fl_I:stat:W', val=60.32, units="lbm/s")
-        p.model.set_input_defaults('mix_fuel.mix:ratio', val=0.0304)
-        p.model.set_input_defaults('mix_fuel.Fl_I:tot:h', val=298.48, units='Btu/lbm')
-
-        n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
-                           1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
-                           1.00000000e-10, 7.23198770e-03])
-        # p.model.set_input_defaults('mix_fuel.Fl_I:tot:n', val=n_init)  # product ratios for clean air
-        p.model.set_input_defaults('burner_flow.P', val=616.736, units='psi')
-        p.model.set_input_defaults('burner_flow.T', val=3400.00, units='degR')
-
-        # needed to get the FAR right to match NPSS numbers
-        p.model.add_subsystem('mix_fuel', thermo_add.ThermoAdd(mix_thermo_data=species_data.janaf))
-
-
-        p.model.add_subsystem(
-            'burner_flow',
-            flow_start.FlowStart(
-                thermo_data=species_data.janaf,
-                elements=AIR_FUEL_ELEMENTS))
-        p.model.connect('mix_fuel.composition_out', 'burner_flow.composition')
-
-        self.prob = p
 
     def test_cooling_calcs(self):
         """test the basic cooling requirement calculations"""
-        p = self.prob
+        p = Problem()
 
         p.model.set_input_defaults('x_factor', val=.9)
         p.model.set_input_defaults('W_primary', val=62.15, units='lbm/s')
         p.model.set_input_defaults('Tt_primary', val=3400.00, units='degR')
         p.model.set_input_defaults('Tt_cool', val=1721.97, units='degR')
 
-        p.model.add_subsystem(
-            'w_cool',
-            cooling.CoolingCalcs(
-                n_stages=2,
-                i_row=0,
-                T_metal=2460.,
-                T_safety=150.),
-            promotes=['*'])
+        p.model.add_subsystem('w_cool', cooling.CoolingCalcs(n_stages=2, i_row=0,
+                                                               T_metal=2460., T_safety=150.),
+                                promotes=['*'])
 
         p.setup()
         p.set_solver_print(0)
@@ -172,9 +140,11 @@ class Tests(unittest.TestCase):
         # assert_near_equal(self, p['Pt_out'], 4.44635, tol) # TODO: set this
         # assert_near_equal(self, p['ht_out'], 4.44635, tol)
 
+    
+
     def test_row(self):
         """test the flow mixing calculations for a single row"""
-        p = self.prob
+        p = Problem()
 
         # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
         #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
@@ -189,6 +159,8 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('row.Tt_primary', val=3400.00, units='degR')
         p.model.set_input_defaults('row.Tt_cool', val=1721.97, units='degR')
         p.model.set_input_defaults('row.ht_cool', val=298.48, units='Btu/lbm')
+        p.model.set_input_defaults('row.ht_primary', val=250.32757333, units='Btu/lbm')
+        p.model.set_input_defaults('row.composition_primary', val=[0.00031378, 0.00211278, 0.00420881, 0.05232509, 0.01405863])
 
         p.model.add_subsystem(
             'row',
@@ -197,16 +169,17 @@ class Tests(unittest.TestCase):
                 i_row=0,
                 T_metal=2460.,
                 T_safety=150.,
-                thermo_data=species_data.janaf),
+                thermo_method='CEA',
+                thermo_data=species_data.janaf,
+                main_flow_composition=CEA_AIR_FUEL_COMPOSITION, 
+                bld_flow_composition=CEA_AIR_COMPOSITION, 
+                mix_flow_composition=CEA_AIR_FUEL_COMPOSITION),
             promotes=[
                 'Pt_in',
                 'Pt_out'])
 
-        p.model.connect('burner_flow.Fl_O:tot:h', 'row.ht_primary')
-
-        p.model.connect('burner_flow.Fl_O:tot:composition', 'row.composition_primary')
-
         p.setup()
+
 
         p.set_solver_print(0)
 
@@ -220,7 +193,8 @@ class Tests(unittest.TestCase):
 
     def test_turbine_cooling(self):
         """test the flow calculations and final temperatures for multiple rows"""
-        p = self.prob
+        p = Problem()
+        # p = self.prob
 
         # n_init = np.array([3.23319258e-04, 1.00000000e-10, 1.10131241e-05, 1.00000000e-10,
         #                    1.63212420e-10, 6.18813039e-09, 1.00000000e-10, 2.69578835e-02,
@@ -229,7 +203,11 @@ class Tests(unittest.TestCase):
 
         # need ivc here, because b0 is shape_by_conn
         b0_air = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
-        p.model.add_subsystem('ivc', IndepVarComp('air_composition', b0_air))
+        b0_mix = [0.00031378, 0.00211278, 0.00420881, 0.05232509, 0.01405863]
+        ivc = p.model.add_subsystem('ivc', IndepVarComp())
+        ivc.add_output('air_composition', b0_air)
+        ivc.add_output('mix_composition', b0_mix)
+
 
         # p.model.set_input_defaults('turb_cool.Fl_cool:tot:composition', val=b0_air)  # product ratios for clean air
         p.model.set_input_defaults('turb_cool.turb_pwr', val=24193.5, units='hp')
@@ -241,17 +219,22 @@ class Tests(unittest.TestCase):
         p.model.set_input_defaults('turb_cool.Fl_turb_I:tot:h', val=250.097, units='Btu/lbm')
         p.model.set_input_defaults('turb_cool.Fl_cool:tot:h', val=298.48, units='Btu/lbm')
 
-        p.model.add_subsystem(
-            'turb_cool',
-            cooling.TurbineCooling(
-                n_stages=2,
-                T_metal=2460.,
-                T_safety=150.,
-                thermo_data=species_data.janaf))
+        cool_comp = p.model.add_subsystem('turb_cool',
+                                          cooling.TurbineCooling(
+                                            n_stages=2,
+                                            T_metal=2460.,
+                                            T_safety=150.,
+                                            thermo_method='CEA',
+                                            thermo_data=species_data.janaf))
 
-        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_I:tot:composition', 
+        cool_comp.Fl_I_data['Fl_turb_I'] = CEA_AIR_FUEL_COMPOSITION
+        cool_comp.Fl_I_data['Fl_cool'] = CEA_AIR_COMPOSITION
+        cool_comp.Fl_I_data['Fl_turb_O'] = CEA_AIR_FUEL_COMPOSITION
+        cool_comp.pyc_setup_output_ports()
+
+        p.model.connect('ivc.mix_composition', ['turb_cool.Fl_turb_I:tot:composition', 
                                                      'turb_cool.Fl_turb_I:stat:composition' ])
-        p.model.connect('mix_fuel.composition_out', ['turb_cool.Fl_turb_O:tot:composition', 
+        p.model.connect('ivc.mix_composition', ['turb_cool.Fl_turb_O:tot:composition', 
                                                      'turb_cool.Fl_turb_O:stat:composition'])
         p.model.connect('ivc.air_composition', ['turb_cool.Fl_cool:tot:composition', 'turb_cool.Fl_cool:stat:composition'])
 

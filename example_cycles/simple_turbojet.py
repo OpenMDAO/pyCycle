@@ -7,35 +7,32 @@ import pycycle.api as pyc
 
 class Turbojet(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
+        USE_TABULAR = True
+
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
+
         design = self.options['design']
 
         # Add engine elements
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                    elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
-                                    elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
-                                    map_extrap=True),
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=['Nmech'])
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                    inflow_elements=pyc.AIR_ELEMENTS,
-                                    air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                    fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,),
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269),
                                     promotes_inputs=['Nmech'])
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv',
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv'))
+        self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         # Connect flow stations
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
@@ -89,9 +86,7 @@ class Turbojet(pyc.Cycle):
             self.connect('balance.W', 'inlet.Fl_I:stat:W')
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
-        # Setup solver to converge engine
-        # self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'nozz', 'shaft', 'perf', 'balance'])
-
+       
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
@@ -102,6 +97,8 @@ class Turbojet(pyc.Cycle):
         newton.options['reraise_child_analysiserror'] = False
         
         self.linear_solver = om.DirectSolver()
+
+        super().setup()
 
 def viewer(prob, pt, file=sys.stdout):
     """
@@ -156,12 +153,13 @@ def map_plots(prob, pt):
     pyc.plot_turbine_maps(prob, turb_full_names)
 
 
+
 class MPTurbojet(pyc.MPCycle):
 
     def setup(self):
 
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', Turbojet())
+        self.pyc_add_pnt('DESIGN', Turbojet(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm')
         self.set_input_defaults('DESIGN.inlet.MN', 0.60)
@@ -190,6 +188,8 @@ class MPTurbojet(pyc.MPCycle):
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
+        super().setup()
+
 if __name__ == "__main__":
 
     import time
@@ -197,7 +197,9 @@ if __name__ == "__main__":
     prob = om.Problem()
 
 
-    prob.model = mp_turbojet = MPTurbojet()
+    mp_turbojet = prob.model = MPTurbojet()
+
+    # prob.model.set_order(['DESIGN', 'OD0', 'OD1', 'test')
 
     prob.setup(check=False)
 
@@ -231,7 +233,13 @@ if __name__ == "__main__":
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
+
+    # prob.model.OD1.nonlinear_solver.options['maxiter'] = 1
+
     prob.run_model()
+
+    # prob.model.OD1.list_outputs(residuals=True)
+    # exit()
 
     for pt in ['DESIGN']+mp_turbojet.od_pts:
         viewer(prob, pt)

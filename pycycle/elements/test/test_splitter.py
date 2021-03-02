@@ -7,7 +7,6 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 
 from pycycle.mp_cycle import Cycle
-from pycycle.constants import AIR_ELEMENTS
 from pycycle.thermo.cea.species_data import janaf
 
 from pycycle.elements.splitter import Splitter
@@ -63,9 +62,11 @@ class splitterTestCase(unittest.TestCase):
 
         self.prob = Problem()
         cycle = self.prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
 
-        cycle.add_subsystem('flow_start', FlowStart(thermo_data=janaf, elements=AIR_ELEMENTS))
-        cycle.add_subsystem('splitter', Splitter(elements=AIR_ELEMENTS))
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('splitter', Splitter())
 
         cycle.set_input_defaults('flow_start.P', 17., units='psi')
         cycle.set_input_defaults('flow_start.T', 500., units='degR')

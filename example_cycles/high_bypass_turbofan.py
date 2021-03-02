@@ -11,56 +11,63 @@ class HBTF(pyc.Cycle):
 
     def initialize(self):
         # Initialize the model here by setting option variables such as a switch for design vs off-des cases
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
         self.options.declare('throttle_mode', default='T4', values=['T4', 'percent_thrust'])
+
+        super().initialize()
+
 
     def setup(self):
         #Setup the problem by including all the relavant components here - comp, burner, turbine etc
         
         #Create any relavent short hands here:
-        thermo_spec = pyc.species_data.janaf #Thermodynamic data specification 
         design = self.options['design']
         
+        USE_TABULAR = False
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = 'FAR'
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'Jet-A(g)'
+
+        
         #Add subsystems to build the engine deck:
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
         
         # Note variable promotion for the fan -- 
         # the LP spool speed and the fan speed are INPUTS that are promoted:
         # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
         # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
-        self.pyc_add_element('fan', pyc.Compressor(map_data=pyc.FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('duct4', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=pyc.LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.add_subsystem('splitter', pyc.Splitter())
+        self.add_subsystem('duct4', pyc.Duct())
+        self.add_subsystem('lpc', pyc.Compressor(map_data=pyc.LPCMap,
                                         map_extrap=True),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct6', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('hpc', pyc.Compressor(map_data=pyc.HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.add_subsystem('duct6', pyc.Duct())
+        self.add_subsystem('hpc', pyc.Compressor(map_data=pyc.HPCMap,
                                         bleed_names=['cool1','cool2','cust'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['cool3','cool4']))
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_ELEMENTS,
-                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                        fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=pyc.HPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
+        self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['cool3','cool4']))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+        self.add_subsystem('hpt', pyc.Turbine(map_data=pyc.HPTMap,
                                         bleed_names=['cool3','cool4'], map_extrap=True),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('duct11', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=pyc.LPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
+        self.add_subsystem('duct11', pyc.Duct())
+        self.add_subsystem('lpt', pyc.Turbine(map_data=pyc.LPTMap,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct13', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
+        self.add_subsystem('duct13', pyc.Duct())
+        self.add_subsystem('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
 
-        self.pyc_add_element('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
-        self.pyc_add_element('duct15', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('byp_bld', pyc.BleedOut(bleed_names=['bypBld']))
+        self.add_subsystem('duct15', pyc.Duct())
+        self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
         
         #Create shaft instances. Note that LP shaft has 3 ports! => no gearbox
-        self.pyc_add_element('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=2, num_burners=1))
+        self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
+        self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
     
         # Now use the explicit connect method to make connections -- connect(<from>, <to>)
         
@@ -218,7 +225,9 @@ class HBTF(pyc.Cycle):
         ls.options['rho'] = 0.75
         # ls.options['print_bound_enforce'] = True
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
+
+        super().setup()
 
 
 def viewer(prob, pt, file=sys.stdout):
@@ -286,7 +295,7 @@ class MPhbtf(pyc.MPCycle):
 
     def setup(self):
 
-        self.pyc_add_pnt('DESIGN', HBTF()) # Create an instace of the High Bypass ratio Turbofan
+        self.pyc_add_pnt('DESIGN', HBTF(thermo_method='CEA')) # Create an instace of the High Bypass ratio Turbofan
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.751)
         self.set_input_defaults('DESIGN.fan.MN', 0.4578)
@@ -344,13 +353,13 @@ class MPhbtf(pyc.MPCycle):
         self.od_Fn_target = [5500.0, 5300]
         self.od_dTs = [0.0, 0.0]
 
-        self.pyc_add_pnt('OD_full_pwr', HBTF(design=False, throttle_mode='T4'))
+        self.pyc_add_pnt('OD_full_pwr', HBTF(design=False, thermo_method='CEA', throttle_mode='T4'))
 
         self.set_input_defaults('OD_full_pwr.fc.MN', 0.8)
         self.set_input_defaults('OD_full_pwr.fc.alt', 35000, units='ft')
         self.set_input_defaults('OD_full_pwr.fc.dTs', 0., units='degR')
 
-        self.pyc_add_pnt('OD_part_pwr', HBTF(design=False, throttle_mode='percent_thrust'))
+        self.pyc_add_pnt('OD_part_pwr', HBTF(design=False, thermo_method='CEA', throttle_mode='percent_thrust'))
 
         self.set_input_defaults('OD_part_pwr.fc.MN', 0.8)
         self.set_input_defaults('OD_part_pwr.fc.alt', 35000, units='ft')
@@ -363,6 +372,8 @@ class MPhbtf(pyc.MPCycle):
         #Set up the RHS of the balances!
         self.pyc_connect_des_od('core_nozz.Throat:stat:area','balance.rhs:W')
         self.pyc_connect_des_od('byp_nozz.Throat:stat:area','balance.rhs:BPR')
+
+        super().setup()
 
 
 if __name__ == "__main__":

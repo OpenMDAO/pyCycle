@@ -10,7 +10,7 @@ class PsCalc(ExplicitComponent):
     def setup(self):
 
         self.add_input('gamma', val=1.4)
-        self.add_input('n_moles', shape=1)
+        self.add_input('R', val=0.0, units='J/kg/degK')
         self.add_input('Ts', val=518., units="degK", desc="Static temp")
         self.add_input('ht', val=0., units="J/kg", desc="Total enthalpy reference condition")
         self.add_input('hs', val=0., units="J/kg", desc="Static enthalpy")
@@ -23,13 +23,13 @@ class PsCalc(ExplicitComponent):
         self.add_output('area', val=1.0, units="m**2", desc="computed area")
 
         self.declare_partials('V', ['ht', 'hs'])
-        self.declare_partials('Vsonic', ['gamma', 'n_moles', 'Ts'])
-        self.declare_partials('MN', ['gamma', 'n_moles', 'Ts', 'hs', 'ht'])
+        self.declare_partials('Vsonic', ['gamma', 'R', 'Ts'])
+        self.declare_partials('MN', ['gamma', 'R', 'Ts', 'hs', 'ht'])
         self.declare_partials('area', ['rho', 'W', 'hs', 'ht'])
 
     def compute(self, inputs, outputs):
 
-        outputs['Vsonic'] = Vsonic = np.sqrt(inputs['gamma'] * R_UNIVERSAL_SI * inputs['n_moles'] * inputs['Ts'])
+        outputs['Vsonic'] = Vsonic = np.sqrt(inputs['gamma'] * inputs['R'] * inputs['Ts'])
 
         # If ht < hs then V will be imaginary, so use an inverse relationship to allow solution process to continue
         if inputs['ht'] >= inputs['hs']:
@@ -44,10 +44,10 @@ class PsCalc(ExplicitComponent):
 
     def compute_partials(self, inputs, J):
 
-        Vsonic = np.sqrt(inputs['gamma'] * R_UNIVERSAL_SI * inputs['n_moles'] * inputs['Ts'])
+        Vsonic = np.sqrt(inputs['gamma'] * inputs['R'] * inputs['Ts'])
 
         J['Vsonic','gamma'] = Vsonic / (2.0 * inputs['gamma'])
-        J['Vsonic','n_moles'] = Vsonic / (2.0 * inputs['n_moles'])
+        J['Vsonic','R'] = Vsonic / (2.0 * inputs['R'])
         J['Vsonic','Ts'] = Vsonic / (2.0 * inputs['Ts'])
 
         if inputs['ht'] >= inputs['hs']:
@@ -62,7 +62,7 @@ class PsCalc(ExplicitComponent):
         J['MN','ht'] = 1.0 / Vsonic * J['V','ht']
         J['MN','hs'] = 1.0 / Vsonic * J['V','hs']
         J['MN','gamma'] = -V / Vsonic**2 * J['Vsonic','gamma']
-        J['MN','n_moles'] = -V / Vsonic**2 * J['Vsonic','n_moles']
+        J['MN','R'] = -V / Vsonic**2 * J['Vsonic','R']
         J['MN','Ts'] = -V / Vsonic**2 * J['Vsonic','Ts']
 
         J['area','W'] = 1.0 / (inputs['rho'] * V)

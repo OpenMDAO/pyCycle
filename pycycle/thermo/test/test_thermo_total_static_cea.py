@@ -18,9 +18,10 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model.add_subsystem('thermo', Thermo(mode='total_TP', 
                                                method='CEA', 
-                                               thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
+                                               thermo_kwargs={'composition': constants.CEA_CO2_CO_O2_COMPOSITION, 
                                                               'spec': species_data.co2_co_o2 }), 
                               promotes=['*'])
+
 
         p.setup(check=False)
         p.set_solver_print(level=-1)
@@ -31,30 +32,12 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         
         p.run_model()
 
-        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.03293137
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19054697, 1e-4)
 
         p.set_val('T', 1500, units='degK')
         p.set_val('P', 1.034210, units='bar')
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        expected_n_moles = 0.0227262
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16379233, 1e-4)
 
 
@@ -63,7 +46,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model = Thermo(mode='total_hP', 
                          method = 'CEA', 
-                         thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
+                         thermo_kwargs={'composition': constants.CEA_CO2_CO_O2_COMPOSITION, 
                                       'spec': species_data.co2_co_o2 }) 
 
         p.setup()
@@ -75,33 +58,12 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.run_model()
 
-        expected_concentrations = np.array([0.61989858, 0.07015213, 0.30994929])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.0329281722301
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19039688581, 1e-4)
 
         # 1500K
         p['h'] = -1801.35537381
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.022726185333
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16379012007, 1e-4)
 
     def test_set_total_SP(self):
@@ -111,7 +73,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p = om.Problem()
         p.model = Thermo(mode='total_SP', 
                          method = 'CEA', 
-                         thermo_kwargs={'elements': constants.CO2_CO_O2_ELEMENTS, 
+                         thermo_kwargs={'composition': constants.CEA_CO2_CO_O2_COMPOSITION, 
                                         'spec': species_data.co2_co_o2 }) 
        
         r = p.model
@@ -136,16 +98,6 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.run_model()
 
-        expected_concentrations = np.array([0.62003271, 0.06995092, 0.31001638])
-
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.0329313730421
-
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.19054696779, 1e-4)
 
         # 1500K
@@ -154,15 +106,6 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p['S'] = 1.5852424435
         p.run_model()
 
-        expected_concentrations = np.array([3.58768646e-04, 9.99461847e-01, 1.79384323e-04])
-        n = p['n']
-        n_moles = p['n_moles']
-        concentrations = n / n_moles
-
-        assert_near_equal(concentrations, expected_concentrations, 1e-4)
-
-        expected_n_moles = 0.022726185333
-        assert_near_equal(n_moles, expected_n_moles, 1e-4)
         assert_near_equal(p['gamma'], 1.16396871, 1e-4)
 
 
@@ -173,7 +116,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_TP = om.Problem()
         p_TP.model = Thermo(mode='total_TP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                            thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p_TP.setup()
         p_TP.set_solver_print(level=-1)
@@ -181,7 +124,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_hP = om.Problem()
         p_hP.model = Thermo(mode='total_hP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                            thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p_hP.setup()
         p_hP.set_solver_print(level=-1)
@@ -189,7 +132,7 @@ class TestSetTotalJanaf(unittest.TestCase):
         p_SP = om.Problem()
         p_SP.model = Thermo(mode='total_SP', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                            thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p_SP.setup()
         p_SP.set_solver_print(level=-1)
@@ -278,13 +221,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP =  Thermo(mode='total_TP', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                           thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_Ps =  Thermo(mode='static_Ps', 
                             method='CEA', 
-                            thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                            thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_Ps', static_Ps)
         p.model.connect('set_total_TP.flow:S', 'set_static_Ps.S')
@@ -319,13 +262,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP =  Thermo(mode='total_TP', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                           thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf })  
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_A =  Thermo(mode='static_A', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                           thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                           'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_A', static_A)
         
@@ -368,13 +311,13 @@ class TestStaticJanaf(unittest.TestCase):
         p = self.p = om.Problem()
         total_TP = Thermo(mode='total_TP', 
                           method='CEA', 
-                          thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                          thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_total_TP', total_TP)
 
         static_MN = Thermo(mode='static_MN', 
                            method='CEA', 
-                           thermo_kwargs={'elements': constants.AIR_ELEMENTS, 
+                           thermo_kwargs={'composition': constants.CEA_AIR_COMPOSITION, 
                                            'spec': species_data.janaf }) 
         p.model.add_subsystem('set_static_MN', static_MN)
 

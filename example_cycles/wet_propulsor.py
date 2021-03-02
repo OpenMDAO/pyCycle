@@ -5,22 +5,23 @@ import pycycle.api as pyc
 
 class WetPropulsor(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', types=bool, default=True)
-
     def setup(self):
 
-        thermo_spec = pyc.species_data.wet_air #special species library is called that allows for using initial compositions that include both H and C
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, use_WAR=True,
-                                                  elements=pyc.WET_AIR_ELEMENTS))#WET_AIR_ELEMENTS contains standard dry air compounds as well as H2O
+        # NOTE: DEFAULT TABULAR thermo doesn't include WAR, so must use CEA here
+        # (or build your own thermo tables)
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.wet_air
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS,
-                                                 design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.WET_AIR_ELEMENTS))
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+        self.add_subsystem('fc', pyc.FlightConditions(composition=pyc.CEA_AIR_COMPOSITION, 
+                                                      reactant='Water',
+                                                      mix_ratio_name='WAR'))
+
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
+        self.add_subsystem('nozz', pyc.Nozzle())
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
@@ -81,6 +82,9 @@ class WetPropulsor(pyc.Cycle):
         #
         self.linear_solver = om.DirectSolver(assemble_jac=True)
 
+        # base_class setup should be called as the last thing in your setup
+        super().setup()
+
 
 def viewer(prob, pt):
 
@@ -97,7 +101,7 @@ class MPWetPropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        design = self.pyc_add_pnt('design', WetPropulsor(design=True))
+        design = self.pyc_add_pnt('design', WetPropulsor(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('design.fc.alt', 10000., units="m")
         self.set_input_defaults('design.fc.MN', .72)
@@ -112,7 +116,7 @@ class MPWetPropulsor(pyc.MPCycle):
         self.od_WARs = [.001,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt('off_design', WetPropulsor(design=False))
+            self.pyc_add_pnt('off_design', WetPropulsor(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='m')
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
@@ -121,6 +125,8 @@ class MPWetPropulsor(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
 
 if __name__ == "__main__":
     import time

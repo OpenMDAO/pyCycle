@@ -5,22 +5,27 @@ import pycycle.api as pyc
 
 class Propulsor(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', types=bool, default=True)
-
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                                  elements=pyc.AIR_ELEMENTS))
+        USE_TABULAR = True
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'JP-7'
 
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('fan', pyc.Compressor(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
-                                                 design=design, map_data=pyc.FanMap, map_extrap=True))
-        self.pyc_add_element('nozz', pyc.Nozzle(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=0))
+
+        self.add_subsystem('fc', pyc.FlightConditions())
+
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
+        self.add_subsystem('nozz', pyc.Nozzle())
+        
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
         balance = om.BalanceComp()
@@ -75,12 +80,13 @@ class Propulsor(pyc.Cycle):
         # newton.linesearch = om.ArmijoGoldsteinLS()
         # newton.linesearch.options['maxiter'] = 3
         newton.linesearch = om.BoundsEnforceLS()
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         # newton.linesearch.options['print_bound_enforce'] = True
         # newton.linesearch.options['iprint'] = -1
         #
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
 
+        # base_class setup should be called as the last thing in your setup
+        super().setup()
 
 def viewer(prob, pt):
     """
@@ -106,7 +112,10 @@ class MPpropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        design = self.pyc_add_pnt('design', Propulsor(design=True))
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
+        design = self.pyc_add_pnt('design', Propulsor(design=True, thermo_method='CEA'))
         self.pyc_add_cycle_param('pwr_target', 100.)
 
         # define the off-design conditions we want to run
@@ -116,7 +125,7 @@ class MPpropulsor(pyc.MPCycle):
         self.od_Rlines = [2.2,]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, Propulsor(design=False))
+            self.pyc_add_pnt(pt, Propulsor(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
             self.set_input_defaults(pt+'.fc.alt', val=self.od_alts, units='m') 
@@ -125,6 +134,8 @@ class MPpropulsor(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
         
 
 
@@ -167,6 +178,7 @@ if __name__ == "__main__":
 
     prob.model.off_design.nonlinear_solver.options['atol'] = 1e-6
     prob.model.off_design.nonlinear_solver.options['rtol'] = 1e-6
+
 
     prob.run_model()
     run_time = time.time() - st

@@ -2,11 +2,11 @@
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_FUEL_ELEMENTS, g_c
+from pycycle.constants import g_c
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
 from pycycle.flow_in import FlowIn
-
+from pycycle.element_base import Element
 
 class PR_bal(om.ImplicitComponent):
 
@@ -296,7 +296,7 @@ class Mux(om.ExplicitComponent):
             J['Throat:stat:S', 'S'] = 1.0
             J['%s:stat:S' %fl_out_name, 'S'] = 1.0
 
-class Nozzle(om.Group):
+class Nozzle(Element):
     """
     An assembly that models a convergent Nozzle.
     """
@@ -306,19 +306,22 @@ class Nozzle(om.Group):
                               desc='Nozzle type: CD, CV, or CD_CV.')
         self.options.declare('lossCoef', default='Cv',
                               desc='If set to "Cfg", then Gross Thrust Coefficient is an input.')
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_FUEL_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('internal_solver', default=False)
 
+        super().initialize()
+
+    def pyc_setup_output_ports(self): 
+        
+        self.copy_flow('Fl_I', 'Fl_O')
+
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         nozzType = self.options['nozzType']
         lossCoef = self.options['lossCoef']
 
-        num_element = len(elements)
+        # elements = self.options['elements']
+        composition = self.Fl_I_data['Fl_I']
 
         self.add_subsystem('mach_choked', om.IndepVarComp('MN', 1.000, ))
 
@@ -342,8 +345,8 @@ class Nozzle(om.Group):
 
         # Calculate throat total flow properties
         throat_total = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
-                              method='CEA', 
-                              thermo_kwargs={'elements':elements, 
+                              method=thermo_method, 
+                              thermo_kwargs={'composition':composition, 
                                              'spec':thermo_data})
         prom_in = [('h', 'Fl_I:tot:h'),
                    ('composition', 'Fl_I:tot:composition')]
@@ -353,8 +356,8 @@ class Nozzle(om.Group):
 
         # Calculate static properties for sonic flow
         throat_static_MN = Thermo(mode='static_MN', 
-                                  method='CEA', 
-                                  thermo_kwargs={'elements':elements, 
+                                  method=thermo_method, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
@@ -369,8 +372,8 @@ class Nozzle(om.Group):
 
         # Calculate static properties based on exit static pressure
         throat_static_Ps = Thermo(mode='static_Ps', 
-                                  method='CEA', 
-                                  thermo_kwargs={'elements':elements, 
+                                  method=thermo_method, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
@@ -384,8 +387,8 @@ class Nozzle(om.Group):
 
         # Calculate ideal exit flow properties
         ideal_flow = Thermo(mode='static_Ps', 
-                            method='CEA', 
-                            thermo_kwargs={'elements':elements, 
+                            method=thermo_method, 
+                            thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('S', 'Fl_I:tot:S'),
@@ -458,3 +461,5 @@ class Nozzle(om.Group):
 
             newton.linesearch.options['iprint'] = -1
             self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        super().setup()

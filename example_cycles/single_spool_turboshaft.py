@@ -6,38 +6,34 @@ import pycycle.api as pyc
 
 class SingleSpoolTurboshaft(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
         design = self.options['design']
 
+        USE_TABULAR = False
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = 'JP-7'
+    
         # Add engine elements
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec,
-                                    elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec,
-                                    elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS, map_extrap=True),
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                    inflow_elements=pyc.AIR_ELEMENTS,
-                                    air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                    fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, map_extrap=True),
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.pyc_add_element('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, map_extrap=True),
+        self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
-                                    thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
-        self.pyc_add_element('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=1))
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
+        self.add_subsystem('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
+        self.add_subsystem('LP_shaft', pyc.Shaft(num_ports=1),promotes_inputs=[('Nmech', 'LP_Nmech')])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=1))
 
         # Connect flow stations
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
@@ -98,24 +94,26 @@ class SingleSpoolTurboshaft(pyc.Cycle):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['balance', 'fc', 'inlet', 'comp', 'burner', 'turb', 'pt', 'nozz', 'HP_shaft', 'LP_shaft', 'perf'])
+        self.set_order(['fc', 'inlet', 'comp', 'burner', 'turb', 'pt', 'nozz', 'HP_shaft', 'LP_shaft', 'perf', 'balance'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
         newton.options['iprint'] = 2
-        newton.options['maxiter'] = 10
+        newton.options['maxiter'] = 25
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         newton.options['reraise_child_analysiserror'] = False
 
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
+        newton.linesearch.options['maxiter'] = 3
+        newton.linesearch.options['rho'] = 0.75
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
+
+        super().setup()
 
 def viewer(prob, pt, file=sys.stdout):
     """
@@ -165,8 +163,11 @@ class MPSingleSpool(pyc.MPCycle):
 
     def setup(self):
 
+        self.options['thermo_method'] = 'CEA'
+        self.options['thermo_data'] = pyc.species_data.janaf
+
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft())
+        self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.HP_Nmech', 8070.0, units='rpm')
         self.set_input_defaults('DESIGN.LP_Nmech', 5000.0, units='rpm')
@@ -185,7 +186,7 @@ class MPSingleSpool(pyc.MPCycle):
         self.od_nmechs =[5000., 5000.]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, SingleSpoolTurboshaft(design=False))
+            self.pyc_add_pnt(pt, SingleSpoolTurboshaft(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.alt', self.od_alts[i], units='ft')
             self.set_input_defaults(pt+'.fc.MN', self.od_MNs[i])
@@ -195,6 +196,8 @@ class MPSingleSpool(pyc.MPCycle):
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
+
+        super().setup()
 
 
 if __name__ == "__main__":

@@ -56,7 +56,7 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         tol = 1e-5
         print()
 
-        reg_data = 147.55303531
+        reg_data = 147.333
         ans = prob['DESIGN.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -66,12 +66,12 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('OPR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.01755865
+        reg_data = 0.01776487
         ans = prob['DESIGN.balance.FAR'][0]
         print('Main FAR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 3.87681144
+        reg_data = 3.8591364
         ans = prob['DESIGN.balance.turb_PR'][0]
         print('HPT PR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -81,32 +81,32 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('Fg:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.7904208
+        reg_data = 0.7985165
         ans = prob['DESIGN.perf.TSFC'][0]
         print('TSFC:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 1190.17776485
+        reg_data = 1187.7610184
         ans = prob['DESIGN.comp.Fl_O:tot:T'][0]
         print('Tt3:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 142.69375835
+        reg_data = 142.786698
         ans = prob['OD0.inlet.Fl_O:stat:W'][0]
         print('W:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 12.84084877
+        reg_data = 12.8588424
         ans = prob['OD0.perf.OPR'][0]
         print('OPR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.01665849
+        reg_data = 0.01676938946
         ans = prob['OD0.balance.FAR'][0]
         print('Main FAR:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 7936.36544633
+        reg_data = 7943.9331210
         ans = prob['OD0.balance.Nmech'][0]
         print('HP Nmech:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
@@ -116,12 +116,12 @@ class SimpleTurbojetTestCase(unittest.TestCase):
         print('Fg:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 0.77794514
+        reg_data = 0.783636794
         ans = prob['OD0.perf.TSFC'][0]
         print('TSFC:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)
 
-        reg_data = 1169.51252193
+        reg_data = 1168.067147267
         ans = prob['OD0.comp.Fl_O:tot:T'][0]
         print('Tt3:', reg_data, ans)
         assert_near_equal(ans, reg_data, tol)

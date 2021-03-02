@@ -17,55 +17,62 @@ from N3_LPT_map import LPTMap
 class N3(pyc.Cycle):
 
     def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
         self.options.declare('cooling', default=False,
                               desc='If True, calculate cooling flow values.')
 
+        super().initialize()
+
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
-        design = self.options['design']
-        cooling = self.options['cooling']
+        USE_TABULAR = False
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('fan', pyc.Compressor(map_data=FanMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS, map_extrap=True,
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
+        
+        cooling = self.options['cooling']
+        design = self.options['design']
+
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('fan', pyc.Compressor(map_data=FanMap, map_extrap=True,
                                                  bleed_names=[]),
                            promotes_inputs=[('Nmech','Fan_Nmech')])
-        self.pyc_add_element('splitter', pyc.Splitter(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('duct2', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('lpc', pyc.Compressor(map_data=LPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS, map_extrap=True),
+        self.add_subsystem('splitter', pyc.Splitter())
+        self.add_subsystem('duct2', pyc.Duct(expMN=2.0, ))
+        self.add_subsystem('lpc', pyc.Compressor(map_data=LPCMap, map_extrap=True),
                             promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('bld25', pyc.BleedOut(design=design, bleed_names=['sbv']))
-        self.pyc_add_element('duct25', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('hpc', pyc.Compressor(map_data=HPCMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS, map_extrap=True,
+        self.add_subsystem('bld25', pyc.BleedOut(bleed_names=['sbv']))
+        self.add_subsystem('duct25', pyc.Duct(expMN=2.0, ))
+        self.add_subsystem('hpc', pyc.Compressor(map_data=HPCMap, map_extrap=True,
                                         bleed_names=['bld_inlet','bld_exit','cust']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('bld3', pyc.BleedOut(design=design, bleed_names=['bld_inlet','bld_exit']))
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_ELEMENTS,
-                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                        fuel_type='Jet-A(g)'))
-        self.pyc_add_element('hpt', pyc.Turbine(map_data=HPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, map_extrap=True,
+        self.add_subsystem('bld3', pyc.BleedOut(bleed_names=['bld_inlet','bld_exit']))
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+        self.add_subsystem('hpt', pyc.Turbine(map_data=HPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('duct45', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('lpt', pyc.Turbine(map_data=LPTMap, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, map_extrap=True,
+        self.add_subsystem('duct45', pyc.Duct(expMN=2.0, ))
+        self.add_subsystem('lpt', pyc.Turbine(map_data=LPTMap, map_extrap=True,
                                               bleed_names=['bld_inlet','bld_exit']),
                            promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('duct5', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
-        self.pyc_add_element('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS))
+        self.add_subsystem('duct5', pyc.Duct(expMN=2.0, ))
+        self.add_subsystem('core_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', ))
 
-        self.pyc_add_element('byp_bld', pyc.BleedOut(design=design, bleed_names=['bypBld']))
-        self.pyc_add_element('duct17', pyc.Duct(design=design, expMN=2.0, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
+        self.add_subsystem('byp_bld', pyc.BleedOut(bleed_names=['bypBld']))
+        self.add_subsystem('duct17', pyc.Duct(expMN=2.0, ))
+        self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', ))
 
-        self.pyc_add_element('fan_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','Fan_Nmech')])
-        self.pyc_add_element('gearbox', pyc.Gearbox(design=design), promotes_inputs=[('N_in','LP_Nmech'), ('N_out','Fan_Nmech')])
-        self.pyc_add_element('lp_shaft', pyc.Shaft(num_ports=3), promotes_inputs=[('Nmech','LP_Nmech')])
-        self.pyc_add_element('hp_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','HP_Nmech')])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=2, num_burners=1))
+        self.add_subsystem('fan_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','Fan_Nmech')])
+        self.add_subsystem('gearbox', pyc.Gearbox(), promotes_inputs=[('N_in','LP_Nmech'), ('N_out','Fan_Nmech')])
+        self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3), promotes_inputs=[('Nmech','LP_Nmech')])
+        self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','HP_Nmech')])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
 
         self.connect('inlet.Fl_O:tot:P', 'perf.Pt2')
         self.connect('hpc.Fl_O:tot:P', 'perf.Pt3')
@@ -108,17 +115,18 @@ class N3(pyc.Cycle):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
-            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', rhs_val=0., res_ref=1e4)
+            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lpt_PR', 'lpt.PR')
             self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
 
-            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
+            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hpt_PR', 'hpt.PR')
             self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
 
-            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', rhs_val=0.0)
+            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.gb_trq', 'gearbox.trq_base')
-            self.connect('fan_shaft.pwr_net', 'balance.lhs:gb_trq')
+            self.connect('fan_shaft.pwr_in', 'balance.lhs:gb_trq')
+            self.connect('fan_shaft.pwr_out', 'balance.rhs:gb_trq')
 
             balance.add_balance('hpc_PR', val=14.0, units=None, eq_units=None)
             self.connect('balance.hpc_PR', ['hpc.PR', 'opr_calc.HPCPR'])
@@ -190,17 +198,20 @@ class N3(pyc.Cycle):
             self.connect('balance.BPR', 'splitter.BPR')
             self.connect('fan.map.RlineMap', 'balance.lhs:BPR')
 
-            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.fan_Nmech', 'Fan_Nmech')
-            self.connect('fan_shaft.pwr_net', 'balance.lhs:fan_Nmech')
+            self.connect('fan_shaft.pwr_in', 'balance.lhs:fan_Nmech')
+            self.connect('fan_shaft.pwr_out', 'balance.rhs:fan_Nmech')
 
-            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lp_Nmech', 'LP_Nmech')
-            self.connect('lp_shaft.pwr_net', 'balance.lhs:lp_Nmech')
+            self.connect('lp_shaft.pwr_in', 'balance.lhs:lp_Nmech')
+            self.connect('lp_shaft.pwr_out', 'balance.rhs:lp_Nmech')
 
-            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
+            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hp_Nmech', 'HP_Nmech')
-            self.connect('hp_shaft.pwr_net', 'balance.lhs:hp_Nmech')
+            self.connect('hp_shaft.pwr_in', 'balance.lhs:hp_Nmech')
+            self.connect('hp_shaft.pwr_out', 'balance.rhs:hp_Nmech')
 
             order_add = []
 
@@ -261,7 +272,7 @@ class N3(pyc.Cycle):
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-4
-        newton.options['rtol'] = 1e-4
+        newton.options['rtol'] = 1e-99
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 10
         newton.options['solve_subsystems'] = True
@@ -269,15 +280,13 @@ class N3(pyc.Cycle):
         newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
+        newton.linesearch.options['rho'] = 0.75
         # newton.linesearch.options['maxiter'] = 2
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
-        # if design:
-        #     newton.linesearch.options['print_bound_enforce'] = True
 
-        # newton.options['debug_print'] = True
+        self.linear_solver = om.DirectSolver()
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        super().setup()
 
 def viewer(prob, pt, file=sys.stdout):
     """
@@ -340,6 +349,8 @@ class MPN3(pyc.MPCycle):
                               desc='Name of subsystems to add to beginning of order.')
         self.options.declare('statics', default=True,
                               desc='Tells the model whether or not to connect areas.')
+
+        super().initialize()
 
     def setup(self):
 
@@ -499,13 +510,15 @@ class MPN3(pyc.MPCycle):
         newton.options['maxiter'] = 20
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 10
-        newton.options['err_on_non_converge'] = True
+        newton.options['err_on_non_converge'] = False # True
         newton.options['reraise_child_analysiserror'] = False
         newton.linesearch =  om.BoundsEnforceLS()
         newton.linesearch.options['bound_enforcement'] = 'scalar'
         newton.linesearch.options['iprint'] = -1
 
         self.linear_solver = om.DirectSolver(assemble_jac=True)
+
+        super().setup()
 
 def N3ref_model():
 
@@ -562,8 +575,8 @@ if __name__ == "__main__":
     prob['TOC.fc.balance.Tt'] = 444.41
 
     FAR_guess = [0.02832, 0.02541, 0.02510]
-    W_guess = [1916.13, 2000., 802.79]
-    BPR_guess = [25.5620, 27.3467, 24.3233]
+    W_guess = [1916.13, 1900., 802.79]
+    BPR_guess = [25.5620, 22.3467, 24.3233]
     fan_Nmech_guess = [2132.6, 1953.1, 2118.7]
     lp_Nmech_guess = [6611.2, 6054.5, 6567.9]
     hp_Nmech_guess = [22288.2, 21594.0, 20574.1]
@@ -585,8 +598,8 @@ if __name__ == "__main__":
         prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
         prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
         prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
-        prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
-        prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
+        # prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
+        # prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
         prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
         prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
         prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]

@@ -2,11 +2,11 @@ import numpy as np
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_ELEMENTS
 from pycycle.flow_in import FlowIn
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 
 class BPRcalc(om.ExplicitComponent):
@@ -45,7 +45,7 @@ class BPRcalc(om.ExplicitComponent):
         J['W2','W_in'] = 1.0 - 1.0/(BPR+1)#BPR / (BPR + 1.0)
 
 
-class Splitter(om.Group):
+class Splitter(Element):
     """
     Splits a single incomming flow into two outgoing flows
 
@@ -83,23 +83,25 @@ class Splitter(om.Group):
     """
 
     def initialize(self):
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
+
+        super().initialize()
+
+    def pyc_setup_output_ports(self): 
+        
+        self.copy_flow('Fl_I', 'Fl_O1')
+        self.copy_flow('Fl_I', 'Fl_O2')
+
 
     def setup(self):
 
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
         design = self.options['design']
 
-        num_element = len(elements)
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flowstation
         flow_in = FlowIn(fl_name='Fl_I')
@@ -110,8 +112,8 @@ class Splitter(om.Group):
 
         # Set Fl_out1 totals based on T, P
         real_flow1 = Thermo(mode='total_TP', fl_name='Fl_O1:tot', 
-                            method='CEA', 
-                            thermo_kwargs={'elements':elements, 
+                            method=thermo_method, 
+                            thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow1', real_flow1,
                            promotes_inputs=(('composition', 'Fl_I:tot:composition'),
@@ -121,8 +123,8 @@ class Splitter(om.Group):
 
         # Set Fl_out2 totals based on T, P
         real_flow2 = Thermo(mode='total_TP', fl_name='Fl_O2:tot', 
-                            method='CEA', 
-                            thermo_kwargs={'elements':elements, 
+                            method=thermo_method, 
+                            thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow2', real_flow2, promotes_inputs=(('composition', 'Fl_I:tot:composition'),
                                             ('P', 'Fl_I:tot:P'),
@@ -133,8 +135,8 @@ class Splitter(om.Group):
             if design:
             #   Calculate static properties
                 out1_stat = Thermo(mode='static_MN', fl_name='Fl_O1:stat', 
-                                   method='CEA', 
-                                   thermo_kwargs={'elements':elements, 
+                                   method=thermo_method, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN1')]
@@ -148,8 +150,8 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = Thermo(mode='static_MN', fl_name='Fl_O2:stat', 
-                                   method='CEA', 
-                                   thermo_kwargs={'elements':elements, 
+                                   method=thermo_method, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('MN','MN2')]
@@ -165,8 +167,8 @@ class Splitter(om.Group):
             else:
                 # Calculate static properties
                 out1_stat = Thermo(mode='static_A', fl_name='Fl_O1:stat', 
-                                   method='CEA', 
-                                   thermo_kwargs={'elements':elements, 
+                                   method=thermo_method, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area1')]
@@ -180,8 +182,8 @@ class Splitter(om.Group):
                 self.connect('split_calc.W1', 'out1_stat.W')
 
                 out2_stat = Thermo(mode='static_A', fl_name='Fl_O2:stat', 
-                                   method='CEA', 
-                                   thermo_kwargs={'elements':elements, 
+                                   method=thermo_method, 
+                                   thermo_kwargs={'composition':composition, 
                                                   'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('area','area2')]
@@ -202,6 +204,7 @@ class Splitter(om.Group):
             self.connect('split_calc.W1', 'split_calc_W1')
             self.connect('split_calc.W2', 'split_calc_W2')
 
+        super().setup()
 
 if __name__ == "__main__":
 

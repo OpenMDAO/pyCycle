@@ -7,33 +7,39 @@ import pycycle.api as pyc
 
 class ABTurbojet(pyc.Cycle):
 
-    def initialize(self):
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
-
     def setup(self):
 
-        thermo_spec = pyc.species_data.janaf
+        # Note: Tabular is unstable for this cycle with default thermo data. 
+        # Need a finer grid for the OD2 point
+        USE_TABULAR = True
+
+        if USE_TABULAR: 
+            self.options['thermo_method'] = 'TABULAR'
+            self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
+            FUEL_TYPE = "FAR"
+        else: 
+            self.options['thermo_method'] = 'CEA'
+            self.options['thermo_data'] = pyc.species_data.janaf
+            FUEL_TYPE = "Jet-A(g)"
+
         design = self.options['design']
 
-        self.pyc_add_element('fc', pyc.FlightConditions(thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('inlet', pyc.Inlet(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('duct1', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS))
-        self.pyc_add_element('comp', pyc.Compressor(map_data=pyc.AXI5, design=design, thermo_data=thermo_spec, elements=pyc.AIR_ELEMENTS,
+        self.add_subsystem('fc', pyc.FlightConditions())
+        self.add_subsystem('inlet', pyc.Inlet())
+        self.add_subsystem('duct1', pyc.Duct())
+        self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5,
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
-        self.pyc_add_element('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_ELEMENTS,
-                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                        fuel_type='JP-7'))
-        self.pyc_add_element('turb', pyc.Turbine(map_data=pyc.LPT2269, design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS,
+
+        self.add_subsystem('burner', pyc.Combustor(fuel_type=FUEL_TYPE))
+        
+        self.add_subsystem('turb', pyc.Turbine(map_data=pyc.LPT2269,  
                                         bleed_names=['cool1','cool2'], map_extrap=True),promotes_inputs=['Nmech'])
-        self.pyc_add_element('ab', pyc.Combustor(design=design,thermo_data=thermo_spec,
-                                        inflow_elements=pyc.AIR_FUEL_ELEMENTS,
-                                        air_fuel_elements=pyc.AIR_FUEL_ELEMENTS,
-                                        fuel_type='JP-7'))
-        self.pyc_add_element('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', thermo_data=thermo_spec, elements=pyc.AIR_FUEL_ELEMENTS, internal_solver=True))
-        self.pyc_add_element('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
-        self.pyc_add_element('perf', pyc.Performance(num_nozzles=1, num_burners=2))
+        
+        self.add_subsystem('ab', pyc.Combustor(fuel_type=FUEL_TYPE))
+
+        self.add_subsystem('nozz', pyc.Nozzle(nozzType='CD', lossCoef='Cv', internal_solver=True))
+        self.add_subsystem('shaft', pyc.Shaft(num_ports=2),promotes_inputs=['Nmech'])
+        self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=2))
 
         self.connect('duct1.Fl_O:tot:P', 'perf.Pt2')
         self.connect('comp.Fl_O:tot:P', 'perf.Pt3')
@@ -44,8 +50,6 @@ class ABTurbojet(pyc.Cycle):
 
         self.connect('comp.trq', 'shaft.trq_0')
         self.connect('turb.trq', 'shaft.trq_1')
-        # self.connect('shaft.Nmech', 'comp.Nmech')
-        # self.connect('shaft.Nmech', 'turb.Nmech')
         self.connect('fc.Fl_O:stat:P', 'nozz.Ps_exhaust')
 
         balance = self.add_subsystem('balance', om.BalanceComp())
@@ -64,7 +68,7 @@ class ABTurbojet(pyc.Cycle):
             self.connect('shaft.pwr_net', 'balance.lhs:turb_PR')
 
             # self.set_order(['fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf', 'thrust_balance', 'temp_balance', 'shaft_balance'])
-            self.set_order(['balance', 'fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf'])
+            self.set_order(['fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf', 'balance'])
 
         else:
 
@@ -72,15 +76,17 @@ class ABTurbojet(pyc.Cycle):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
-            balance.add_balance('Nmech', val=8000., units='rpm', lower=500., eq_units='hp', rhs_val=0.)
+            balance.add_balance('Nmech', val=8000., units='rpm', lower=500., upper=10000., eq_units='hp', 
+                                use_mult=True, mult_val=-1)
             self.connect('balance.Nmech', 'Nmech')
-            self.connect('shaft.pwr_net', 'balance.lhs:Nmech')
+            self.connect('shaft.pwr_in', 'balance.lhs:Nmech')
+            self.connect('shaft.pwr_out', 'balance.rhs:Nmech')
 
             balance.add_balance('W', val=100.0, units='lbm/s', eq_units=None, rhs_val=2.0)
             self.connect('balance.W', 'inlet.Fl_I:stat:W')
             self.connect('comp.map.RlineMap', 'balance.lhs:W')
 
-            self.set_order(['balance', 'fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf'])
+            self.set_order(['fc', 'inlet', 'duct1', 'comp', 'burner', 'turb', 'ab', 'nozz', 'shaft', 'perf', 'balance'])
 
 
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I', connect_w=False)
@@ -104,11 +110,12 @@ class ABTurbojet(pyc.Cycle):
         newton.options['reraise_child_analysiserror'] = False
         # newton.linesearch = om.BoundsEnforceLS()
         newton.linesearch = om.ArmijoGoldsteinLS()
-        # newton.linesearch.options['c'] = .0001
-        newton.linesearch.options['bound_enforcement'] = 'scalar'
+        newton.linesearch.options['rho'] = .75
         newton.linesearch.options['iprint'] = -1
 
-        self.linear_solver = om.DirectSolver(assemble_jac=True)
+        self.linear_solver = om.DirectSolver()
+
+        super().setup()
 
 def viewer(prob, pt, file=sys.stdout):
     """
@@ -164,7 +171,7 @@ class MPABTurbojet(pyc.MPCycle):
     def setup(self):
 
         # DESIGN CASE
-        self.pyc_add_pnt('DESIGN', ABTurbojet(design=True))
+        self.pyc_add_pnt('DESIGN', ABTurbojet(design=True, thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm'),
         self.set_input_defaults('DESIGN.inlet.MN', 0.60),
@@ -189,15 +196,15 @@ class MPABTurbojet(pyc.MPCycle):
         self.pyc_add_cycle_param('turb.cool2:frac_P', 0.0)
 
         # define the off_design conditions we want to run
-        self.od_pts = ['OD1','OD2','OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
+        self.od_pts = ['OD1','OD2', 'OD1dry','OD2dry','OD3dry','OD4dry','OD5dry','OD6dry','OD7dry','OD8dry'] 
         self.od_MNs = [0.000001, 0.8, 0.000001, 0.8, 1.00001, 1.2, 0.6, 1.6, 1.6, 1.8]
-        self.od_alts = [0.0, 0.0, 0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
+        self.od_alts = [0.0, 0.0001, 0.0, 0.0, 15000.0, 25000.0, 35000.0, 35000.0, 50000.0, 70000.0]
         self.od_T4s = [2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0, 2370.0]
         self.od_ab_FARs = [0.031523391, 0.022759941, 0, 0, 0, 0, 0, 0, 0, 0]
         self.od_Rlines = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
 
         for i, pt in enumerate(self.od_pts):
-            self.pyc_add_pnt(pt, ABTurbojet(design=False))
+            self.pyc_add_pnt(pt, ABTurbojet(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
             self.set_input_defaults(pt+'.fc.alt', val=self.od_alts[i], units='ft')
@@ -222,6 +229,8 @@ class MPABTurbojet(pyc.MPCycle):
         self.pyc_connect_des_od('turb.Fl_O:stat:area', 'turb.area')
         self.pyc_connect_des_od('ab.Fl_O:stat:area', 'ab.area')
 
+        super().setup()
+
 if __name__ == "__main__":
 
     import time
@@ -231,6 +240,8 @@ if __name__ == "__main__":
     prob.model = mp_abturbojet = MPABTurbojet()
 
     prob.setup()
+
+    # prob.model.OD2.nonlinear_solver.options['maxiter'] = 0
 
     #Define the design point
     prob.set_val('DESIGN.fc.alt', 0.0, units='ft'),
@@ -248,28 +259,29 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Pt'] = 14.6959
     prob['DESIGN.fc.balance.Tt'] = 518.67
 
-    W_guess = [168.0, 225.917, 168.005, 225.917, 166.074, 141.2, 61.70780608, 145.635, 71.53855266, 33.347]
-    FAR_guess = [.01755, .016289, .01755, .01629, .0168, .01689, 0.01872827, .016083, 0.01619524, 0.015170]
-    Nmech_guess = [8070., 8288.85, 8070, 8288.85, 8197.39, 8181.03, 8902.24164717, 8326.586, 8306.00268554, 8467.2404]
-    Pt_guess = [14.696, 22.403, 14.696, 22.403, 15.7034, 13.230, 4.41149502, 14.707, 7.15363767, 3.7009]
-    Tt_guess = [518.67, 585.035, 518.67, 585.04, 558.310, 553.409, 422.29146617, 595.796, 589.9425019, 646.8115]
-    PR_guess = [4.4613, 4.8185, 4.4613, 4.8185, 4.669, 4.6425, 4.42779036, 4.8803, 4.84652723, 5.11582]
+    W_guess = [168.0, 225., 168.005, 225.917, 166.074, 141.2, 61.70780608, 145.635, 71.53855266, 33.347]
+    FAR_guess = [.01755, .01, .01755, .01629, .0168, .01689, 0.01872827, .016083, 0.01619524, 0.015170]
+    Nmech_guess = [8070., 8000., 8070, 8288.85, 8197.39, 8181.03, 8902.24164717, 8326.586, 8306.00268554, 8467.2404]
+    PR_guess = [4.4613, 5., 4.4613, 4.8185, 4.669, 4.6425, 4.42779036, 4.8803, 4.84652723, 5.11582]
 
     for i, pt in enumerate(mp_abturbojet.od_pts):
-
         # initial guesses
         prob[pt+'.balance.W'] = W_guess[i]
         prob[pt+'.balance.FAR'] = FAR_guess[i]
         prob[pt+'.balance.Nmech'] = Nmech_guess[i]
-        prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
-        prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
         prob[pt+'.turb.PR'] = PR_guess[i]
 
     st = time.time()
 
     prob.set_solver_print(level=-1)
     prob.set_solver_print(level=2, depth=1)
+
+    prob['OD2.comp.PR'] = 10.
     prob.run_model()
+
+    # prob.model.OD2.list_outputs(residuals=True)
+
+    # exit()
 
     for pt in ['DESIGN']+mp_abturbojet.od_pts:
         viewer(prob, pt)

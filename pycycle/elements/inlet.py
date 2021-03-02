@@ -2,13 +2,14 @@
 
 import openmdao.api as om
 
-from pycycle.constants import AIR_ELEMENTS, g_c
+from pycycle.constants import g_c
 
 from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo
 
 from pycycle.flow_in import FlowIn
 from pycycle.passthrough import PassThrough
+from pycycle.element_base import Element
 
 #from pycycle.elements.test.util import regression_generator
 
@@ -88,7 +89,7 @@ class Calcs(om.ExplicitComponent):
         J['F_ram', 'W_in'] = inputs['V_in'] / g_c
 
 
-class Inlet(om.Group):
+class Inlet(Element):
     """
     Calculates ram-drag and exit flow conditions for an Inlet with
     specified MN (design) or area (off-design)
@@ -124,28 +125,27 @@ class Inlet(om.Group):
     """
 
     def initialize(self):
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set', recordable=False)
-        self.options.declare('elements', default=AIR_ELEMENTS,
-                              desc='set of elements present in the flow')
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
-        self.options.declare('design', default=True,
-                              desc='Switch between on-design and off-design calculation.')
 
         self.default_des_od_conns = [
             # (design src, off-design target)
             ('Fl_O:stat:area', 'area'),
         ]
 
+        super().initialize()
+
+    def pyc_setup_output_ports(self): 
+        self.copy_flow('Fl_I', 'Fl_O')
 
     def setup(self):
+        thermo_method = self.options['thermo_method']
         thermo_data = self.options['thermo_data']
-        elements = self.options['elements']
         statics = self.options['statics']
         design = self.options['design']
 
-        num_element = len(elements)
+        # elements = self.options['elements']
+        composition = self.Fl_I_data['Fl_I']
 
         # Create inlet flow station
         flow_in = FlowIn(fl_name='Fl_I')
@@ -159,8 +159,8 @@ class Inlet(om.Group):
 
         # Calculate real flow station properties
         real_flow = Thermo(mode='total_TP', fl_name='Fl_O:tot', 
-                           method='CEA', 
-                           thermo_kwargs={'elements':elements, 
+                           method=thermo_method, 
+                           thermo_kwargs={'composition':composition, 
                                           'spec':thermo_data})
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[('T', 'Fl_I:tot:T'), ('composition', 'Fl_I:tot:composition')],
@@ -174,8 +174,8 @@ class Inlet(om.Group):
                 #   Calculate static properties
 
                 out_stat = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                                  method='CEA', 
-                                  thermo_kwargs={'elements':elements, 
+                                  method=thermo_method, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[('composition', 'Fl_I:tot:composition'), ('W', 'Fl_I:stat:W'), 'MN'],
@@ -189,8 +189,8 @@ class Inlet(om.Group):
             else:
                 # Calculate static properties
                 out_stat = Thermo(mode='static_A', fl_name='Fl_O:stat', 
-                                  method='CEA', 
-                                  thermo_kwargs={'elements':elements, 
+                                  method=thermo_method, 
+                                  thermo_kwargs={'composition':composition, 
                                                  'spec':thermo_data})
                 prom_in = [('composition', 'Fl_I:tot:composition'),
                            ('W', 'Fl_I:stat:W'),
@@ -208,27 +208,12 @@ class Inlet(om.Group):
             self.add_subsystem('W_passthru', PassThrough('Fl_I:stat:W', 'Fl_O:stat:W', 0.0, units= "lbm/s"),
                                promotes=['*'])
 
-    
-if __name__ == "__main__":
-    from pycycle import constants
+        super().setup()
+        
+    def pyc_setup_thermo(self, upstream):
+        elements = self.options['elements']
+        
+        self.Fl_O_data = {
+            'Fl_O': upstream['Fl_I']
+        }
 
-    p = om.Problem()
-    p.model = Inlet(MilSpec=True)
-
-    thermo = species_data.Properties(species_data.janaf, constants.AIR_ELEMENTS)
-    p.model.set_input_defaults('Fl_I:tot:T', 284, units='degK')
-    p.model.set_input_defaults('Fl_I:tot:P', 5.0, units='lbf/inch**2')
-    p.model.set_input_defaults('Fl_I:stat:V', 0.0, units='ft/s')#keep
-    p.model.set_input_defaults('Fl_I:stat:W', 1, units='kg/s')
-    p.model.set_input_defaults('Fl_I:stat:MN', 1.3, units=None)
-    p.model.set_input_defaults('ram_recovery', 0.93, units=None)
-
-    p.setup()
-
-    #view_model(p)
-    p.run_model()
-    # print(p.get_val('Fl_I:tot:T', units='degK'))
-    p.model.list_outputs(units=True)
-
-    # generates regression testing setup
-    #regression_generator(p)
