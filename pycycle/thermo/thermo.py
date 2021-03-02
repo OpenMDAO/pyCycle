@@ -81,17 +81,19 @@ class Thermo(om.Group):
             bal = self.add_subsystem('balance', om.BalanceComp(), promotes_outputs=['T'])
 
             # TODO: need to add some kind of T/P ranges to the tabular thermo somehow
-            upper=7000 
+            lower=100.
+            upper=7000. 
             if method=="TABULAR": 
-                upper = 2500
+                upper = 2500.
+                lower=150.
 
             # all static calcs seek to match a given entropy, similar to a total_PS
             if ('SP' in mode) or ('static' in mode):
-                bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=150., upper=upper)
+                bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=lower, upper=upper)
                 self.promotes('balance', inputs=[('rhs:T','S')])
                 self.connect('base_thermo.S', 'balance.lhs:T')
             elif 'hP' in mode: 
-                bal.add_balance('T', val=500., units='degK', eq_units='cal/g', lower=150., upper=upper)
+                bal.add_balance('T', val=500., units='degK', eq_units='cal/g', lower=lower, upper=upper)
                 self.promotes('balance', inputs=[('rhs:T','h')])
                 self.connect('base_thermo.h', 'balance.lhs:T')
 
@@ -174,6 +176,7 @@ class Thermo(om.Group):
         # ln_bt = newton.linesearch = om.BoundsEnforceLS()
         ln_bt = newton.linesearch = om.ArmijoGoldsteinLS()
         ln_bt.options['maxiter'] = 2
+        # ln_bt.options['rho'] = 0.5
         ln_bt.options['iprint'] = 2
 
     def configure(self): 

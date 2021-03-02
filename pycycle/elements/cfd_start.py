@@ -14,6 +14,7 @@ class CFDStart(Element):
         
 
     def pyc_setup_output_ports(self): 
+        thermo_method = self.options['thermo_method']
         composition = self.options['composition']
         if composition is None: 
             composition = THERMO_DEFAULT_COMPOSITIONS[thermo_method]
