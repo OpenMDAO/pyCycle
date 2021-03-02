@@ -1,8 +1,13 @@
 import sys
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+
+# protection incase env doesn't have matplotlib installed, since its not strictly required
+try: 
+    import matplotlib
+    import matplotlib.pyplot as plt
+except ImportError: 
+  plt = None
 
 
 def print_flow_station(prob, fs_names, file=sys.stdout):
