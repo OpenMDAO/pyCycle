@@ -24,7 +24,7 @@ class TabThermoUnitTest(unittest.TestCase):
 
         p.run_model()
 
-        TOL = 3e-4 
+        TOL = 5e-4 
         assert_near_equal(p.get_val('h'), -940746.85004758, tolerance=TOL)
         assert_near_equal(p.get_val('S'),  7967.73852287, tolerance=TOL)
         assert_near_equal(p.get_val('gamma'),  1.3094714, tolerance=TOL)

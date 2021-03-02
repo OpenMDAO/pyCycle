@@ -94,16 +94,16 @@ class SetTotalSimpleTestCase(unittest.TestCase):
 
         p.run_model()
 
-        assert_near_equal(p['gamma'], 1.27532298, 1e-4)
-        assert_near_equal(p['T'], 2000, 1e-4)
+        assert_near_equal(p['gamma'], 1.27532298, 5e-4)
+        assert_near_equal(p['T'], 2000, 5e-4)
 
         # 1500K
 
         p.set_val('S', 8615.116554906986, units="J/kg/degK")
         p.run_model()
 
-        assert_near_equal(p['gamma'], 1.30444708, 1e-4)
-        assert_near_equal(p['T'], 1500, 1e-4)
+        assert_near_equal(p['gamma'], 1.30444708, 5e-4)
+        assert_near_equal(p['T'], 1500, 5e-4)
 
 
 class TestSetTotalTabular(unittest.TestCase): 
