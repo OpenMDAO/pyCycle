@@ -95,7 +95,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.run_model()
 
         assert_near_equal(p['gamma'], 1.27532298, 5e-4)
-        assert_near_equal(p['T'], 2000, 5e-4)
+        assert_near_equal(p['T'], 2000, 5e-3)
 
         # 1500K
 
@@ -103,7 +103,7 @@ class SetTotalSimpleTestCase(unittest.TestCase):
         p.run_model()
 
         assert_near_equal(p['gamma'], 1.30444708, 5e-4)
-        assert_near_equal(p['T'], 1500, 5e-4)
+        assert_near_equal(p['T'], 1500, 5e-3)
 
 
 class TestSetTotalTabular(unittest.TestCase): 
