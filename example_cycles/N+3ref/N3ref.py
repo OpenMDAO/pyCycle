@@ -117,11 +117,13 @@ class N3(pyc.Cycle):
 
             balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.lpt_PR', 'lpt.PR')
-            self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
+            self.connect('lp_shaft.pwr_in', 'balance.lhs:lpt_PR')
+            self.connect('lp_shaft.pwr_out', 'balance.rhs:lpt_PR')
 
             balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.hpt_PR', 'hpt.PR')
-            self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
+            self.connect('hp_shaft.pwr_in', 'balance.lhs:hpt_PR')
+            self.connect('hp_shaft.pwr_out', 'balance.rhs:hpt_PR')
 
             balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', use_mult=True, mult_val=-1)
             self.connect('balance.gb_trq', 'gearbox.trq_base')
