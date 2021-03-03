@@ -69,7 +69,7 @@ class N3(pyc.Cycle):
         self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv', ))
 
         self.add_subsystem('fan_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','Fan_Nmech')])
-        self.add_subsystem('gearbox', pyc.Gearbox(design=design), promotes_inputs=[('N_in','LP_Nmech'), ('N_out','Fan_Nmech')])
+        self.add_subsystem('gearbox', pyc.Gearbox(), promotes_inputs=[('N_in','LP_Nmech'), ('N_out','Fan_Nmech')])
         self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3), promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2), promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
