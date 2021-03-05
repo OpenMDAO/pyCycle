@@ -8,7 +8,8 @@ setup(name='pycycle',
           'pycycle/thermo/cea',
           'pycycle/thermo/cea/thermo_data',
           'pycycle/elements', 
-          'pycycle/maps'
+          'pycycle/maps',
+          'pycycle/thermo/tabular'
       ],
 
       install_requires=[
