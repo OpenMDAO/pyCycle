@@ -115,20 +115,17 @@ class N3(pyc.Cycle):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
 
-            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('lpt_PR', val=10.937, lower=1.001, upper=20, eq_units='hp', rhs_val=0., res_ref=1e4)
             self.connect('balance.lpt_PR', 'lpt.PR')
-            self.connect('lp_shaft.pwr_in', 'balance.lhs:lpt_PR')
-            self.connect('lp_shaft.pwr_out', 'balance.rhs:lpt_PR')
+            self.connect('lp_shaft.pwr_net', 'balance.lhs:lpt_PR')
 
-            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('hpt_PR', val=4.185, lower=1.001, upper=8, eq_units='hp', rhs_val=0., res_ref=1e4)
             self.connect('balance.hpt_PR', 'hpt.PR')
-            self.connect('hp_shaft.pwr_in', 'balance.lhs:hpt_PR')
-            self.connect('hp_shaft.pwr_out', 'balance.rhs:hpt_PR')
+            self.connect('hp_shaft.pwr_net', 'balance.lhs:hpt_PR')
 
-            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('gb_trq', val=23928.0, units='ft*lbf', eq_units='hp', rhs_val=0., res_ref=1e4)
             self.connect('balance.gb_trq', 'gearbox.trq_base')
-            self.connect('fan_shaft.pwr_in', 'balance.lhs:gb_trq')
-            self.connect('fan_shaft.pwr_out', 'balance.rhs:gb_trq')
+            self.connect('fan_shaft.pwr_net', 'balance.lhs:gb_trq')
 
             balance.add_balance('hpc_PR', val=14.0, units=None, eq_units=None)
             self.connect('balance.hpc_PR', ['hpc.PR', 'opr_calc.HPCPR'])
@@ -200,20 +197,17 @@ class N3(pyc.Cycle):
             self.connect('balance.BPR', 'splitter.BPR')
             self.connect('fan.map.RlineMap', 'balance.lhs:BPR')
 
-            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('fan_Nmech', val=2000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
             self.connect('balance.fan_Nmech', 'Fan_Nmech')
-            self.connect('fan_shaft.pwr_in', 'balance.lhs:fan_Nmech')
-            self.connect('fan_shaft.pwr_out', 'balance.rhs:fan_Nmech')
+            self.connect('fan_shaft.pwr_net', 'balance.lhs:fan_Nmech')
 
-            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('lp_Nmech', val=6000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
             self.connect('balance.lp_Nmech', 'LP_Nmech')
-            self.connect('lp_shaft.pwr_in', 'balance.lhs:lp_Nmech')
-            self.connect('lp_shaft.pwr_out', 'balance.rhs:lp_Nmech')
+            self.connect('lp_shaft.pwr_net', 'balance.lhs:lp_Nmech')
 
-            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', use_mult=True, mult_val=-1)
+            balance.add_balance('hp_Nmech', val=20000.0, units='rpm', lower=500., eq_units='hp', rhs_val=0., res_ref=1e2)
             self.connect('balance.hp_Nmech', 'HP_Nmech')
-            self.connect('hp_shaft.pwr_in', 'balance.lhs:hp_Nmech')
-            self.connect('hp_shaft.pwr_out', 'balance.rhs:hp_Nmech')
+            self.connect('hp_shaft.pwr_net', 'balance.lhs:hp_Nmech')
 
             order_add = []
 
@@ -274,7 +268,7 @@ class N3(pyc.Cycle):
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-4
-        newton.options['rtol'] = 1e-99
+        newton.options['rtol'] = 1e-4
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 10
         newton.options['solve_subsystems'] = True
@@ -512,7 +506,7 @@ class MPN3(pyc.MPCycle):
         newton.options['maxiter'] = 20
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 10
-        newton.options['err_on_non_converge'] = False # True
+        newton.options['err_on_non_converge'] = True
         newton.options['reraise_child_analysiserror'] = False
         newton.linesearch =  om.BoundsEnforceLS()
         newton.linesearch.options['bound_enforcement'] = 'scalar'
@@ -582,8 +576,6 @@ if __name__ == "__main__":
     fan_Nmech_guess = [2132.6, 1953.1, 2118.7]
     lp_Nmech_guess = [6611.2, 6054.5, 6567.9]
     hp_Nmech_guess = [22288.2, 21594.0, 20574.1]
-    Pt_guess = [15.349, 14.696, 5.272]
-    Tt_guess = [552.49, 545.67, 444.41]
     hpt_PR_guess = [4.210, 4.245, 4.197]
     lpt_PR_guess = [8.161, 7.001, 10.803]
     fan_Rline_guess = [1.7500, 1.7500, 1.9397]
@@ -600,8 +592,6 @@ if __name__ == "__main__":
         prob[pt+'.balance.fan_Nmech'] = fan_Nmech_guess[i]
         prob[pt+'.balance.lp_Nmech'] = lp_Nmech_guess[i]
         prob[pt+'.balance.hp_Nmech'] = hp_Nmech_guess[i]
-        # prob[pt+'.fc.balance.Pt'] = Pt_guess[i]
-        # prob[pt+'.fc.balance.Tt'] = Tt_guess[i]
         prob[pt+'.hpt.PR'] = hpt_PR_guess[i]
         prob[pt+'.lpt.PR'] = lpt_PR_guess[i]
         prob[pt+'.fan.map.RlineMap'] = fan_Rline_guess[i]
