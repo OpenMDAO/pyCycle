@@ -142,6 +142,8 @@ class Mixer(Element):
         self.options.declare('internal_solver', default=True,
                               desc='If True, a newton solver is used inside the mixer to converge the impulse balance')
 
+        
+
         super().initialize()
 
     def pyc_setup_output_ports(self): 
@@ -172,6 +174,16 @@ class Mixer(Element):
         in_flow = FlowIn(fl_name='Fl_I2')
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
+        if self.options['designed_stream'] == 1:
+            self.default_des_od_conns = [
+                ('Fl_O:stat:area', 'area'), 
+                ('Fl_I1_calc:stat:area', 'Fl_I1_stat_calc.area')
+            ]
+        else:
+            self.default_des_od_conns = [
+                ('Fl_O:stat:area', 'area'), 
+                ('Fl_I2_calc:stat:area', 'Fl_I2_stat_calc.area')
+            ]
 
         if design:
             # internal flow station to compute the area that is needed to match the static pressures
@@ -254,14 +266,14 @@ class Mixer(Element):
         if self.options['internal_solver']:
             newton = conv.nonlinear_solver = om.NewtonSolver()
             newton.options['maxiter'] = 30
-            newton.options['atol'] = 1e-2
+            newton.options['atol'] = 1e-5
+            newton.options['rtol'] = 1e-99
             newton.options['solve_subsystems'] = True
             newton.options['max_sub_solves'] = 20
             newton.options['reraise_child_analysiserror'] = False
             newton.linesearch = om.BoundsEnforceLS()
-            newton.linesearch.options['bound_enforcement'] = 'scalar'
             newton.linesearch.options['iprint'] = -1
-            conv.linear_solver = om.DirectSolver(assemble_jac=True)
+            conv.linear_solver = om.DirectSolver()
 
         out_tot = Thermo(mode='total_hP', fl_name='Fl_O:tot', 
                          method=thermo_method, 

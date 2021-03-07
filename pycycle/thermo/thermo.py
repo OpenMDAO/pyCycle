@@ -35,6 +35,7 @@ class Thermo(om.Group):
                              desc='Defines the thermodynamic data to be used in computations', recordable=False)
 
     def setup(self):
+
         method = self.options['method']
         mode = self.options['mode']
 

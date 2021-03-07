@@ -21,14 +21,7 @@ class BPRcalc(om.ExplicitComponent):
         self.add_output('W2', 0.56, desc='Weight flow for Fl_O2', units='lbm/s')
 
         self.declare_partials('*', '*')
-
-        self.default_des_od_conns = [
-            # (design src, off-design target)
-            ('Fl_O1:stat:area', 'area1'), 
-            ('Fl_O2:stat:area', 'area2'), 
-        ]    
-
-
+ 
 
     def compute(self, inputs, outputs):
         BPR = inputs['BPR']
@@ -85,6 +78,11 @@ class Splitter(Element):
     def initialize(self):
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
+
+        self.default_des_od_conns = [
+            ('Fl_O1:stat:area', 'area1'),
+            ('Fl_O2:stat:area', 'area2')
+        ]
 
         super().initialize()
 
