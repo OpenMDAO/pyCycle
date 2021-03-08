@@ -46,9 +46,10 @@ class MixerTestcase(unittest.TestCase):
         p.set_solver_print(level=-1)
 
         p.setup()
-        p['mixer.balance.P_tot'] = 17
+
         p.run_model()
-        tol = 2e-7
+
+        tol = 1e-6
         assert_near_equal(p['mixer.Fl_O:stat:area'], 2*p['start1.Fl_O:stat:area'], tolerance=tol)
         assert_near_equal(p['mixer.Fl_O:tot:P'], p['P'], tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1, tolerance=tol)
@@ -79,9 +80,9 @@ class MixerTestcase(unittest.TestCase):
 
         p.setup()
         p.run_model()
-        tol = 2e-7
+        tol = 1e-6
         assert_near_equal(p['mixer.Fl_O:stat:area'], 653.26524074, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.7943609, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 15.89206597, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.1333333333, tolerance=tol)
 
     def test_mix_air_with_airfuel(self):
@@ -116,9 +117,9 @@ class MixerTestcase(unittest.TestCase):
 
         p.run_model()
 
-        tol = 5e-7
+        tol = 1e-6
         assert_near_equal(p['mixer.Fl_O:stat:area'], 2786.86877031, tolerance=tol)
-        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.8881475, tolerance=tol)
+        assert_near_equal(p['mixer.Fl_O:tot:P'], 8.87520497, tolerance=tol)
         assert_near_equal(p['mixer.ER'], 1.06198157, tolerance=tol)
 
         partials = p.check_partials(includes=['mixer.area_calc*', 'mixer.mix_flow*', 'mixer.imp_out*'], out_stream=None, method='cs')

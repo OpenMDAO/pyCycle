@@ -113,7 +113,6 @@ class Cycle(om.Group):
 
             queue.extend(G.successors(node))
 
-
             if node not in visited: 
 
                 if node_type == 'element': 

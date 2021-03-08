@@ -181,6 +181,8 @@ class ThermoAdd(om.ExplicitComponent):
                 b0_out += self.mix_out_flow_idx_maps[name].dot(mix_stuff)
                 W_out += W_mix
 
+                mass_avg_h += inputs[f'{name}:h'] * W_mix
+
         b0_out /= np.sum(b0_out) # scale back to 1 kg
         outputs['composition_out'] = b0_out/self.mixed_wt_mole
 

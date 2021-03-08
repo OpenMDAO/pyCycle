@@ -104,16 +104,17 @@ class ThermoAddTestCase(unittest.TestCase):
 
         p['Fl_I:stat:W'] = 62.15
         p['Fl_I:tot:composition'] = [0.000313780313538, 0.0021127831122, 0.004208814234964, 0.052325087161902, 0.014058631311261]
+        p['Fl_I:tot:h'] = 10. 
 
         p['mix:W'] = 4.44635
         p['mix:composition'] = [3.23319258e-04, 1.10132241e-05, 5.39157736e-02, 1.44860147e-02]
-
+        p['mix:h'] = 5
         p.run_model()
 
         tol = 5e-7
         assert_near_equal(p['Wout'], 62.15+4.44635, tolerance=tol)
-        # assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
         assert_near_equal(p['composition_out'], np.array([0.00031442, 0.00197246, 0.00392781, 0.05243129, 0.01408717]), tolerance=tol)
+        assert_near_equal(p['mass_avg_h'], (62.15*10+4.44635*5)/(62.15+4.44635), tol)
 
     def test_mix_2flow(self): 
 
