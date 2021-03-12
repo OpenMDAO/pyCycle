@@ -112,9 +112,6 @@ class MPpropulsor(pyc.MPCycle):
 
     def setup(self):
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
-
         design = self.pyc_add_pnt('design', Propulsor(design=True, thermo_method='CEA'))
         self.pyc_add_cycle_param('pwr_target', 100.)
 

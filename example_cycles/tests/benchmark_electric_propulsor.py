@@ -54,7 +54,7 @@ class ElectricPropulsorTestCase(unittest.TestCase):
 
         prob.run_model()
 
-        tol = 1e-5
+        tol = 3e-5
         assert_near_equal(prob['design.fc.Fl_O:stat:W'], 409.636, tol)
         assert_near_equal(prob['design.nozz.Fg'], 12139.282, tol)
         assert_near_equal(prob['design.fan.SMN'], 36.64057531, tol)
