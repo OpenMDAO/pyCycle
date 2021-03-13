@@ -28,7 +28,7 @@ class Cycle(om.Group):
         self._flow_graph = nx.DiGraph()
 
         # flag needed for user focused error checking to make sure they called super in their sub-class
-        self.__base_class_super_called = False
+        self._base_class_super_called = False
 
         self._children = {}
 
@@ -62,13 +62,13 @@ class Cycle(om.Group):
 
             self._flow_graph.add_node(name, type='element')
 
-        #TODO: Find some way to error check based on __base_class_super_called to let user know they forgot a call to super
+        #TODO: Find some way to error check based on _base_class_super_called to let user know they forgot a call to super
         return super().add_subsystem(name, subsys, **kwargs)
 
 
     def setup(self): 
 
-        self.__base_class_super_called = True
+        self._base_class_super_called = True
 
 
         # Code that follows the flow-graph and propagates thermo setup data down the chain
@@ -140,7 +140,8 @@ class Cycle(om.Group):
                         target_element.Fl_I_data[in_port] = src_element.Fl_O_data[out_port]
 
                 visited.add(node)
-       
+
+
     def pyc_connect_flow(self, fl_src, fl_target, connect_stat=True, connect_tot=True, connect_w=True):
         """ 
         helper function to connect all of the flow variables between two ports 
@@ -192,22 +193,6 @@ class MPCycle(om.Group):
         self._use_default_des_od_conns = False
         super(MPCycle, self).__init__(**kwargs)
 
-
-    def initialize(self): 
-
-        self.options.declare('thermo_method', values=ALLOWED_THERMOS, default='CEA',
-                              desc='Method for computing thermodynamic properties')
-
-        self.options.declare('thermo_data', default=species_data.janaf,
-                              desc='thermodynamic data set.', 
-                              recordable=False)
-
-
-    def setup(self): 
-
-        for pnt in self._od_pnts + [self._des_pnt]: 
-            pnt.options['thermo_method'] = self.options['thermo_method']
-            pnt.options['thermo_data'] = self.options['thermo_data']
 
     def pyc_add_cycle_param(self, name, val, units=None): 
 
@@ -279,8 +264,5 @@ class MPCycle(om.Group):
                             self.connect( f'{self._des_pnt.name}.{elem.name}.{src}', f'{od_pnt.name}.{elem.name}.{target}')
                 except AttributeError: 
                     pass # no des-to-od conns defined
-
-
-
 
 
