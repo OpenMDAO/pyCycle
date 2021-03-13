@@ -163,9 +163,6 @@ class MPSingleSpool(pyc.MPCycle):
 
     def setup(self):
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
-
         # Create design instance of model
         self.pyc_add_pnt('DESIGN', SingleSpoolTurboshaft(thermo_method='CEA'))
 

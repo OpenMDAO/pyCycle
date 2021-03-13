@@ -198,9 +198,6 @@ class MPMultiSpool(pyc.MPCycle):
 
     def setup(self):
 
-        self.options['thermo_method'] = 'CEA'
-        self.options['thermo_data'] = pyc.species_data.janaf
-
         self.pyc_add_pnt('DESIGN', MultiSpoolTurboshaft(thermo_method='CEA'))
 
         self.set_input_defaults('DESIGN.inlet.MN', 0.4),
