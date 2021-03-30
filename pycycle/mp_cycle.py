@@ -32,6 +32,11 @@ class Cycle(om.Group):
 
         self._children = {}
 
+    def _setup_check(self): 
+
+        if not self._base_class_super_called: 
+            raise NotImplementedError(f"`super.setup()` has not been called within the setup method of f{self.__class__}")
+        
     def pyc_add_element(self, name, element, **kwargs):
         """
         A thin wrapper around `add_subsystem` to keep track of 
