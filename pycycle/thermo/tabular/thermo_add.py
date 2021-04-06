@@ -16,7 +16,7 @@ class ThermoAdd(om.ExplicitComponent):
     """
 
     def initialize(self):
-        self.options.declare('spec', types=str, default=AIR_JETA_TAB_SPEC)
+        self.options.declare('spec', default=AIR_JETA_TAB_SPEC, recordable=False)
         self.options.declare('inflow_composition', default=None, 
                              desc='composition present in the inflow')
 
