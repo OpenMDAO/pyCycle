@@ -9,8 +9,6 @@ class ABTurbojet(pyc.Cycle):
 
     def setup(self):
 
-        # Note: Tabular is unstable for this cycle with default thermo data. 
-        # Need a finer grid for the OD2 point
         USE_TABULAR = True
 
         if USE_TABULAR: 

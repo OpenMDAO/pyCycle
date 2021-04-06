@@ -1,6 +1,5 @@
 import numpy as np
 import openmdao.api as om
-import pickle
 
 from pycycle.constants import TAB_AIR_FUEL_COMPOSITION, AIR_JETA_TAB_SPEC
 
