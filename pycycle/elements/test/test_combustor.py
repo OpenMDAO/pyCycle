@@ -123,7 +123,7 @@ class BurnerTestCase(unittest.TestCase):
             print('')
 
             partial_data = prob.check_partials(out_stream=None, method='cs', 
-                                               includes=['combustor.*',], excludes=['*.base_thermo.*',])
+                                               includes=['combustor.*',], excludes=['*.base_thermo.*', '*.mix_fuel.*'])
             assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 

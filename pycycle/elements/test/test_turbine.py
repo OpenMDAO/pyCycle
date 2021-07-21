@@ -168,7 +168,7 @@ class TurbineTestCase(unittest.TestCase):
             assert_near_equal(npss, pyc, tol)
 
             partial_data = self.prob.check_partials(out_stream=None, method='cs', 
-                                                    includes=['turbine.*'], excludes=['*.base_thermo.*',])
+                                                    includes=['turbine.*'], excludes=['*.base_thermo.*', '*.mix_fuel.*', '*.thermo_add'])
             assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
 if __name__ == "__main__":

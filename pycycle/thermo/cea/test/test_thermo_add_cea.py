@@ -47,8 +47,8 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
         # data = p.check_partials(out_stream=None, method='cs')
-        data = p.check_partials(method='cs')
-        assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
+        data = p.check_partials(method='fd')
+        assert_check_partials(data, atol=2.e-4, rtol=2.e-4) # can't get very accurate checks with FD
 
     def test_mix_2fuel(self): 
 
@@ -86,9 +86,9 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['fuel2:W'], p['Fl_I:stat:W']*ratio, tolerance=tol)
         assert_near_equal(p['composition_out'], np.array([0.0003149, 0.00186566, 0.00371394, 0.05251212, 0.01410888]), tolerance=tol)
 
-        data = p.check_partials(out_stream=None, method='cs')
+        data = p.check_partials(out_stream=None, method='fd')
         # data = p.check_partials(method='cs')
-        assert_check_partials(data, atol=1.e-6, rtol=1.e-6)
+        assert_check_partials(data, atol=2.e-4, rtol=2.e-4) # can't get very accurate checks with FD
 
     def test_mix_1flow(self): 
 
