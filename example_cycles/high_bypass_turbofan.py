@@ -386,9 +386,6 @@ if __name__ == "__main__":
 
     prob.setup()
 
-    om.n2(prob)
-    exit()
-
     prob.set_val('DESIGN.fan.PR', 1.685)
     prob.set_val('DESIGN.fan.eff', 0.8948)
 
