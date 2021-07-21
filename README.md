@@ -11,6 +11,20 @@ Disclosure: The docs are nearly non-existent. We're hoping to improve this, but 
 We suggest you look in the examples folder for some indications of how to run this code. 
 Also, you can read [the paper on pyCycle](https://www.mdpi.com/2226-4310/6/8/87/pdf) which goes into a lot of detail that is very relevant. 
 
+## OpenMDAO Version Compatibility
+----------------------------------
+pyCycle is built on top of OpenMDAO, and thus depends on it. 
+Here is the OpenMDAO version you need for the specific versions of pyCycle
+
+| pyCycle version  | OpenMDAO version  |
+| -----------------| ----------------  |
+| 3.0.0            | 2.8.0 thru 3.1.1  |
+| 3.2.0            | 3.2.0 thru 3.5.0  |
+| 3.4.0            | 3.3.0 thru 3.5.0  |
+| 3.5.0            | 3.5.0 thru 3.7.0  |
+| 4.0.0            | 3.7.0 or greater  |
+| 4.1.0            | 3.10.0 or greater |
+
 
 ## Version 4.0 Announcements
 Version 4.0 officially supports multiple thermodynamic packages. 
@@ -45,19 +59,6 @@ Over all the, changes are pretty minor, but their impact is significant.
 The changes to the Element initialization not only make models simpler, 
 they also make them thermo-agnostic. 
 
-
-## OpenMDAO Version Compatibility
-----------------------------------
-pyCycle is built on top of OpenMDAO, and thus depends on it. 
-Here is the OpenMDAO version you need for the specific versions of pyCycle
-
-| pyCycle version  | OpenMDAO version  |
-| -----------------| ----------------  |
-| 3.0.0            | 2.8.0 thru 3.1.1  |
-| 3.2.0            | 3.2.0 thru 3.5.0  |
-| 3.4.0            | 3.3.0 thru 3.5.0  |
-| 3.5.0            | 3.5.0 thru 3.7.0  |
-| 4.0.0            | 3.7.0 or greater  |
 
 
 ## Citation

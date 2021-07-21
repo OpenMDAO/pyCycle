@@ -159,7 +159,7 @@ class MPTurbojet(pyc.MPCycle):
     def setup(self):
 
         # Create design instance of model
-        self.pyc_add_pnt('DESIGN', Turbojet(thermo_method='CEA'))
+        self.pyc_add_pnt('DESIGN', Turbojet())
 
         self.set_input_defaults('DESIGN.Nmech', 8070.0, units='rpm')
         self.set_input_defaults('DESIGN.inlet.MN', 0.60)
