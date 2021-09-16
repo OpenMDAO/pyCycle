@@ -23,7 +23,7 @@ class UnitCompBase(ExplicitComponent):
 
             meta = rel2meta[in_name]
             new_meta = {k:v for k, v in meta.items() if k in _allowed_out_args}
-            meta_val = meta['val']
+            meta_val = meta['value']
             if isinstance(meta_val, float): 
                 val = meta_val
             else: 
