@@ -127,10 +127,8 @@ class TurbineMap(om.Group):
 
         if design:
             # In design mode, operating point specified by default values for RlineMap, NcMap and alphaMap
-            mapDesPt = om.IndepVarComp()
-            mapDesPt.add_output('NpMap', val=map_data.defaults['NpMap'], units='rpm')
-            mapDesPt.add_output('PRmap', val=map_data.defaults['PRmap'], units=None)
-            self.add_subsystem('mapDesPt', subsys=mapDesPt, promotes=['*'])
+            self.set_input_defaults('NpMap', val=map_data.defaults['NpMap'], units='rpm')
+            self.set_input_defaults('PRmap', val=map_data.defaults['PRmap'], units=None)
 
             # Evaluate map using design point values
             self.add_subsystem('readMap', readmap, promotes_inputs=['alphaMap', 'NpMap', 'PRmap'],
@@ -153,7 +151,7 @@ class TurbineMap(om.Group):
 
             # Use balance component to vary NpMap and PRmap to match incoming corrected flow and speed
             map_bal = om.BalanceComp()
-            map_bal.add_balance('NpMap', val=map_data.defaults['NpMap'], units='rpm', eq_units='rpm', lower=1., upper=200.)
+            map_bal.add_balance('NpMap', val=map_data.defaults['NpMap'], units='rpm', eq_units='rpm', lower=.1, upper=200.)
             map_bal.add_balance('PRmap', val=map_data.defaults['PRmap'], units=None,
                                 eq_units='lbm/s', lower=1.01)
             self.add_subsystem(name='map_bal', subsys=map_bal,

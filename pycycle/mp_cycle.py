@@ -138,7 +138,7 @@ class Cycle(om.Group):
                         # 1) there is a sub-cycle that you need to push into 
                         #        in this case, get the containing sub-cycle and push some starting nodes into its graph based on this linkage
                         # 2) they made a mistake in the element name, so throw an error
-                        print(node_parents[link[1]])
+                        # print(node_parents[link[1]])
 
                         out_port = node_port_names[node]
                         in_port = node_port_names[link[1]]

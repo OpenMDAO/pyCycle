@@ -183,10 +183,8 @@ class CompressorMap(om.Group):
         # Create instance of map for evaluating actual operating point
         if design:
             # In design mode, operating point specified by default values for RlineMap, NcMap and alphaMap
-            mapDesPt = om.IndepVarComp()
-            mapDesPt.add_output('NcMap', val=map_data.defaults['NcMap'], units='rpm')
-            mapDesPt.add_output('RlineMap', val=map_data.defaults['RlineMap'], units=None)
-            self.add_subsystem('mapDesPt', subsys=mapDesPt, promotes=['*'])
+            self.set_input_defaults('RlineMap', val=map_data.defaults['RlineMap'], units=None)
+            self.set_input_defaults('NcMap', val=map_data.defaults['NcMap'], units='rpm')
 
             # Evaluate map using design point values
             self.add_subsystem('map', readmap, promotes_inputs=['RlineMap', 'NcMap', 'alphaMap'],

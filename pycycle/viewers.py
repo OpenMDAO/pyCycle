@@ -42,19 +42,19 @@ def print_flow_station(prob, fs_names, file=sys.stdout):
 
 def print_compressor(prob, element_names, file=sys.stdout):
 
-    len_header = 17+12*13
+    len_header = 17+14*13
     # print("-"*len_header)
     print("-"*len_header, file=file, flush=True)
     print("                          COMPRESSOR PROPERTIES", file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
-    line_tmpl = '{:<14}|  '+'{:>11}'*12
-    print(line_tmpl.format('Compressor', 'Wc', 'Pr', 'eta_a', 'eta_p', 'Nc', 'pwr', 'RlineMap', 'NcMap', 'PRmap', 'alphaMap', 'SMN', 'SMW'),
+    line_tmpl = '{:<14}|  '+'{:>11}'*14
+    print(line_tmpl.format('Compressor', 'Wc', 'Pr', 'eta_a', 'eta_p', 'Nc', 'pwr', 'RlineMap', 'NcMap', 'WcMap', 'PRmap', 'alphaMap', 'SMN', 'SMW', 'effMap'),
           file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
 
-    line_tmpl = '{:<14}|  '+'{:11.3f}'*12
+    line_tmpl = '{:<14}|  '+'{:11.3f}'*14
     for e_name in element_names:
         sys = prob.model._get_subsystem(e_name)
         if sys.options['design']:
@@ -66,8 +66,8 @@ def print_compressor(prob, element_names, file=sys.stdout):
 
         print(line_tmpl.format(e_name, prob[e_name+'.Wc'][0], PR_temp,
                                eff_temp, prob[e_name+'.eff_poly'][0], prob[e_name+'.Nc'][0], prob[e_name+'.power'][0],
-                               prob[e_name+'.map.RlineMap'][0], prob[e_name+'.map.NcMap'][0],prob[e_name+'.map.PRmap'][0],
-                               prob[e_name+'.map.map.alphaMap'][0], prob[e_name+'.SMN'][0], prob[e_name+'.SMW'][0]),
+                               prob[e_name+'.map.RlineMap'][0], prob[e_name+'.map.NcMap'][0],prob[e_name+'.map.PRmap'][0], prob[e_name+'.map.WcMap'][0],
+                               prob[e_name+'.map.map.alphaMap'][0], prob[e_name+'.SMN'][0], prob[e_name+'.SMW'][0], prob[e_name+'.map.effMap'][0]),
               file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
@@ -96,17 +96,17 @@ def print_burner(prob, element_names, file=sys.stdout):
 
 def print_turbine(prob, element_names, file=sys.stdout):
 
-    len_header = 17+7*13
+    len_header = 17+9*13
     print("-"*len_header, file=file, flush=True)
     print("                            TURBINE PROPERTIES", file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
-    line_tmpl = '{:<14}|  '+'{:>13}'*7
-    print(line_tmpl.format('Turbine', 'Wp', 'PR', 'eff', 'Np', 'pwr', 'NpMap', 'PRmap'),
+    line_tmpl = '{:<14}|  '+'{:>13}'*9
+    print(line_tmpl.format('Turbine', 'Wp', 'PR', 'eff_a', 'eff_p', 'Np', 'pwr', 'NpMap', 'PRmap', 'alphaMap'),
         file=file, flush=True)
 
 
-    line_tmpl = '{:<14}|  '+'{:13.3f}'*7
+    line_tmpl = '{:<14}|  '+'{:13.3f}'*9
     for e_name in element_names:
         sys = prob.model._get_subsystem(e_name)
         if sys.options['design']:
@@ -117,8 +117,8 @@ def print_turbine(prob, element_names, file=sys.stdout):
           eff_temp = prob[e_name+'.eff'][0]
 
         print(line_tmpl.format(e_name, prob[e_name+'.Wp'][0], PR_temp,
-                               eff_temp, prob[e_name+'.Np'][0], prob[e_name+'.power'][0],
-                               prob[e_name+'.map.NpMap'][0], prob[e_name+'.map.PRmap'][0]),
+                               eff_temp, prob[e_name+'.eff_poly'][0], prob[e_name+'.Np'][0], prob[e_name+'.power'][0],
+                               prob[e_name+'.map.NpMap'][0], prob[e_name+'.map.PRmap'][0], prob[e_name+'.map.alphaMap'][0]),
               file=file, flush=True)
 
 
