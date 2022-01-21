@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='pycycle',
-      version='3.9.9',
+      version='4.1.1',
       packages=[
           'pycycle',
           'pycycle/thermo',
@@ -13,6 +13,6 @@ setup(name='pycycle',
       ],
 
       install_requires=[
-        'openmdao>=3.5.0',
+        'openmdao>=3.13.0',
       ],
 )
