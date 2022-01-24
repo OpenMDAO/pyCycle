@@ -33,7 +33,7 @@ setup(name='pycycle',
       ],
 
       install_requires=[
-        'openmdao>=3.13.0',
+        'openmdao>=3.10.0',
       ],
     package_data={
         'pycycle.elements.test': ['reg_data/*.csv'],

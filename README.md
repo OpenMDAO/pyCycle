@@ -23,7 +23,7 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | 3.4.0            | 3.3.0 thru 3.5.0  |
 | 3.5.0            | 3.5.0 thru 3.7.0  |
 | 4.0.0            | 3.7.0 or greater  |
-| 4.1.0            | 3.10.0 or greater |
+| 4.1.x            | 3.10.0 or greater |
 
 
 ## Version 4.0 Announcements
@@ -81,6 +81,18 @@ If you use pyCycle, please cite this paper:
 
 ## Installation 
 
+### PyPI
+
+    If you want to install from PyPI then do the following: 
+
+    pip install pycycle
+
+    or, if you want to install the (optional) additional testing tools 
+
+    pip install 'openmdao[all]'
+
+### Clone
+
 clone this repo, and checkout the specific version you want to run: 
 
     git clone https://github.com/OpenMDAO/pyCycle
@@ -105,3 +117,16 @@ or for pyCycle V4.0.0:
 Use pip to install: 
 
     pip install -e .
+
+
+## Testing 
+
+After installation if you wat to run the unit test suite you can do so via the `testflo` command: 
+
+    testflo pycycle
+
+This will run all the unit tests within the pycycle repository, but note that it will NOT run the longer regression tests from the 
+`example_cycles` folder. 
+If you want to run the regression tests, then you need to clone the repository, CD into the `example_cycles` folder and call 
+
+    testflo .
