@@ -1,4 +1,12 @@
-from distutils.core import setup
+import re
+import sys
+
+from setuptools import setup
+
+__version__ = re.findall(
+    r"""__version__ = ["']+([0-9\.\-dev]*)["']+""",
+    open('openmdao/__init__.py').read(),
+)[0]
 
 # optional dependencies, by category (currently just 'test')
 optional_dependencies = {
@@ -15,7 +23,12 @@ optional_dependencies['all'] = sorted([
 ])
 
 setup(name='om-pycycle',
-      version='4.2',
+      version=__version__,
+      description="pyCycle -- Thermodynamic Cycle modeling library",
+      long_description="""pyCycle is an open-source library for modeling of turbine based propulsion and power generation systems.
+      It is a modular library, allowing you to build up a turbine based system from basic blocks like `inlet`, `compressor`, `turbine`, and `nozzle`. 
+      """,
+
       packages=[
           'pycycle',
           'pycycle.elements',
