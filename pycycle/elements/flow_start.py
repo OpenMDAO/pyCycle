@@ -6,6 +6,7 @@ from pycycle.thermo.cea import species_data
 from pycycle.thermo.thermo import Thermo, ThermoAdd
 from pycycle.constants import THERMO_DEFAULT_COMPOSITIONS
 from pycycle.element_base import Element
+from pycycle.passthrough import PassThrough
 
 
 class FlowStart(Element):
@@ -21,6 +22,9 @@ class FlowStart(Element):
 
         self.options.declare('mix_ratio_name', default='mix:ratio', 
                              desc='The name of the input that governs the mix ratio of the reactant to the primary flow')
+
+        self.options.declare('compute_stat', default=True, 
+                             desc='Computes the static properties of the output flow')
 
         super().initialize()
 
@@ -72,18 +76,21 @@ class FlowStart(Element):
         self.add_subsystem('totals', set_TP, promotes_inputs=in_vars,
                            promotes_outputs=('Fl_O:tot:*',))
 
-        set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
-                             method=thermo_method, 
-                             thermo_kwargs={'composition':composition, 
-                                            'spec':thermo_data} )
+        if self.options['compute_stat']:
+            set_stat_MN = Thermo(mode='static_MN', fl_name='Fl_O:stat', 
+                                method=thermo_method, 
+                                thermo_kwargs={'composition':composition, 
+                                                'spec':thermo_data} )
 
-        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'composition'),
-                           promotes_outputs=('Fl_O:stat:*', ))
+            self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'composition'),
+                            promotes_outputs=('Fl_O:stat:*', ))
 
-        self.connect('totals.h','exit_static.ht')
-        self.connect('totals.S','exit_static.S')
-        self.connect('Fl_O:tot:P','exit_static.guess:Pt')
-        self.connect('totals.gamma', 'exit_static.guess:gamt')
+            self.connect('totals.h','exit_static.ht')
+            self.connect('totals.S','exit_static.S')
+            self.connect('Fl_O:tot:P','exit_static.guess:Pt')
+            self.connect('totals.gamma', 'exit_static.guess:gamt')
+        else:
+            self.add_subsystem('pt', PassThrough('W', 'Fl_O:stat:W', 1, units='lbm/s'), promotes=['*'])
 
         super().setup()
 
