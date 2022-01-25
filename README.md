@@ -24,6 +24,7 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | 3.5.0            | 3.5.0 thru 3.7.0  |
 | 4.0.0            | 3.7.0 or greater  |
 | 4.1.x            | 3.10.0 or greater |
+| 4.2.0            | 3.10.0 or greater |
 
 ## Version 4.2 --- PyPI release
 No significant code changes, but minor adjustments to the package name in `setup.py` to enable publishing to PyPI. 
