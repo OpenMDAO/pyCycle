@@ -25,41 +25,8 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | 4.0.0            | 3.7.0 or greater  |
 | 4.1.x            | 3.10.0 or greater |
 
-
-## Version 4.0 Announcements
-Version 4.0 officially supports multiple thermodynamic packages.
-Currently there are two: CEA (the original thermo solver) and the new TABULAR option.
-Although these are the only two current thermo packages, the code has been setup so that it is expandable to more later.
-
-The tabular thermodynamic is much simpler to use, and much faster to run.
-The downside is that it is tied to a specific pre-computed thermodynamic data set that is valid for a specific fuel type, and within a specific temperature range.
-We have included an [example script that shows how to generate your own tabular data set](example_cycles/tab_thermo_data_generator.py), which you would need to do for anything other than Jet-A fuel.
-Additionally the default tabular thermo data only support fuel (no water injection).
-If you want to use tabular thermo for a water injection case, you'll need to generate a new thermo data table.
-
-## Different thermos will give different answers!
-Please note that when you switch thermodynamics packages, you will get slightly different answers.
-Depending on how finely you sample your thermo data for the tabular package, the differences could be small to modest.
-If you see changes greater than 1% on any critical values then you should consider refining your thermodynamic data tables.
-
-### V4 is modestly backwards incompatible
-In order to modular thermodynamic happens, some modest changes to the API were needed.
-
-- The `Cycle`, introduced in V3.5.0, is now mandatory. You must build your cycle in this, instead of a basic OpenMDAO `Group`.
-- The `pyc_add_element` method has been deprecated (to be removed in version 4.1).
-  Improvements to the cycle class made it possible to stick with standard `add_subsystem` calls instead.
-- The arguments needed to be passed into Elements during instantiation have been changed (and for the most part significantly simplified).
-  The biggest change is that you no longer need to pass element lists to each Element any more. All of the thermodynamic arguments have now been moved up to the `Cycle` group.
-- There is a new `Element` class which must be the base class (or at least an ancestor class) for any component that contain flow-ports (anything you would point to in a call to `connect_flow` is an element).
-  This new base class has one additional method, `pyc_setup_output_ports` that is required for initialization of the fluid port data.
-  If you have developed any of your own custom Elements beyond the standard library, then note that you'll need to update them and define the new method in them.
-
-
-Over all the, changes are pretty minor, but their impact is significant.
-The changes to the Element initialization not only make models simpler,
-they also make them thermo-agnostic.
-
-
+## Version 4.2 --- PyPI release
+No significant code changes, but minor adjustments to the package name in `setup.py` to enable publishing to PyPI. 
 
 ## Citation
 
@@ -90,6 +57,12 @@ If you use pyCycle, please cite this paper:
     or, if you want to install the (optional) additional testing tools
 
     pip install 'om-pycycle[all]'
+
+Why is it `om-pycycle` on PyPI? 
+Because another package already claimed `pyCycle`! 
+Note that the import does not change though. 
+You still use `import pycycle` regardless.
+
 
 ### Clone
 
@@ -130,3 +103,37 @@ This will run all the unit tests within the pycycle repository, but note that it
 If you want to run the regression tests, then you need to clone the repository, CD into the `example_cycles` folder and call
 
     testflo .
+
+
+## Version 4.0 Announcements
+Version 4.0 officially supports multiple thermodynamic packages.
+Currently there are two: CEA (the original thermo solver) and the new TABULAR option.
+Although these are the only two current thermo packages, the code has been setup so that it is expandable to more later.
+
+The tabular thermodynamic is much simpler to use, and much faster to run.
+The downside is that it is tied to a specific pre-computed thermodynamic data set that is valid for a specific fuel type, and within a specific temperature range.
+We have included an [example script that shows how to generate your own tabular data set](example_cycles/tab_thermo_data_generator.py), which you would need to do for anything other than Jet-A fuel.
+Additionally the default tabular thermo data only support fuel (no water injection).
+If you want to use tabular thermo for a water injection case, you'll need to generate a new thermo data table.
+
+## Different thermos will give different answers!
+Please note that when you switch thermodynamics packages, you will get slightly different answers.
+Depending on how finely you sample your thermo data for the tabular package, the differences could be small to modest.
+If you see changes greater than 1% on any critical values then you should consider refining your thermodynamic data tables.
+
+### V4 is modestly backwards incompatible
+In order to modular thermodynamic happens, some modest changes to the API were needed.
+
+- The `Cycle`, introduced in V3.5.0, is now mandatory. You must build your cycle in this, instead of a basic OpenMDAO `Group`.
+- The `pyc_add_element` method has been deprecated (to be removed in version 4.1).
+  Improvements to the cycle class made it possible to stick with standard `add_subsystem` calls instead.
+- The arguments needed to be passed into Elements during instantiation have been changed (and for the most part significantly simplified).
+  The biggest change is that you no longer need to pass element lists to each Element any more. All of the thermodynamic arguments have now been moved up to the `Cycle` group.
+- There is a new `Element` class which must be the base class (or at least an ancestor class) for any component that contain flow-ports (anything you would point to in a call to `connect_flow` is an element).
+  This new base class has one additional method, `pyc_setup_output_ports` that is required for initialization of the fluid port data.
+  If you have developed any of your own custom Elements beyond the standard library, then note that you'll need to update them and define the new method in them.
+
+
+Over all the, changes are pretty minor, but their impact is significant.
+The changes to the Element initialization not only make models simpler,
+they also make them thermo-agnostic.

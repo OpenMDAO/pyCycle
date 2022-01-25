@@ -15,7 +15,7 @@ optional_dependencies['all'] = sorted([
 ])
 
 setup(name='om-pycycle',
-      version='4.1.2',
+      version='4.2',
       packages=[
           'pycycle',
           'pycycle.elements',
