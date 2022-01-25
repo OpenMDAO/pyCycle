@@ -5,7 +5,7 @@ from setuptools import setup
 
 __version__ = re.findall(
     r"""__version__ = ["']+([0-9\.\-dev]*)["']+""",
-    open('openmdao/__init__.py').read(),
+    open('pycycle/__init__.py').read(),
 )[0]
 
 # optional dependencies, by category (currently just 'test')
