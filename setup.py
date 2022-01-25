@@ -14,7 +14,7 @@ optional_dependencies['all'] = sorted([
     for dependency in dependencies
 ])
 
-setup(name='pycycle',
+setup(name='om-pycycle',
       version='4.1.2',
       packages=[
           'pycycle',
@@ -31,7 +31,6 @@ setup(name='pycycle',
           'pycycle.thermo.test',
           'pycycle.tests',
       ],
-
       install_requires=[
         'openmdao>=3.10.0',
       ],
