@@ -89,7 +89,6 @@ class ThermoAddTestCase(unittest.TestCase):
         p['mix:composition'] = [0.1]
         p['mix:h'] = 10.
 
-        p.setup(force_alloc_complex=True)
         p.run_model()
 
 
@@ -130,7 +129,6 @@ class ThermoAddTestCase(unittest.TestCase):
         p['mix2:composition'] = 0.1
         p['mix2:h'] = 20.
 
-        p.setup(force_alloc_complex=True)
         p.run_model()
 
 
@@ -172,8 +170,6 @@ class ThermoAddTestCase(unittest.TestCase):
         p['mix1:composition'] = [0., .01]
         p['mix1:h'] = 2.
 
-
-        p.setup(force_alloc_complex=True)
         p.run_model()
 
         tol = 1e-6
@@ -198,7 +194,6 @@ class ThermoAddTestCase(unittest.TestCase):
         p['fuel1:ratio'] = .01
         p['fuel1:h'] = 2.
 
-        p.setup(force_alloc_complex=True)
         p.run_model()
 
         W_air_in = p['Fl_I:stat:W']/(1+np.sum(p['Fl_I:tot:composition']))
