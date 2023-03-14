@@ -49,7 +49,7 @@ def print_compressor(prob, element_names, file=sys.stdout):
     print("-"*len_header, file=file, flush=True)
 
     line_tmpl = '{:<14}|  '+'{:>11}'*14
-    print(line_tmpl.format('Compressor', 'Wc', 'Pr', 'eta_a', 'eta_p', 'Nc', 'pwr', 'RlineMap', 'NcMap', 'WcMap', 'PRmap', 'alphaMap', 'SMN', 'SMW', 'effMap'),
+    print(line_tmpl.format('Compressor', 'Wc', 'Pr', 'eta_a', 'eta_p', 'Nc', 'pwr', 'RlineMap', 'NcMap', 'PRmap', 'WcMap', 'alphaMap', 'SMN', 'SMW', 'effMap'),
           file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
@@ -66,7 +66,7 @@ def print_compressor(prob, element_names, file=sys.stdout):
 
         print(line_tmpl.format(e_name, prob[e_name+'.Wc'][0], PR_temp,
                                eff_temp, prob[e_name+'.eff_poly'][0], prob[e_name+'.Nc'][0], prob[e_name+'.power'][0],
-                               prob[e_name+'.map.RlineMap'][0], prob[e_name+'.map.NcMap'][0],prob[e_name+'.map.PRmap'][0], prob[e_name+'.map.WcMap'][0],
+                               prob[e_name+'.map.RlineMap'][0], prob[e_name+'.map.NcMap'][0], prob[e_name+'.map.PRmap'][0], prob[e_name+'.map.WcMap'][0],
                                prob[e_name+'.map.map.alphaMap'][0], prob[e_name+'.SMN'][0], prob[e_name+'.SMW'][0], prob[e_name+'.map.effMap'][0]),
               file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
