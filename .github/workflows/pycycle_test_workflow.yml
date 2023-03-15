@@ -96,7 +96,7 @@ jobs:
           echo "============================================================="
           echo "Install pyCycle"
           echo "============================================================="
-          python -m pip install .${{ matrix.OPTIONAL }}
+          python -m pip install -e .${{ matrix.OPTIONAL }}
 
       - name: Install pyOptSparse
         if: matrix.PYOPTSPARSE
