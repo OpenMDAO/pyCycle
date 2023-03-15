@@ -153,15 +153,10 @@ jobs:
           conda list
 
       - name: Run tests
-        if: matrix.TESTS
         run: |
           echo "============================================================="
           echo "Run tests with coverage (from directory other than repo root)"
           echo "============================================================="
-          echo "############ .coveragerc contents #################"
-          cat .coveragerc
-          echo "###################################################"
-          cp .coveragerc $HOME
           cd $HOME
           testflo -n 2 pycycle --timeout=240 --show_skipped --coverage --coverpkg pycycle --durations=20
 
@@ -281,7 +276,6 @@ jobs:
           echo "============================================================="
           echo "Run tests with coverage (from directory other than repo root)"
           echo "============================================================="
-          copy .coveragerc $HOME
           cd $HOME
           testflo -n 2 pycycle --timeout=240 --show_skipped --coverage  --coverpkg pycycle --durations=20
 
