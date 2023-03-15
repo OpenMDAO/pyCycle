@@ -89,7 +89,7 @@ jobs:
 
       - name: Install pyCycle
         run: |
-          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
+          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} swig -q -y
 
           python -m pip install --upgrade pip
 
