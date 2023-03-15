@@ -114,37 +114,18 @@ jobs:
           else
             python -m pip install git+https://github.com/OpenMDAO/build_pyoptsparse
 
-            if [[ "${{ matrix.PYOPTSPARSE }}" == "latest" ]]; then
-              function latest_version() {
-                local REPO_URL=$1/releases/latest
-                local LATEST_URL=`curl -fsSLI -o /dev/null -w %{url_effective} $REPO_URL`
-                local LATEST_VER=`echo $LATEST_URL | awk '{split($0,a,"/tag/"); print a[2]}'`
-                echo $LATEST_VER
-              }
-              BRANCH="-b $(latest_version https://github.com/mdolab/pyoptsparse)"
-            else
-              BRANCH="-b ${{ matrix.PYOPTSPARSE }}"
-            fi
-
-            if [[ "${{ matrix.PAROPT }}" ]]; then
-              PAROPT="-a"
-            fi
+            BRANCH="-b ${{ matrix.PYOPTSPARSE }}"
 
             if [[ "${{ matrix.SNOPT }}" == "7.7" && "${{ secrets.SNOPT_LOCATION_77 }}" ]]; then
               echo "  > Secure copying SNOPT 7.7 over SSH"
               mkdir SNOPT
               scp -qr ${{ secrets.SNOPT_LOCATION_77 }} SNOPT
               SNOPT="-s SNOPT/src"
-            elif [[ "${{ matrix.SNOPT }}" == "7.2" && "${{ secrets.SNOPT_LOCATION_72 }}" ]]; then
-              echo "  > Secure copying SNOPT 7.2 over SSH"
-              mkdir SNOPT
-              scp -qr ${{ secrets.SNOPT_LOCATION_72 }} SNOPT
-              SNOPT="-s SNOPT/source"
             elif [[ "${{ matrix.SNOPT }}" ]]; then
               echo "SNOPT version ${{ matrix.SNOPT }} was requested but source is not available"
             fi
 
-            build_pyoptsparse $BRANCH $PAROPT $SNOPT
+            build_pyoptsparse $BRANCH $SNOPT
           fi
 
       - name: Display environment info
