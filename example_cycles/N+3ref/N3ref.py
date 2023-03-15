@@ -26,15 +26,15 @@ class N3(pyc.Cycle):
 
         USE_TABULAR = False
 
-        if USE_TABULAR: 
+        if USE_TABULAR:
             self.options['thermo_method'] = 'TABULAR'
             self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
             FUEL_TYPE = "FAR"
-        else: 
+        else:
             self.options['thermo_method'] = 'CEA'
             self.options['thermo_data'] = pyc.species_data.janaf
             FUEL_TYPE = "Jet-A(g)"
-        
+
         cooling = self.options['cooling']
         design = self.options['design']
 
@@ -92,11 +92,11 @@ class N3(pyc.Cycle):
         self.connect('fc.Fl_O:stat:P', 'byp_nozz.Ps_exhaust')
 
         self.add_subsystem('ext_ratio', om.ExecComp('ER = core_V_ideal * core_Cv / ( byp_V_ideal *  byp_Cv )',
-                        core_V_ideal={'value':1000.0, 'units':'ft/s'},
-                        core_Cv={'value':0.98, 'units':None},
-                        byp_V_ideal={'value':1000.0, 'units':'ft/s'},
-                        byp_Cv={'value':0.98, 'units':None},
-                        ER={'value':1.4, 'units':None}))
+                        core_V_ideal={'val':1000.0, 'units':'ft/s'},
+                        core_Cv={'val':0.98, 'units':None},
+                        byp_V_ideal={'val':1000.0, 'units':'ft/s'},
+                        byp_Cv={'val':0.98, 'units':None},
+                        ER={'val':1.4, 'units':None}))
 
         self.connect('core_nozz.ideal_flow.V', 'ext_ratio.core_V_ideal')
         self.connect('byp_nozz.ideal_flow.V', 'ext_ratio.byp_V_ideal')
@@ -154,10 +154,10 @@ class N3(pyc.Cycle):
 
             self.add_subsystem('hpc_CS',
                     om.ExecComp('CS = Win *(power(Tout/518.67,0.5)/(Pout/14.696))',
-                            Win= {'value': 10.0, 'units':'lbm/s'},
-                            Tout={'value': 14.696, 'units':'degR'},
-                            Pout={'value': 518.67, 'units':'psi'},
-                            CS={'value': 10.0, 'units':'lbm/s'}))
+                            Win= {'val': 10.0, 'units':'lbm/s'},
+                            Tout={'val': 14.696, 'units':'degR'},
+                            Pout={'val': 518.67, 'units':'psi'},
+                            CS={'val': 10.0, 'units':'lbm/s'}))
             self.connect('duct25.Fl_O:stat:W', 'hpc_CS.Win')
             self.connect('hpc.Fl_O:tot:T', 'hpc_CS.Tout')
             self.connect('hpc.Fl_O:tot:P', 'hpc_CS.Pout')
@@ -167,16 +167,16 @@ class N3(pyc.Cycle):
             self.connect('hpc_EtaBalance.eta_a', 'hpc.eff')
 
             self.add_subsystem('fan_dia', om.ExecComp('FanDia = 2.0*(area/(pi*(1.0-hub_tip**2.0)))**0.5',
-                            area={'value':7000.0, 'units':'inch**2'},
-                            hub_tip={'value':0.3125, 'units':None},
-                            FanDia={'value':100.0, 'units':'inch'}))
+                            area={'val':7000.0, 'units':'inch**2'},
+                            hub_tip={'val':0.3125, 'units':None},
+                            FanDia={'val':100.0, 'units':'inch'}))
             self.connect('inlet.Fl_O:stat:area', 'fan_dia.area')
 
             self.add_subsystem('opr_calc', om.ExecComp('OPR_simple = FPR*LPCPR*HPCPR',
-                            FPR={'value':1.3, 'units':None},
-                            LPCPR={'value':3.0, 'units':None},
-                            HPCPR={'value':14.0, 'units':None},
-                            OPR_simple={'value':55.0, 'units':None}))
+                            FPR={'val':1.3, 'units':None},
+                            LPCPR={'val':3.0, 'units':None},
+                            HPCPR={'val':14.0, 'units':None},
+                            OPR_simple={'val':55.0, 'units':None}))
 
 
             # order_add = ['hpc_CS', 'fan_dia', 'opr_calc']
@@ -351,7 +351,7 @@ class MPN3(pyc.MPCycle):
     def setup(self):
 
         # TOC POINT (DESIGN)
-        self.pyc_add_pnt('TOC', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'), 
+        self.pyc_add_pnt('TOC', N3(), promotes_inputs=[('fan.PR', 'fan:PRdes'), ('lpc.PR', 'lpc:PRdes'),
                                                         ('opr_calc.FPR', 'fan:PRdes'), ('opr_calc.LPCPR', 'lpc:PRdes')])
 
         # POINT 1: Top-of-climb (TOC)
@@ -371,7 +371,7 @@ class MPN3(pyc.MPCycle):
         self.set_input_defaults('TOC.Fan_Nmech', 2184.5, units='rpm'),
         self.set_input_defaults('TOC.LP_Nmech', 6772.0, units='rpm'),
         self.set_input_defaults('TOC.HP_Nmech', 20871.0, units='rpm'),
-        
+
         self.set_input_defaults('TOC.inlet.MN', 0.625),
         self.set_input_defaults('TOC.fan.MN', 0.45)
         self.set_input_defaults('TOC.splitter.MN1', 0.45)
@@ -430,7 +430,7 @@ class MPN3(pyc.MPCycle):
             self.set_input_defaults(pt+'.inlet.ram_recovery', val=self.od_recoveries[i])
 
         # Extra set input for Rolling Takeoff
-        self.set_input_defaults('RTO.balance.rhs:FAR', 22800.0, units='lbf'), 
+        self.set_input_defaults('RTO.balance.rhs:FAR', 22800.0, units='lbf'),
 
         self.pyc_connect_des_od('fan.s_PR', 'fan.s_PR')
         self.pyc_connect_des_od('fan.s_Wc', 'fan.s_Wc')
@@ -492,9 +492,9 @@ class MPN3(pyc.MPCycle):
 
         self.add_subsystem('T4_ratio',
                              om.ExecComp('TOC_T4 = RTO_T4*TR',
-                                         RTO_T4={'value': 3400.0, 'units':'degR'},
-                                         TOC_T4={'value': 3150.0, 'units':'degR'},
-                                         TR={'value': 0.926470588, 'units': None}), promotes_inputs=['RTO_T4',])
+                                         RTO_T4={'val': 3400.0, 'units':'degR'},
+                                         TOC_T4={'val': 3150.0, 'units':'degR'},
+                                         TR={'val': 0.926470588, 'units': None}), promotes_inputs=['RTO_T4',])
         self.connect('T4_ratio.TOC_T4', 'TOC.balance.rhs:FAR')
         initial_order = ['T4_ratio', 'TOC', 'RTO', 'SLS', 'CRZ']
         self.set_order(self.options['order_start'] + initial_order + self.options['order_add'])
@@ -551,7 +551,7 @@ if __name__ == "__main__":
 
     # Define the design point
     prob.set_val('TOC.fc.W', 820.44097898, units='lbm/s')
-    prob.set_val('TOC.splitter.BPR', 23.94514401), 
+    prob.set_val('TOC.splitter.BPR', 23.94514401),
     prob.set_val('TOC.balance.rhs:hpc_PR', 53.6332)
 
     # Set up the specific cycle parameters
@@ -559,7 +559,7 @@ if __name__ == "__main__":
     prob.set_val('lpc:PRdes', 3.000),
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('RTO_T4', 3400.0, units='degR')
-    prob.set_val('SLS.balance.rhs:FAR', 28620.84, units='lbf') 
+    prob.set_val('SLS.balance.rhs:FAR', 28620.84, units='lbf')
     prob.set_val('CRZ.balance.rhs:FAR', 5510.72833567, units='lbf')
     prob.set_val('RTO.hpt_cooling.x_factor', 0.9)
 
