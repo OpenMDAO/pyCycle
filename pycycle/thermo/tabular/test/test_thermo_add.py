@@ -9,15 +9,16 @@ from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 from pycycle.thermo.tabular.thermo_add import ThermoAdd
 
 
-class ThermoAddTestCase(unittest.TestCase): 
+class ThermoAddTestCase(unittest.TestCase):
 
-    def test_mix_1fuel(self): 
+    def test_mix_1fuel(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='reactant', mix_composition='FAR', mix_names='fuel')
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='reactant', mix_composition='FAR', mix_names='fuel'),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
-
 
         p['Fl_I:stat:W'] = 1.
         p['Fl_I:tot:h'] = 181.381769
@@ -42,10 +43,12 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['fuel:W'], W_fuel_mix, tolerance=tol)
         assert_near_equal(p['composition_out'], (W_fuel_in+W_fuel_mix)/W_air_in, tolerance=tol)
 
-    def test_mix_2fuel(self): 
+    def test_mix_2fuel(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='reactant', mix_composition='FAR', mix_names=['fuel1', 'fuel2'])
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='reactant', mix_composition='FAR', mix_names=['fuel1', 'fuel2']),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -74,10 +77,12 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['fuel1:W'], p['Fl_I:stat:W']*ratio, tolerance=tol)
 
 
-    def test_mix_1flow(self): 
+    def test_mix_1flow(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='flow', mix_composition='FAR', mix_names='mix')
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='flow', mix_composition='FAR', mix_names='mix'),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -110,10 +115,12 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['mass_avg_h'], mass_avg_h, tol)
 
 
-    def test_mix_2flow(self): 
+    def test_mix_2flow(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='flow', mix_composition='FAR', mix_names=['mix1', 'mix2'])
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='flow', mix_composition='FAR', mix_names=['mix1', 'mix2']),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -154,11 +161,13 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['mass_avg_h'], mass_avg_h, tol)
 
 
-    def test_mix_1flow2compo(self): 
+    def test_mix_1flow2compo(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='flow', inflow_composition={'FAR':0., 'WAR':0.}, 
-                            mix_names='mix1')
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='flow', inflow_composition={'FAR':0., 'WAR':0.}, 
+                                        mix_names='mix1'),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -179,11 +188,13 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['mass_avg_h'], 2., tol)
 
 
-    def test_mix_1fuel2compo(self): 
+    def test_mix_1fuel2compo(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='reactant', inflow_composition={'FAR':0., 'WAR':0.}, 
-                            mix_composition='FAR', mix_names='fuel1')
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='reactant', inflow_composition={'FAR':0., 'WAR':0.}, 
+                                        mix_composition='FAR', mix_names='fuel1'),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -213,11 +224,13 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['composition_out'][1], 0, tolerance=tol)
 
 
-    def test_mix_1water2compo(self): 
+    def test_mix_1water2compo(self):
 
         p = om.Problem()
-        p.model = ThermoAdd(mix_mode='reactant', inflow_composition={'FAR':0., 'WAR':0.}, 
-                            mix_composition='WAR', mix_names='water1')
+        p.model.add_subsystem('thermo_add',
+                              ThermoAdd(mix_mode='reactant', inflow_composition={'FAR':0., 'WAR':0.},
+                                        mix_composition='WAR', mix_names='water1'),
+                              promotes=['*'])
 
         p.setup(force_alloc_complex=True)
 
@@ -248,6 +261,6 @@ class ThermoAddTestCase(unittest.TestCase):
         assert_near_equal(p['composition_out'][0], W_fuel_in/W_air_in, tolerance=tol)
         assert_near_equal(p['composition_out'][1], (W_water_in+W_water_mix)/W_air_in, tolerance=tol)
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
 
     unittest.main()
