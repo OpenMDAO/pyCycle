@@ -44,8 +44,6 @@ header = [
     'Fl_O.gams']
 h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 
-np.seterr(all="raise")
-
 
 class DuctTestCase(unittest.TestCase):
 
@@ -102,7 +100,7 @@ class DuctTestCase(unittest.TestCase):
             assert_near_equal(ps_computed, ps, tol)
             assert_near_equal(ts_computed, ts, tol)
 
-            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+            partial_data = self.prob.check_partials(out_stream=None, method='cs',
                                                     includes=['duct.*'], excludes=['*.base_thermo.*',])
             assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
@@ -116,7 +114,7 @@ class DuctTestCase(unittest.TestCase):
         cycle_DES = self.prob.model.add_subsystem('DESIGN', Cycle())
         cycle_DES.options['thermo_method'] = 'CEA'
         cycle_DES.options['thermo_data'] = species_data.janaf
-        
+
         cycle_OD = self.prob.model.add_subsystem('OFF_DESIGN', Cycle())
         cycle_OD.options['design'] = False
         cycle_OD.options['thermo_method'] = 'CEA'
@@ -124,7 +122,7 @@ class DuctTestCase(unittest.TestCase):
 
 
         cycle_DES.add_subsystem('flow_start', FlowStart(), promotes=['P', 'T', 'MN', 'W'])
-        
+
         cycle_OD.add_subsystem('flow_start_OD', FlowStart(), promotes=['P', 'T', 'W', 'MN'])
 
         expMN = 1.0
@@ -189,7 +187,7 @@ class DuctTestCase(unittest.TestCase):
         assert_near_equal(ps_computed, 8.26348914, tol)
         assert_near_equal(ts_computed, ts, tol)
 
-        partial_data = self.prob.check_partials(out_stream=None, method='cs', 
+        partial_data = self.prob.check_partials(out_stream=None, method='cs',
                                                     includes=['duct.*'], excludes=['*.base_thermo.*',])
         assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 

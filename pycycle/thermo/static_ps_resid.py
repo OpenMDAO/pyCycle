@@ -106,13 +106,13 @@ class PsResid(om.ImplicitComponent):
     def _compute_outputs_MN(self, i):
 
         Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
+        old = np.seterr(all='raise')
         try:
-            np.seterr(all='raise')
             Vsonic = (i['gamma']*i['R']*i['Ts'])**0.5
-            np.seterr(all='warn')
         except:
-            np.seterr(all='warn')
             print(self.pathname, i['gamma'], i['R'], i['Ts'])
+        finally:
+            np.seterr(**old)
 
         MN = i['MN']
         if MN < 1e-16:
@@ -133,17 +133,17 @@ class PsResid(om.ImplicitComponent):
             #MN = i['W']/(i['rho']*Vsonic*i['area'])
             #print("MN_calc", self.pathname, i['W'], i['rho'], Vsonic, i['area'])
 
+            old = np.seterr(all='raise')
             try:
-                np.seterr(all='raise')
                 MN = i['W']/(i['rho']*Vsonic*i['area'])
-                np.seterr(all='warn')
             except:
-                np.seterr(all='warn')
                 print("MN_calc", self.pathname, i['W'], i['rho'], Vsonic, i['area'])
                 MN = 5.
+            finally:
+                np.seterr(**old)
 
         V = MN*Vsonic
-        
+
         return MN, Vsonic, V
 
     def solve_nonlinear(self, inputs, outputs):
