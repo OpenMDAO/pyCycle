@@ -30,31 +30,33 @@ class FlowStartTestCase(unittest.TestCase):
         self.prob.setup(check=False, force_alloc_complex=True)
 
     def test_case1(self):
-        np.seterr(divide='raise')
-        # 6 cases to check against
-        for i, data in enumerate(ref_data):
-            self.prob['amb.alt'] = data[h_map['alt']]
-            self.prob['amb.dTs'] = data[h_map['dTs']]
+        old = np.seterr(divide='raise')
+        try:
+            # 6 cases to check against
+            for i, data in enumerate(ref_data):
+                self.prob['amb.alt'] = data[h_map['alt']]
+                self.prob['amb.dTs'] = data[h_map['dTs']]
 
-            self.prob.run_model()
+                self.prob.run_model()
 
-            # check outputs
-            tol = 1.0e-2 # seems a little generous
+                # check outputs
+                tol = 1.0e-2 # seems a little generous
 
-            npss = data[h_map['Ps']]
-            pyc = self.prob['amb.Ps']
-            rel_err = abs(npss - pyc)/npss
-            self.assertLessEqual(rel_err, tol)
+                npss = data[h_map['Ps']]
+                pyc = self.prob['amb.Ps']
+                rel_err = abs(npss - pyc)/npss
+                self.assertLessEqual(rel_err, tol)
 
-            npss = data[h_map['Ts']]
-            pyc = self.prob['amb.Ts']
-            rel_err = abs(npss - pyc)/npss
-            self.assertLessEqual(rel_err, tol)
+                npss = data[h_map['Ts']]
+                pyc = self.prob['amb.Ts']
+                rel_err = abs(npss - pyc)/npss
+                self.assertLessEqual(rel_err, tol)
 
-            partial_data = self.prob.check_partials(out_stream=None, method='cs', 
-                                                    includes=['amb.*'], excludes=['*.base_thermo.*', 'amb.readAtmTable'])
-            assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
-
+                partial_data = self.prob.check_partials(out_stream=None, method='cs',
+                                                        includes=['amb.*'], excludes=['*.base_thermo.*', 'amb.readAtmTable'])
+                assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
+        finally:
+            np.seterr(**old)
 
 
 if __name__ == "__main__":

@@ -38,8 +38,11 @@ class ThermoCalcs(om.Group):
 
 
 def _resid_weighting(n):
-    np.seterr(under='ignore')
-    return (1 / (1 + np.exp(-1e5 * n)) - .5) * 2
+    old = np.seterr(under='ignore')
+    try:
+        return (1 / (1 + np.exp(-1e5 * n)) - .5) * 2
+    finally:
+        np.seterr(**old)
 
 
 class ChemEq(om.ImplicitComponent):
@@ -101,7 +104,7 @@ class ChemEq(om.ImplicitComponent):
                         val=self.n_init,
                         desc="mole fractions of the mixture",
                         lower=MIN_VALID_CONCENTRATION,
-                        upper=1e2, 
+                        upper=1e2,
                         res_ref=10000.
                         )
 
@@ -159,17 +162,17 @@ class ChemEq(om.ImplicitComponent):
         # np.seterr(all='warn')
         # self.mu = H0_T - S0_T + np.log(n) + np.log(P) - np.log(n_moles)
 
+        old = np.seterr(all='raise')
         try:
-            np.seterr(all='raise')
             self.mu = H0_T - S0_T + np.log(n) + np.log(P) - np.log(n_moles)
-            np.seterr(all='warn')
         except:
             print('ChemEQ error in: ', self.pathname)
             print('n', n)
             print('P', P)
             print('n_moles', n_moles)
             self.mu = H0_T - S0_T + np.log(n) + np.log(1e-5) - np.log(n_moles)
-            np.seterr(all='warn')
+        finally:
+            np.seterr(**old)
 
         resids_n = (self.mu - np.sum(pi * thermo.aij.T, axis=1))
         if self.use_trace_damping:
@@ -324,9 +327,9 @@ class ChemEq(om.ImplicitComponent):
                     dRdy[j, j] = -1.0
 
 
-class SetTotalTP(om.Group): 
+class SetTotalTP(om.Group):
 
-    def initialize(self): 
+    def initialize(self):
 
         self.options.declare('spec', recordable=False)
         self.options.declare('composition')
@@ -335,15 +338,15 @@ class SetTotalTP(om.Group):
     def setup(self):
 
         init_elements = self.options['composition']
-        if init_elements is None: 
+        if init_elements is None:
             init_elements = CEA_AIR_COMPOSITION
 
-        self.thermo = species_data.Properties(self.options['spec'], 
+        self.thermo = species_data.Properties(self.options['spec'],
                                               init_elements=init_elements)
-        
+
         # these have to be part of the API for the unit_comps to use
         self.composition = self.thermo.b0
-        
+
         self.add_subsystem('chem_eq', ChemEq(thermo=self.thermo), promotes=['*'])
 
         self.add_subsystem('props', ThermoCalcs(thermo=self.thermo), promotes=['*'])
