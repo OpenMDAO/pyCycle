@@ -1,0 +1,168 @@
+# Run pyCycle Tests
+name: pyCycle Tests
+
+on:
+  # Trigger on push or pull request events for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allow running the workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+
+  tests:
+
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # test baseline versions on Ubuntu
+          - NAME: Ubuntu Baseline
+            OS: ubuntu-latest
+            PY: '3.11'
+            NUMPY: '1.24'
+            SCIPY: '1.10'
+
+          # test baseline versions on MacOS
+          - NAME: MacOS Baseline
+            OS: macos-latest
+            PY: '3.11'
+            NUMPY: '1.24'
+            SCIPY: '1.10'
+
+
+    runs-on: ${{ matrix.OS }}
+
+    name: ${{ matrix.NAME }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Display run details
+        run: |
+          echo "============================================================="
+          echo "Run #${GITHUB_RUN_NUMBER}"
+          echo "Run ID: ${GITHUB_RUN_ID}"
+          echo "Testing: ${GITHUB_REPOSITORY}"
+          echo "Triggered by: ${GITHUB_EVENT_NAME}"
+          echo "Initiated by: ${GITHUB_ACTOR}"
+          echo "============================================================="
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.PY }}
+          conda-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
+
+      - name: Install pyCycle
+        run: |
+          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
+
+          echo "============================================================="
+          echo "Install pyCycle"
+          echo "============================================================="
+          python -m pip install -e .[test]
+
+      - name: Display environment info
+        run: |
+          conda info
+          conda list
+
+      - name: Run tests
+        run: |
+          echo "============================================================="
+          echo "Run tests with coverage"
+          echo "============================================================="
+          testflo -n 1 pycycle --timeout=240 --show_skipped --coverage --coverpkg pycycle --durations=20
+
+      - name: Notify slack
+        uses: act10ns/slack@v2.0.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ job.status }}
+        if: always()
+
+
+  windows_tests:
+    runs-on: windows-latest
+
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # baseline versions
+          - NAME: Windows Baseline
+            PY: '3.11'
+            NUMPY: '1.24'
+            SCIPY: '1.10'
+
+    name: ${{ matrix.NAME }}
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Display run details
+        run: |
+          echo "============================================================="
+          echo "Run #$env:GITHUB_RUN_NUMBER"
+          echo "Run ID: $env:GITHUB_RUN_ID"
+          echo "Testing: $env:GITHUB_REPOSITORY"
+          echo "Triggered by: $env:GITHUB_EVENT_NAME"
+          echo "Initiated by: $env:GITHUB_ACTOR"
+          echo "============================================================="
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.PY }}
+          conda-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
+
+      - name: Install pyCycle
+        run: |
+          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
+
+          echo "============================================================="
+          echo "Install pyCycle"
+          echo "============================================================="
+          python -m pip install -e .[test]
+
+      - name: Display environment info
+        run: |
+          conda info
+          conda list
+
+      - name: Run tests
+        run: |
+          echo "============================================================="
+          echo "Run tests with coverage"
+          echo "============================================================="
+          testflo -n 1 pycycle --timeout=240 --show_skipped --coverage  --coverpkg pycycle --durations=20
+
+      - name: Notify slack
+        uses: act10ns/slack@v2.0.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          status: ${{ job.status }}
+        if: always()
+
