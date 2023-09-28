@@ -16,22 +16,25 @@ class SetTotalTP(om.Group):
         spec = self.options['spec']
         composition = self.options['composition']
 
-        if composition is None: 
+        if composition is None:
             composition = TAB_AIR_FUEL_COMPOSITION
 
         sorted_compo = sorted(composition.keys())
 
         interp = om.MetaModelStructuredComp(method=interp_method, extrapolate=True)
-        self.add_subsystem('tab', interp, promotes_inputs=['P', 'T'], 
+        self.add_subsystem('tab', interp, promotes_inputs=['P', 'T'],
                                           promotes_outputs=['h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'R'])
 
-        for i, param in enumerate(sorted_compo): 
+        for i, param in enumerate(sorted_compo):
             interp.add_input(param, composition[param], training_data=spec[param])
             self.promotes('tab', inputs=[(param, 'composition')], src_indices=[i,])
         self.set_input_defaults('composition', src_shape=len(composition))
 
         interp.add_input('P', 101325.0, units='Pa', training_data=spec['P'])
         interp.add_input('T', 273.0, units='degK', training_data=spec['T'])
+
+        if len(sorted_compo) == 1 and interp_method == 'slinear':
+            interp.options['method'] = '3D-slinear'
 
         interp.add_output('h', 1.0, units='J/kg', training_data=spec['h'])
         interp.add_output('S', 1.0, units='J/kg/degK', training_data=spec['S'])
@@ -42,6 +45,6 @@ class SetTotalTP(om.Group):
         interp.add_output('R', 287.0, units='J/kg/degK', training_data=spec['R'])
 
         # required part of the SetTotalTP API for flow setup
-        # use a sorted list of keys, so dictionary hash ordering doesn't bite us 
+        # use a sorted list of keys, so dictionary hash ordering doesn't bite us
         # loop over keys and create a vector of mass fractions
         self.composition = [composition[k] for k in sorted_compo]
