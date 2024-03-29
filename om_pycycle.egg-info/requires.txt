@@ -1,0 +1,7 @@
+openmdao>=3.10.0
+
+[all]
+testflo>=1.3.6
+
+[test]
+testflo>=1.3.6

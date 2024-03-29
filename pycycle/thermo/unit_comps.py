@@ -78,6 +78,36 @@ class EngUnitStaticProps(UnitCompBase):
 
         super().setup_io()
 
+class SIUnitProps(UnitCompBase):
+    """only job is to provide flow in english units"""
+
+    def setup_io(self, composition):
+
+        self.add_input('T', val=284., units="degK", desc="Temperature") #degR
+        self.add_input('P', val=1., units='kPa', desc="Pressure") #lbf/inch**2
+        self.add_input('h', val=1., units="J/kg", desc="enthalpy")#Btu/lbm
+        self.add_input('S', val=1., units="J/(degK*kg)", desc="entropy")#Btu/(lbm*degR)
+        self.add_input('gamma', val=1.4, desc="ratio of specific heats")
+        self.add_input('Cp', val=1., units="J/(degK*kg)", desc="Specific heat at constant pressure")#Btu/(lbm*degR)
+        self.add_input('Cv', val=1., units="J/(degK*kg)", desc="Specific heat at constant volume")#Btu/(lbm*degR)
+        self.add_input('rho', val=1., units="kg/m**3", desc="density")#lbm/ft**3
+        self.add_input('R', val=1.0, units="J/(degK*kg)", desc='Total specific gas constant')#Btu/(lbm*degR)
+        self.add_input('composition', val=composition, desc='moles of atoms present for each element')
+
+        super().setup_io()
+
+class SIUnitStaticProps(UnitCompBase):
+
+    def setup_io(self):
+
+        self.add_input('area', val=1.0, units="m**2")#inch**2
+        self.add_input('W', val=1.0, units="kg/s")#lbm/s
+        self.add_input('V', val=1.0, units="m/s")#ft/s
+        self.add_input('Vsonic', val=1.0, units="m/s")#ft/s
+        self.add_input('MN', val=0.5)
+
+        super().setup_io()
+
 
 if __name__ == "__main__":
 

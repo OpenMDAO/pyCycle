@@ -2,7 +2,7 @@ import openmdao.api as om
 
 from pycycle.thermo.static_ps_calc import PsCalc
 from pycycle.thermo.static_ps_resid import PsResid
-from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps
+from pycycle.thermo.unit_comps import EngUnitStaticProps, EngUnitProps, SIUnitProps, SIUnitStaticProps
 
 from pycycle.thermo.cea import chem_eq as cea_thermo
 from pycycle.thermo.cea import thermo_add as cea_thermo_add
@@ -89,7 +89,7 @@ class Thermo(om.Group):
                 lower=150.
 
             # all static calcs seek to match a given entropy, similar to a total_PS
-            if ('SP' in mode) or ('static' in mode):
+            if ('SP' in mode) or ('static' in mode):    
                 bal.add_balance('T', val=500., units='degK', eq_units='cal/(g*degK)', lower=lower, upper=upper)
                 self.promotes('balance', inputs=[('rhs:T','S')])
                 self.connect('base_thermo.S', 'balance.lhs:T')
@@ -130,15 +130,15 @@ class Thermo(om.Group):
 
         fl_name = self.options['fl_name']
         # TODO: remove need for thermo specific data in the flow components
-        self.add_subsystem('flow', EngUnitProps(fl_name=fl_name),
+        self.add_subsystem('flow', SIUnitProps(fl_name=fl_name),
                            promotes_inputs=in_vars,
                            promotes_outputs=(f'{fl_name}:*',))
 
         if 'static' in mode:
             in_vars = ('area', 'W', 'V', 'Vsonic', 'MN')
             # TODO: remove need for thermo specific data in the flow components
-            eng_units_statics = EngUnitStaticProps(fl_name=fl_name)
-            self.add_subsystem('flow_static', eng_units_statics,
+            units_statics = SIUnitStaticProps(fl_name=fl_name)
+            self.add_subsystem('flow_static', units_statics,
                                promotes_inputs=in_vars,
                                promotes_outputs=(f'{fl_name}:*',))
 

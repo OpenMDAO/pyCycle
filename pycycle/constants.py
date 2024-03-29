@@ -30,7 +30,7 @@ TAB_AIR_FUEL_COMPOSITION = {'FAR': 0.0}
 pkg_path = os.path.dirname(os.path.realpath(__file__))
 tab_spec_path = os.path.join(pkg_path, 'thermo', 'tabular', 'air_jetA.pkl')
 with open(tab_spec_path, 'rb') as spec_data:
-    AIR_JETA_TAB_SPEC = pickle.load(spec_data)
+    AIR_JETA_TAB_SPEC = pickle.load(spec_data)      #T:(100,) P:(110,) FAR:(20,) h:(20, 110, 100) Cv:(20, 110, 100), h , S, gamma, rho , R, Cp, all (20, 110, 100)
 
 
 THERMO_DEFAULT_COMPOSITIONS = {

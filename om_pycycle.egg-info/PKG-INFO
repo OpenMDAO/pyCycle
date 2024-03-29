@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: om-pycycle
+Version: 4.2.1
+Summary: pyCycle -- Thermodynamic Cycle modeling library
+License-File: LICENSE.txt
+Requires-Dist: openmdao>=3.10.0
+Provides-Extra: test
+Requires-Dist: testflo>=1.3.6; extra == "test"
+Provides-Extra: all
+Requires-Dist: testflo>=1.3.6; extra == "all"
+
+pyCycle is an open-source library for modeling of turbine based propulsion and power generation systems.
+      It is a modular library, allowing you to build up a turbine based system from basic blocks like `inlet`, `compressor`, `turbine`, and `nozzle`. 
+      
