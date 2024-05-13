@@ -63,7 +63,7 @@ class Combustor(Element):
                              desc='Type of fuel.')
         
         self.default_des_od_conns = [
-            # (design src, off-design target)
+            #  (design src, off-design target)
             ('Fl_O:stat:area', 'area')
         ]
 
