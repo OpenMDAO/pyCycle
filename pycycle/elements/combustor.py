@@ -61,6 +61,11 @@ class Combustor(Element):
                              desc='If True, calculate static properties.')
         self.options.declare('fuel_type', default="JP-7",
                              desc='Type of fuel.')
+        
+        self.default_des_od_conns = [
+            # (design src, off-design target)
+            ('Fl_O:stat:area', 'area')
+        ]
 
         super().initialize()
 
