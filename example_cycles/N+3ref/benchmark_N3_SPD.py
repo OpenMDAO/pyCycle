@@ -1,16 +1,22 @@
-import numpy as np 
+import numpy as np
 import unittest
 import os
 
 import openmdao.api as om
 from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.general_utils import set_pyoptsparse_opt
 
 import pycycle.api as pyc
 
 from N3_SPD import N3_SPD_model
 
+# check that pyoptsparse is installed
+OPT, OPTIMIZER = set_pyoptsparse_opt('SNOPT')
+
+
 class N3MDPOptTestCase(unittest.TestCase):
 
+    @unittest.skipUnless(OPT, "This test requires pyOptSparse.")
     def benchmark_case1(self):
 
         prob = N3_SPD_model()
@@ -20,7 +26,7 @@ class N3MDPOptTestCase(unittest.TestCase):
         # Define the design point
         prob.set_val('TOC.splitter.BPR', 23.94514401),
         prob.set_val('TOC.balance.rhs:hpc_PR', 53.6332)
-        prob.set_val('TOC.fc.W', 820.44097898, units='lbm/s') 
+        prob.set_val('TOC.fc.W', 820.44097898, units='lbm/s')
 
         # Set specific cycle parameters
         prob.set_val('fan:PRdes', 1.300),
@@ -28,7 +34,7 @@ class N3MDPOptTestCase(unittest.TestCase):
         prob.set_val('T4_ratio.TR', 0.926470588)
         prob.set_val('RTO_T4', 3400.0, units='degR')
         prob.set_val('SLS.balance.rhs:FAR', 28620.84, units='lbf')
-        prob.set_val('CRZ.balance.rhs:FAR', 5510.72833567, units='lbf') 
+        prob.set_val('CRZ.balance.rhs:FAR', 5510.72833567, units='lbf')
         prob.set_val('RTO.hpt_cooling.x_factor', 0.9)
 
         # Set initial guesses for balances
@@ -126,7 +132,7 @@ class N3MDPOptTestCase(unittest.TestCase):
         assert_near_equal(prob['CRZ.balance.fan_Nmech'], 2118.62554023, tol)#
         assert_near_equal(prob['CRZ.balance.lp_Nmech'], 6567.78766693, tol)#
         assert_near_equal(prob['CRZ.balance.hp_Nmech'], 20574.43651756, tol)#
-        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:T'], 1481.9756247, tol)#   
+        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:T'], 1481.9756247, tol)#
 
 
 if __name__ == "__main__":
