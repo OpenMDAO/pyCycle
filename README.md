@@ -27,7 +27,7 @@ Here is the OpenMDAO version you need for the specific versions of pyCycle
 | 4.2.0            | 3.10.0 or greater |
 
 ## Version 4.2 --- PyPI release
-No significant code changes, but minor adjustments to the package name in `setup.py` to enable publishing to PyPI. 
+No significant code changes, but minor adjustments to the package name in `setup.py` to enable publishing to PyPI.
 
 ## Citation
 
@@ -59,9 +59,9 @@ If you use pyCycle, please cite this paper:
 
     pip install 'om-pycycle[all]'
 
-Why is it `om-pycycle` on PyPI? 
-Because another package already claimed `pyCycle`! 
-Note that the import does not change though. 
+Why is it `om-pycycle` on PyPI?
+Because another package already claimed `pyCycle`!
+Note that the import does not change though.
 You still use `import pycycle` regardless.
 
 
@@ -90,7 +90,7 @@ or for pyCycle V4.0.0:
 
 Use pip to install:
 
-    pip install -e .
+    pip install -e .[all]
 
 
 ## Testing
@@ -100,10 +100,10 @@ After installation if you wat to run the unit test suite you can do so via the `
     testflo pycycle
 
 This will run all the unit tests within the pycycle repository, but note that it will NOT run the longer regression tests from the
-`example_cycles` folder.
-If you want to run the regression tests, then you need to clone the repository, CD into the `example_cycles` folder and call
+`example_cycles` folder.  These tests are written as 'benchmark' tests.
+If you want to run these tests, then you need to clone the repository, CD into the `example_cycles` folder and call
 
-    testflo .
+    testflo -b .
 
 
 ## Version 4.0 Announcements

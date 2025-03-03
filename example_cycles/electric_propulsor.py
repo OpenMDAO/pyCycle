@@ -2,6 +2,13 @@ import openmdao.api as om
 
 import pycycle.api as pyc
 
+# protection incase env doesn't have matplotlib installed, since its not strictly required
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+except ImportError:
+  plt = None
+
 
 class Propulsor(pyc.Cycle):
 
@@ -10,10 +17,10 @@ class Propulsor(pyc.Cycle):
         design = self.options['design']
 
         USE_TABULAR = True
-        if USE_TABULAR: 
+        if USE_TABULAR:
             self.options['thermo_method'] = 'TABULAR'
             self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
-        else: 
+        else:
             self.options['thermo_method'] = 'CEA'
             self.options['thermo_data'] = pyc.species_data.janaf
             FUEL_TYPE = 'JP-7'
@@ -24,7 +31,7 @@ class Propulsor(pyc.Cycle):
         self.add_subsystem('inlet', pyc.Inlet())
         self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap, map_extrap=True))
         self.add_subsystem('nozz', pyc.Nozzle())
-        
+
         self.add_subsystem('perf', pyc.Performance(num_nozzles=1, num_burners=0))
 
 
@@ -125,15 +132,14 @@ class MPpropulsor(pyc.MPCycle):
             self.pyc_add_pnt(pt, Propulsor(design=False, thermo_method='CEA'))
 
             self.set_input_defaults(pt+'.fc.MN', val=self.od_MNs[i])
-            self.set_input_defaults(pt+'.fc.alt', val=self.od_alts, units='m') 
-            self.set_input_defaults(pt+'.fan.map.RlineMap', val=self.od_Rlines[i])        
+            self.set_input_defaults(pt+'.fc.alt', val=self.od_alts, units='m')
+            self.set_input_defaults(pt+'.fan.map.RlineMap', val=self.od_Rlines[i])
 
         self.pyc_use_default_des_od_conns()
 
         self.pyc_connect_des_od('nozz.Throat:stat:area', 'balance.rhs:W')
 
         super().setup()
-        
 
 
 if __name__ == "__main__":
@@ -158,13 +164,13 @@ if __name__ == "__main__":
 
     # Set initial guesses for balances
     prob['design.balance.W'] = 200.
-    
+
     for i, pt in enumerate(mp_propulsor.od_pts):
-    
+
         # initial guesses
-        prob['off_design.fan.PR'] = 1.2
-        prob['off_design.balance.W'] = 406.790
-        prob['off_design.balance.Nmech'] = 1. # normalized value
+        prob[pt+'.fan.PR'] = 1.2
+        prob[pt+'.balance.W'] = 406.790
+        prob[pt+'.balance.Nmech'] = 1. # normalized value
 
     st = time.time()
 
@@ -184,7 +190,7 @@ if __name__ == "__main__":
         print('\n', '#'*10, pt, '#'*10)
         viewer(prob, pt)
 
-    map_plots(prob,'design')
-
+    if plt:
+        map_plots(prob,'design')
 
     print("Run time", run_time)

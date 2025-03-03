@@ -4,20 +4,27 @@ import pickle
 from pprint import pprint
 
 import openmdao.api as om
+from openmdao.utils.general_utils import set_pyoptsparse_opt
 
 import pycycle.api as pyc
 
 from N3ref import N3, viewer, MPN3
 
+# check that pyoptsparse is installed
+OPT, OPTIMIZER = set_pyoptsparse_opt('SNOPT')
+if OPTIMIZER:
+    from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
+
+
 def N3_SPD_model():
 
     prob = om.Problem()
 
-    prob.model = MPN3()    
+    prob.model = MPN3()
 
     # setup the optimization
     prob.driver = om.pyOptSparseDriver()
-    prob.driver.options['optimizer'] = 'SNOPT'
+    prob.driver.options['optimizer'] = OPTIMIZER
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'objs']
     prob.driver.opt_settings={'Major step limit': 0.05}
 
@@ -53,7 +60,7 @@ if __name__ == "__main__":
     # Define the design point
     prob.set_val('TOC.splitter.BPR', 23.94514401),
     prob.set_val('TOC.balance.rhs:hpc_PR', 53.6332)
-    prob.set_val('TOC.fc.W', 820.44097898, units='lbm/s') 
+    prob.set_val('TOC.fc.W', 820.44097898, units='lbm/s')
 
     # Set specific cycle parameters
     prob.set_val('fan:PRdes', 1.300),
@@ -61,7 +68,7 @@ if __name__ == "__main__":
     prob.set_val('T4_ratio.TR', 0.926470588)
     prob.set_val('RTO_T4', 3400.0, units='degR')
     prob.set_val('SLS.balance.rhs:FAR', 28620.84, units='lbf')
-    prob.set_val('CRZ.balance.rhs:FAR', 5510.72833567, units='lbf') 
+    prob.set_val('CRZ.balance.rhs:FAR', 5510.72833567, units='lbf')
     prob.set_val('RTO.hpt_cooling.x_factor', 0.9)
 
     # Set initial guesses for balances
