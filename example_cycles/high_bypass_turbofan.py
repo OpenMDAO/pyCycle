@@ -18,29 +18,29 @@ class HBTF(pyc.Cycle):
 
     def setup(self):
         #Setup the problem by including all the relavant components here - comp, burner, turbine etc
-        
+
         #Create any relavent short hands here:
         design = self.options['design']
-        
+
         USE_TABULAR = False
-        if USE_TABULAR: 
+        if USE_TABULAR:
             self.options['thermo_method'] = 'TABULAR'
             self.options['thermo_data'] = pyc.AIR_JETA_TAB_SPEC
             FUEL_TYPE = 'FAR'
-        else: 
+        else:
             self.options['thermo_method'] = 'CEA'
             self.options['thermo_data'] = pyc.species_data.janaf
             FUEL_TYPE = 'Jet-A(g)'
 
-        
+
         #Add subsystems to build the engine deck:
         self.add_subsystem('fc', pyc.FlightConditions())
         self.add_subsystem('inlet', pyc.Inlet())
-        
-        # Note variable promotion for the fan -- 
+
+        # Note variable promotion for the fan --
         # the LP spool speed and the fan speed are INPUTS that are promoted:
         # Note here that promotion aliases are used. Here Nmech is being aliased to LP_Nmech
-        # check out: http://openmdao.org/twodocs/versions/latest/features/core_features/grouping_components/add_subsystem.html?highlight=alias
+        # check out: https://openmdao.org/newdocs/versions/latest/features/core_features/working_with_groups/add_subsystem.html?highlight=alias
         self.add_subsystem('fan', pyc.Compressor(map_data=pyc.FanMap,
                                         bleed_names=[], map_extrap=True), promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('splitter', pyc.Splitter())
@@ -63,14 +63,14 @@ class HBTF(pyc.Cycle):
         self.add_subsystem('byp_bld', pyc.BleedOut(bleed_names=['bypBld']))
         self.add_subsystem('duct15', pyc.Duct())
         self.add_subsystem('byp_nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv'))
-        
+
         #Create shaft instances. Note that LP shaft has 3 ports! => no gearbox
         self.add_subsystem('lp_shaft', pyc.Shaft(num_ports=3),promotes_inputs=[('Nmech','LP_Nmech')])
         self.add_subsystem('hp_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech','HP_Nmech')])
         self.add_subsystem('perf', pyc.Performance(num_nozzles=2, num_burners=1))
-    
+
         # Now use the explicit connect method to make connections -- connect(<from>, <to>)
-        
+
         #Connect the inputs to perf group
         self.connect('inlet.Fl_O:tot:P', 'perf.Pt2')
         self.connect('hpc.Fl_O:tot:P', 'perf.Pt3')
@@ -78,7 +78,7 @@ class HBTF(pyc.Cycle):
         self.connect('inlet.F_ram', 'perf.ram_drag')
         self.connect('core_nozz.Fg', 'perf.Fg_0')
         self.connect('byp_nozz.Fg', 'perf.Fg_1')
-        
+
         #LP-shaft connections
         self.connect('fan.trq', 'lp_shaft.trq_0')
         self.connect('lpc.trq', 'lp_shaft.trq_1')
@@ -89,7 +89,7 @@ class HBTF(pyc.Cycle):
         #Ideally expanding flow by conneting flight condition static pressure to nozzle exhaust pressure
         self.connect('fc.Fl_O:stat:P', 'core_nozz.Ps_exhaust')
         self.connect('fc.Fl_O:stat:P', 'byp_nozz.Ps_exhaust')
-        
+
         #Create a balance component
         # Balances can be a bit confusing, here's some explanation -
         #   State Variables:
@@ -102,7 +102,7 @@ class HBTF(pyc.Cycle):
         #           (lpt_PR)   LPT press ratio to balance shaft power on the low spool
         #           (hpt_PR)   HPT press ratio to balance shaft power on the high spool
         # Ref: look at the XDSM diagrams in the pyCycle paper and this:
-        # http://openmdao.org/twodocs/versions/latest/features/building_blocks/components/balance_comp.html
+        # http://openmdao.org/newdocs/versions/latest/features/building_blocks/components/balance_comp.html
 
         balance = self.add_subsystem('balance', om.BalanceComp())
         if design:
@@ -116,7 +116,7 @@ class HBTF(pyc.Cycle):
             self.connect('balance.FAR', 'burner.Fl_I:FAR')
             self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
             self.promotes('balance', inputs=[('rhs:FAR', 'T4_MAX')])
-            
+
             # Note that for the following two balances the mult val is set to -1 so that the NET torque is zero
             balance.add_balance('lpt_PR', val=1.5, lower=1.001, upper=8,
                                 eq_units='hp', use_mult=True, mult_val=-1)
@@ -131,11 +131,11 @@ class HBTF(pyc.Cycle):
             self.connect('hp_shaft.pwr_out_real', 'balance.rhs:hpt_PR')
 
         else:
-            
+
             #In OFF-DESIGN mode we need to redefine the balances:
             #   State Variables:
             #           (W)        Inlet mass flow rate to balance core flow area
-            #                      LHS: core_nozz.Throat:stat:area == Area from DESIGN calculation 
+            #                      LHS: core_nozz.Throat:stat:area == Area from DESIGN calculation
             #
             #           (FAR)      Fuel-air ratio to balance Thrust req.
             #                      LHS: perf.Fn  == RHS: Thrust requirement (set when TF is instantiated)
@@ -146,13 +146,13 @@ class HBTF(pyc.Cycle):
             #           (lp_Nmech)   LP spool speed to balance shaft power on the low spool
             #           (hp_Nmech)   HP spool speed to balance shaft power on the high spool
 
-            if self.options['throttle_mode'] == 'T4': 
+            if self.options['throttle_mode'] == 'T4':
                 balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='degR')
                 self.connect('balance.FAR', 'burner.Fl_I:FAR')
                 self.connect('burner.Fl_O:tot:T', 'balance.lhs:FAR')
                 self.promotes('balance', inputs=[('rhs:FAR', 'T4_MAX')])
 
-            elif self.options['throttle_mode'] == 'percent_thrust': 
+            elif self.options['throttle_mode'] == 'percent_thrust':
                 balance.add_balance('FAR', val=0.017, lower=1e-4, eq_units='lbf', use_mult=True)
                 self.connect('balance.FAR', 'burner.Fl_I:FAR')
                 self.connect('perf.Fn', 'balance.rhs:FAR')
@@ -177,12 +177,12 @@ class HBTF(pyc.Cycle):
             self.connect('balance.hp_Nmech', 'HP_Nmech')
             self.connect('hp_shaft.pwr_in_real', 'balance.lhs:hp_Nmech')
             self.connect('hp_shaft.pwr_out_real', 'balance.rhs:hp_Nmech')
-            
+
             # Specify the order in which the subsystems are executed:
-            
+
             # self.set_order(['balance', 'fc', 'inlet', 'fan', 'splitter', 'duct4', 'lpc', 'duct6', 'hpc', 'bld3', 'burner', 'hpt', 'duct11',
             #                 'lpt', 'duct13', 'core_nozz', 'byp_bld', 'duct15', 'byp_nozz', 'lp_shaft', 'hp_shaft', 'perf'])
-        
+
         # Set up all the flow connections:
         self.pyc_connect_flow('fc.Fl_O', 'inlet.Fl_I')
         self.pyc_connect_flow('inlet.Fl_O', 'fan.Fl_I')
@@ -207,13 +207,13 @@ class HBTF(pyc.Cycle):
         self.pyc_connect_flow('hpc.cool2', 'lpt.cool2', connect_stat=False)
         self.pyc_connect_flow('bld3.cool3', 'hpt.cool3', connect_stat=False)
         self.pyc_connect_flow('bld3.cool4', 'hpt.cool4', connect_stat=False)
-        
+
         #Specify solver settings:
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-8
 
         # set this very small, so it never activates and we rely on atol
-        newton.options['rtol'] = 1e-99 
+        newton.options['rtol'] = 1e-99
         newton.options['iprint'] = 2
         newton.options['maxiter'] = 50
         newton.options['solve_subsystems'] = True
@@ -318,7 +318,7 @@ class MPhbtf(pyc.MPCycle):
         self.set_input_defaults('DESIGN.HP_Nmech', 14705.7, units='rpm')
 
         # --- Set up bleed values -----
-        
+
         self.pyc_add_cycle_param('inlet.ram_recovery', 0.9990)
         self.pyc_add_cycle_param('duct4.dPqP', 0.0048)
         self.pyc_add_cycle_param('duct6.dPqP', 0.0101)
@@ -346,7 +346,7 @@ class MPhbtf(pyc.MPCycle):
         self.pyc_add_cycle_param('lpt.cool2:frac_P', 0.0)
         self.pyc_add_cycle_param('hp_shaft.HPX', 250.0, units='hp')
 
-        self.od_pts = ['OD_full_pwr', 'OD_part_pwr'] 
+        self.od_pts = ['OD_full_pwr', 'OD_part_pwr']
 
         self.od_MNs = [0.8, 0.8]
         self.od_alts = [35000.0, 35000.0]
@@ -394,20 +394,20 @@ if __name__ == "__main__":
 
     prob.set_val('DESIGN.hpc.PR', 9.369)
     prob.set_val('DESIGN.hpc.eff', 0.8707)
-    
+
     prob.set_val('DESIGN.hpt.eff', 0.8888)
     prob.set_val('DESIGN.lpt.eff', 0.8996)
-    
+
     prob.set_val('DESIGN.fc.alt', 35000., units='ft')
     prob.set_val('DESIGN.fc.MN', 0.8)
-    
+
     prob.set_val('DESIGN.T4_MAX', 2857, units='degR')
-    prob.set_val('DESIGN.Fn_DES', 5900.0, units='lbf') 
+    prob.set_val('DESIGN.Fn_DES', 5900.0, units='lbf')
 
     prob.set_val('OD_full_pwr.T4_MAX', 2857, units='degR')
     prob.set_val('OD_part_pwr.PC', 0.8)
 
-    
+
     # Set initial guesses for balances
     prob['DESIGN.balance.FAR'] = 0.025
     prob['DESIGN.balance.W'] = 100.
@@ -416,15 +416,15 @@ if __name__ == "__main__":
     prob['DESIGN.fc.balance.Pt'] = 5.2
     prob['DESIGN.fc.balance.Tt'] = 440.0
 
-    
+
     for pt in ['OD_full_pwr', 'OD_part_pwr']:
 
         # initial guesses
         prob[pt+'.balance.FAR'] = 0.02467
         prob[pt+'.balance.W'] = 300
         prob[pt+'.balance.BPR'] = 5.105
-        prob[pt+'.balance.lp_Nmech'] = 5000 
-        prob[pt+'.balance.hp_Nmech'] = 15000 
+        prob[pt+'.balance.lp_Nmech'] = 5000
+        prob[pt+'.balance.hp_Nmech'] = 15000
         prob[pt+'.hpt.PR'] = 3.
         prob[pt+'.lpt.PR'] = 4.
         prob[pt+'.fan.map.RlineMap'] = 2.0
@@ -437,16 +437,16 @@ if __name__ == "__main__":
     prob.set_solver_print(level=2, depth=1)
 
     flight_env = [(0.8, 35000), (0.7, 35000), (0.55, 35000), (0.46, 35000), (0.4, 35000),
-                  (0.4, 20000), (0.6, 20000), (0.8, 20000), 
+                  (0.4, 20000), (0.6, 20000), (0.8, 20000),
                   (0.8, 10000), (0.6, 10000), (0.4, 10000), (0.2, 10000), (0.001, 10000),
                   (.001, 1000), (0.2, 1000), (0.4, 1000), (0.6, 1000),
                   (0.6, 0), (0.4, 0), (0.2, 0), (0.001, 0)]
 
     viewer_file = open('hbtf_view.out', 'w')
     first_pass = True
-    for MN, alt in flight_env: 
+    for MN, alt in flight_env:
 
-        # NOTE: You never change the MN,alt for the 
+        # NOTE: You never change the MN,alt for the
         # design point because that is a fixed reference condition.
 
         print('***'*10)
@@ -454,26 +454,26 @@ if __name__ == "__main__":
         print('***'*10)
         prob['OD_full_pwr.fc.MN'] = MN
         prob['OD_full_pwr.fc.alt'] = alt
-        
+
         prob['OD_part_pwr.fc.MN'] = MN
         prob['OD_part_pwr.fc.alt'] = alt
 
-        for PC in [1, 0.9, 0.8, .7]: 
+        for PC in [1, 0.9, 0.8, .7]:
             print(f'## PC = {PC}')
             prob['OD_part_pwr.PC'] = PC
             prob.run_model()
 
-            if first_pass: 
+            if first_pass:
                 viewer(prob, 'DESIGN', file=viewer_file)
-                first_pass = False 
+                first_pass = False
             viewer(prob, 'OD_part_pwr', file=viewer_file)
 
         # run throttle back up to full power
-        for PC in [1, 0.85]: 
+        for PC in [1, 0.85]:
             prob['OD_part_pwr.PC'] = PC
             prob.run_model()
 
-    
+
 
     print()
     print("Run time", time.time() - st)
