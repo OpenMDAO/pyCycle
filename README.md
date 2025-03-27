@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/OpenMDAO/pyCycle.svg?branch=master)](https://travis-ci.org/OpenMDAO/pyCycle)
+[![GitHub Actions Test Badge][1]][2]
+[![PyPI version][3]][4]
 
 # pyCycle
 --------------
@@ -138,3 +139,9 @@ In order to modular thermodynamic happens, some modest changes to the API were n
 Over all the, changes are pretty minor, but their impact is significant.
 The changes to the Element initialization not only make models simpler,
 they also make them thermo-agnostic.
+
+[1]: https://github.com/OpenMDAO/pyCycle/actions/workflows/pycycle_test_workflow.yml/badge.svg "Github Actions Badge"
+[2]: https://github.com/OpenMDAO/pyCycle/actions "Github Actions"
+
+[3]: https://badge.fury.io/py/om-pycycle.svg "PyPI Version"
+[4]: https://badge.fury.io/py/om-pycycle "pyCycle @PyPI"
