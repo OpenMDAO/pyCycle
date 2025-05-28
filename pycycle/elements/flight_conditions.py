@@ -1,6 +1,7 @@
 import openmdao.api as om
 
 from pycycle.thermo.cea import species_data
+from pycycle.thermo.cea import thermo_data
 from pycycle.constants import THERMO_DEFAULT_COMPOSITIONS
 from pycycle.elements.ambient import Ambient
 from pycycle.elements.flow_start import FlowStart
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     des_vars.add_output('dTs', 0.0, units='degR')
 
 
-    fc = p1.model.add_subsystem("fc", FlightConditions())
+    fc = p1.model.add_subsystem("fc", FlightConditions(thermo_data=thermo_data.wet_air))
 
     p1.model.connect('des_vars.W', 'fc.W')
     p1.model.connect('des_vars.alt', 'fc.alt')
