@@ -253,11 +253,11 @@ class MPCycle(om.Group):
         # then issue connections between the design and off-design points
 
         for param, (val, units) in self._cycle_params.items(): 
-            self.set_input_defaults(name=param, val=val, units=units)
-        
-            self.promotes(self._des_pnt.name, inputs=[param])
+            # set the default value for the design point
+            self.set_input_defaults(name=f"{self._des_pnt.name}.{param}", val=val, units=units)
+            # set the default value for all off-design points
             for pnt in self._od_pnts: 
-                self.promotes(pnt.name, inputs=[param])
+                self.set_input_defaults(name=f"{pnt.name}.{param}", val=val, units=units)
 
 
         for src, target in self._des_od_connections: 
