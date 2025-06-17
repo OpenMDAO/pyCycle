@@ -3,12 +3,35 @@ import sys
 import numpy as np
 
 # protection incase env doesn't have matplotlib installed, since its not strictly required
-try: 
+try:
     import matplotlib
     import matplotlib.pyplot as plt
-except ImportError: 
+except ImportError:
   plt = None
 
+
+def get_val(prob, point, element, var_name):
+    """
+    Get the value of the requested element from the OpenMDAO model.
+
+    Parameters
+    ----------
+    prob: <Problem>
+        OpenMDAO problem that contains the pycycle model.
+    point: str
+        OpenMDAO pathname of the cycle point.
+    element: str
+        Name of the pcycle element system.
+    var_name: str
+        Name of the variable to get.
+    """
+    try:
+        val = prob.get_val(f"{point}.{element}.{var_name}")
+    except KeyError:
+        # This is a cycle parameter.
+        val = prob.get_val(f"{element}.{var_name}")
+
+    return val[0]
 
 def print_flow_station(prob, fs_names, file=sys.stdout):
     names = ['tot:P', 'tot:T', 'tot:h', 'tot:S', 'stat:P', 'stat:W', 'stat:MN', 'stat:V', 'stat:area']
@@ -83,14 +106,19 @@ def print_burner(prob, element_names, file=sys.stdout):
 
     # line_tmpl = '{:<20}|  '+'{:13.3f}'*4
     line_tmpl = '{:<20}|  {:13.4f}{:13.2f}{:13.4f}{:13.5f}'
+
     for e_name in element_names:
-        W_fuel = prob[e_name+'.Wfuel'][0]
-        W_tot = prob[e_name+'.Fl_O:stat:W'][0]
+
+        point, _, element = e_name.rpartition(".")
+
+        W_fuel = get_val(prob, point, element, 'Wfuel')
+        W_tot = get_val(prob, point, element, 'Fl_O:stat:W')
         W_air = W_tot - W_fuel
         FAR = W_fuel/W_air
-        print(line_tmpl.format(e_name, prob[e_name+'.dPqP'][0],
-                               prob[e_name+'.Fl_O:tot:T'][0],
-                               W_fuel, FAR),
+        dPqP = get_val(prob, point, element, 'dPqP')
+        T_tot = get_val(prob, point, element, 'Fl_O:tot:T')
+
+        print(line_tmpl.format(e_name, dPqP, T_tot, W_fuel, FAR),
               file=file, flush=True)
 
 
@@ -108,17 +136,28 @@ def print_turbine(prob, element_names, file=sys.stdout):
 
     line_tmpl = '{:<14}|  '+'{:13.3f}'*9
     for e_name in element_names:
+
+        point, _, element = e_name.rpartition(".")
+
         sys = prob.model._get_subsystem(e_name)
         if sys.options['design']:
-          PR_temp = prob[e_name+'.map.scalars.PR'][0]
-          eff_temp = prob[e_name+'.map.scalars.eff'][0]
+            PR_temp = get_val(prob, point, element, 'map.scalars.PR')
+            eff_temp = get_val(prob, point, element, 'map.scalars.eff')
         else:
-          PR_temp = prob[e_name+'.PR'][0]
-          eff_temp = prob[e_name+'.eff'][0]
+            PR_temp = get_val(prob, point, element, 'PR')
+            eff_temp = get_val(prob, point, element, 'eff')
 
-        print(line_tmpl.format(e_name, prob[e_name+'.Wp'][0], PR_temp,
-                               eff_temp, prob[e_name+'.eff_poly'][0], prob[e_name+'.Np'][0], prob[e_name+'.power'][0],
-                               prob[e_name+'.map.NpMap'][0], prob[e_name+'.map.PRmap'][0], prob[e_name+'.map.alphaMap'][0]),
+        Wp = get_val(prob, point, element, 'Wp')
+        eff_poly = get_val(prob, point, element, 'eff_poly')
+        Np = get_val(prob, point, element, 'Np')
+        power = get_val(prob, point, element, 'power')
+        NpMap = get_val(prob, point, element, 'map.NpMap')
+        PRmap = get_val(prob, point, element, 'map.PRmap')
+        alphaMap = get_val(prob, point, element, 'map.alphaMap')
+
+        print(line_tmpl.format(e_name, Wp, PR_temp,
+                               eff_temp, eff_poly, Np, power,
+                               NpMap, PRmap, alphaMap),
               file=file, flush=True)
 
 
@@ -134,21 +173,30 @@ def print_nozzle(prob, element_names, file=sys.stdout):
 
 
     for e_name in element_names:
+
+        point, _, element = e_name.rpartition(".")
+
         sys = prob.model._get_subsystem(e_name)
         if sys.options['lossCoef'] == 'Cv':
-            Cv_val = prob[e_name+'.Cv'][0]
+
+            Cv_val = get_val(prob, point, element, 'Cv')
             Cfg_val = '        N/A  '
             line_tmpl = '{:<14}|  ' + '{:13.3f}'*2 + '{}' + '{:13.3f}'*5
 
         else:
             Cv_val = '        N/A  '
-            Cfg_val = prob[e_name+'.Cfg'][0]
+            Cfg_val = get_val(prob, point, element, 'Cfg')
             line_tmpl = '{:<14}|  ' + '{:13.3f}'*1 + '{}' + '{:13.3f}'*6
 
-        print(line_tmpl.format(e_name, prob[e_name+'.PR'][0], Cv_val, Cfg_val,
-                               prob[e_name+'.Throat:stat:area'][0], prob[e_name+'.Throat:stat:MN'][0],
-                               prob[e_name+'.Fl_O:stat:MN'][0],
-                               prob[e_name+'.Fl_O:stat:V'][0], prob[e_name+'.Fg'][0]),
+        PR = get_val(prob, point, element, 'PR')
+        area = get_val(prob, point, element, 'Throat:stat:area')
+        throat_MN = get_val(prob, point, element, 'Throat:stat:MN')
+        MN = get_val(prob, point, element, 'Fl_O:stat:MN')
+        V = get_val(prob, point, element, 'Fl_O:stat:V')
+        Fg = get_val(prob, point, element, 'Fg')
+
+        print(line_tmpl.format(e_name, PR, Cv_val, Cfg_val,
+                               area, throat_MN, MN, V, Fg),
              file=file, flush=True)
 
 
@@ -287,7 +335,7 @@ def plot_compressor_maps(prob, element_names, eff_vals=np.array([0,0.5,0.55,0.6,
           plt.ylabel('PR')
           plt.title(e_name)
           # plt.show()
-          plt.savefig(e_name+'.pdf')  
+          plt.savefig(e_name+'.pdf')
 
 
 def plot_turbine_maps(prob, element_names, eff_vals=np.array([0,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0]),alphas=[0]):
@@ -321,5 +369,5 @@ def plot_turbine_maps(prob, element_names, eff_vals=np.array([0,0.5,0.55,0.6,0.6
           plt.ylabel('PR')
           plt.title(e_name)
           # plt.show()
-          plt.savefig(e_name+'.pdf')  
+          plt.savefig(e_name+'.pdf')
 
