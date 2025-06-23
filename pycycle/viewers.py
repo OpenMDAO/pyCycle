@@ -10,7 +10,7 @@ except ImportError:
   plt = None
 
 
-def get_val(prob, point, element, var_name):
+def get_val(prob, point, element, var_name, units=None):
     """
     Get the value of the requested element from the OpenMDAO model.
 
@@ -24,12 +24,18 @@ def get_val(prob, point, element, var_name):
         Name of the pcycle element system.
     var_name: str
         Name of the variable to get.
+    units: str or None
+        Units for the return value. Default is None, which will return using the delared units.
+
+    Returns
+    float
+        Value of requested element.
     """
     try:
-        val = prob.get_val(f"{point}.{element}.{var_name}")
+        val = prob.get_val(f"{point}.{element}.{var_name}", units=units)
     except KeyError:
         # This is a cycle parameter.
-        val = prob.get_val(f"{element}.{var_name}")
+        val = prob.get_val(f"{element}.{var_name}", units=units)
 
     return val[0]
 
