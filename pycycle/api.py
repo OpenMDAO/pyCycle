@@ -1,6 +1,6 @@
-from pycycle.constants import (AIR_FUEL_MIX, AIR_MIX, WET_AIR_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF, 
-                               R_UNIVERSAL_SI, R_UNIVERSAL_ENG, g_c, MIN_VALID_CONCENTRATION, 
-                               T_STDeng, P_STDeng, P_REF, CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION, 
+from pycycle.constants import (AIR_FUEL_MIX, AIR_MIX, WET_AIR_MIX, BTU_s2HP, HP_per_RPM_to_FT_LBF,
+                               R_UNIVERSAL_SI, R_UNIVERSAL_ENG, g_c, MIN_VALID_CONCENTRATION,
+                               T_STDeng, P_STDeng, P_REF, CEA_AIR_COMPOSITION, CEA_AIR_FUEL_COMPOSITION,
                                CEA_WET_AIR_COMPOSITION, AIR_JETA_TAB_SPEC, TAB_AIR_FUEL_COMPOSITION)
 
 from pycycle.thermo.cea import species_data
