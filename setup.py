@@ -12,6 +12,7 @@ __version__ = re.findall(
 optional_dependencies = {
     'test': [
         'testflo>=1.3.6',
+        'parameterized',
     ]
 }
 
