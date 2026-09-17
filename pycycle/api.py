@@ -11,6 +11,7 @@ from pycycle.elements.inlet import Inlet, MilSpecRecovery
 from pycycle.elements.duct import Duct
 from pycycle.elements.compressor import Compressor
 from pycycle.elements.combustor import Combustor
+from pycycle.elements.rde_combustor import RDECombustor, RDEPressureGainComp, print_rde
 from pycycle.elements.turbine import Turbine
 from pycycle.elements.nozzle import Nozzle
 from pycycle.elements.shaft import Shaft
