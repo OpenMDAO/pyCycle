@@ -22,6 +22,12 @@ row       Tgas'    Tmetal       Tcool             phi            phi'          W
    4     2745.85   2460.00      1721.97           0.279185      0.362111       70.61          0.91853     2412.12
 Wout  = 71.53
 
+The table above subtracts each rotor's work from the primary and cooling flows after they mix, so
+the rows extract more than the turbine power. pyCycle now has a rotor extract its work from the
+primary flow before its coolant mixes in, so the rotor rows remove exactly the turbine power and the
+rotor and second stage values below differ from the table. The last row exit temperature (2430.26 R)
+matches the HPT exit temperature in the NPSS output below (FS_45, 2430.94 R).
+
 ************************************************************************************************************************************
 Date:07/17/17    Time:10:57:07    Model:          N+3 Gear Drive Turbofan Engine for Small Core Research    converge = 1   CASE:   0
 Version:            NPSS_2.6          Gas Package:  Janaf        iter/pass/Jacb/Broy= 24/132/ 2/21        Run by:           smjones1
@@ -101,7 +107,6 @@ Core_Nozz       1.205    0.9999    1.0000   0.9999     393.42     0.535    974.7
 
 import unittest
 
-import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_near_equal
@@ -238,7 +243,7 @@ class Tests(unittest.TestCase):
                                                      'turb_cool.Fl_turb_O:stat:composition'])
         p.model.connect('ivc.air_composition', ['turb_cool.Fl_cool:tot:composition', 'turb_cool.Fl_cool:stat:composition'])
 
-        p.setup()
+        p.setup(force_alloc_complex=True)
         p.set_solver_print(0)
 
         p.set_val('turb_cool.x_factor', .9)
@@ -247,22 +252,39 @@ class Tests(unittest.TestCase):
 
         tol = 4e-4
 
+        # first vane matches the reference table
         assert_near_equal(p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
-        assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2846.45, tol)
-        assert_near_equal(p['turb_cool.row_2.Fl_O:tot:T'], 2821.58, tol)
-        assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2412.12, tol)
-
         assert_near_equal(p['turb_cool.row_0.W_cool'], 4.44635, tol)
-        assert_near_equal(p['turb_cool.row_1.W_cool'][0], 2.2981, tol)
-        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.7079, tol)
-        assert_near_equal(p['turb_cool.row_3.W_cool'][0], 0.91799, tol)
 
-        np.set_printoptions(precision=5)
-        check = p.check_partials(includes=['turb_cool.row_0.cooling_calcs',
-                                           'turb_cool.row_1.cooling_calcs'],
-                                 out_stream=None)
+        # rotor coolant mixes after the rotor work (see module docstring)
+        assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2859.96, tol)
+        assert_near_equal(p['turb_cool.row_2.Fl_O:tot:T'], 2834.11, tol)
+        assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2430.26, tol)
 
-        assert_check_partials(check, atol=1e-6, rtol=1e2)
+        assert_near_equal(p['turb_cool.row_1.W_cool'], 2.30094, tol)
+        assert_near_equal(p['turb_cool.row_2.W_cool'], 1.75554, tol)
+        assert_near_equal(p['turb_cool.row_3.W_cool'], 0.95495, tol)
+
+        # the rows remove exactly the turbine power
+        W_in = p.get_val('turb_cool.Fl_turb_I:stat:W', units='lbm/s')
+        h_in = p.get_val('turb_cool.Fl_turb_I:tot:h', units='Btu/lbm')
+        h_cool = p.get_val('turb_cool.Fl_cool:tot:h', units='Btu/lbm')
+        W_cool = sum(p.get_val(f'turb_cool.row_{i}.W_cool', units='lbm/s') for i in range(4))
+        W_out = p.get_val('turb_cool.row_3.W_out', units='lbm/s')
+        h_out = p.get_val('turb_cool.row_3.Fl_O:tot:h', units='Btu/lbm')
+        pwr_removed = W_in*h_in + W_cool*h_cool - W_out*h_out
+        assert_near_equal(pwr_removed, p.get_val('turb_cool.turb_pwr', units='Btu/s'), 1e-10)
+
+        # each stator is at its stage inlet pressure and each rotor at its stage exit pressure
+        Pt_in, Pt_out = 616.736, 149.113
+        Pt_mid = (Pt_in + Pt_out)/2
+        for i, Pt in enumerate([Pt_in, Pt_mid, Pt_mid, Pt_out]):
+            assert_near_equal(p.get_val(f'turb_cool.row_{i}.Fl_O:tot:P', units='psi'), Pt, 1e-10)
+
+        check = p.check_partials(includes=['turb_cool.row_*.cooling_calcs'],
+                                 method='cs', out_stream=None)
+
+        assert_check_partials(check, atol=1e-8, rtol=1e-8)
 
 
 if __name__ == "__main__":

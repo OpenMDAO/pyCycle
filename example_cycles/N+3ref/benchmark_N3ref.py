@@ -78,56 +78,56 @@ class N3MDPVerifTestCase(unittest.TestCase):
         assert_near_equal(prob['TOC.inlet.Fl_O:stat:W'], 820.44097898, tol)#
         assert_near_equal(prob['TOC.inlet.Fl_O:tot:P'], 5.26210728, tol)#
         assert_near_equal(prob['TOC.hpc.Fl_O:tot:P'], 275.21039426, tol)#
-        assert_near_equal(prob['TOC.burner.Wfuel'], 0.74702036, tol)#
+        assert_near_equal(prob['TOC.burner.Wfuel'], 0.74575326, tol)#
         assert_near_equal(prob['TOC.inlet.F_ram'], 19854.88340967, tol)#
-        assert_near_equal(prob['TOC.core_nozz.Fg'], 1547.13847348, tol)#
+        assert_near_equal(prob['TOC.core_nozz.Fg'], 1536.77598639, tol)#
         assert_near_equal(prob['TOC.byp_nozz.Fg'], 24430.7872167, tol)#
-        assert_near_equal(prob['TOC.perf.TSFC'], 0.43900789, tol)#
+        assert_near_equal(prob['TOC.perf.TSFC'], 0.43920374, tol)#
         assert_near_equal(prob['TOC.perf.OPR'], 52.30041498, tol)#
-        assert_near_equal(prob['TOC.balance.FAR'], 0.02669913, tol)#
+        assert_near_equal(prob['TOC.balance.FAR'], 0.02671119, tol)#
         assert_near_equal(prob['TOC.hpc.Fl_O:tot:T'], 1517.98001185, tol)#
-        assert_near_equal(prob['RTO.inlet.Fl_O:stat:W'], 1915.22687254, tol)#
+        assert_near_equal(prob['RTO.inlet.Fl_O:stat:W'], 1915.54269542, tol)#
         assert_near_equal(prob['RTO.inlet.Fl_O:tot:P'], 15.3028198, tol)#
-        assert_near_equal(prob['RTO.hpc.Fl_O:tot:P'], 623.4047562, tol)#
-        assert_near_equal(prob['RTO.burner.Wfuel'], 1.73500397, tol)#
-        assert_near_equal(prob['RTO.inlet.F_ram'], 17040.51023484, tol)#
-        assert_near_equal(prob['RTO.core_nozz.Fg'], 2208.78618847, tol)#
-        assert_near_equal(prob['RTO.byp_nozz.Fg'], 37631.72404627, tol)#
-        assert_near_equal(prob['RTO.perf.TSFC'], 0.273948, tol)#
-        assert_near_equal(prob['RTO.perf.OPR'], 40.73790087, tol)#
-        assert_near_equal(prob['RTO.balance.FAR'], 0.02853677, tol)#
-        assert_near_equal(prob['RTO.balance.fan_Nmech'], 2133.2082055, tol)#
-        assert_near_equal(prob['RTO.balance.lp_Nmech'], 6612.99426306, tol)#
-        assert_near_equal(prob['RTO.balance.hp_Nmech'], 22294.4214065, tol)#
-        assert_near_equal(prob['RTO.hpc.Fl_O:tot:T'], 1707.8424979, tol)#
-        assert_near_equal(prob['SLS.inlet.Fl_O:stat:W'], 1733.66974646, tol)#
+        assert_near_equal(prob['RTO.hpc.Fl_O:tot:P'], 623.9488203, tol)#
+        assert_near_equal(prob['RTO.burner.Wfuel'], 1.73600340, tol)#
+        assert_near_equal(prob['RTO.inlet.F_ram'], 17043.31964111, tol)#
+        assert_near_equal(prob['RTO.core_nozz.Fg'], 2197.26733139, tol)#
+        assert_near_equal(prob['RTO.byp_nozz.Fg'], 37646.05230813, tol)#
+        assert_near_equal(prob['RTO.perf.TSFC'], 0.274106, tol)#
+        assert_near_equal(prob['RTO.perf.OPR'], 40.77345406, tol)#
+        assert_near_equal(prob['RTO.balance.FAR'], 0.02858843, tol)#
+        assert_near_equal(prob['RTO.balance.fan_Nmech'], 2133.6796598, tol)#
+        assert_near_equal(prob['RTO.balance.lp_Nmech'], 6614.45578223, tol)#
+        assert_near_equal(prob['RTO.balance.hp_Nmech'], 22299.8972212, tol)#
+        assert_near_equal(prob['RTO.hpc.Fl_O:tot:T'], 1708.5132836, tol)#
+        assert_near_equal(prob['SLS.inlet.Fl_O:stat:W'], 1733.83811005, tol)#
         assert_near_equal(prob['SLS.inlet.Fl_O:tot:P'], 14.62242048, tol)#
-        assert_near_equal(prob['SLS.hpc.Fl_O:tot:P'], 509.33522171, tol)#
-        assert_near_equal(prob['SLS.burner.Wfuel'], 1.3201035, tol)#
-        assert_near_equal(prob['SLS.inlet.F_ram'], 0.06170051, tol)#
-        assert_near_equal(prob['SLS.core_nozz.Fg'], 1526.45701492, tol)#
-        assert_near_equal(prob['SLS.byp_nozz.Fg'], 27094.44468547, tol)#
-        assert_near_equal(prob['SLS.perf.TSFC'], 0.16604588, tol)#
-        assert_near_equal(prob['SLS.perf.OPR'], 34.8324836, tol)#
-        assert_near_equal(prob['SLS.balance.FAR'], 0.02559136, tol)#
-        assert_near_equal(prob['SLS.balance.fan_Nmech'], 1953.67749381, tol)#
-        assert_near_equal(prob['SLS.balance.lp_Nmech'], 6056.44494761, tol)#
-        assert_near_equal(prob['SLS.balance.hp_Nmech'], 21599.4239832, tol)#
-        assert_near_equal(prob['SLS.hpc.Fl_O:tot:T'], 1615.20710655, tol)#
-        assert_near_equal(prob['CRZ.inlet.Fl_O:stat:W'], 802.28669491, tol)#
+        assert_near_equal(prob['SLS.hpc.Fl_O:tot:P'], 509.80866518, tol)#
+        assert_near_equal(prob['SLS.burner.Wfuel'], 1.3209615, tol)#
+        assert_near_equal(prob['SLS.inlet.F_ram'], 0.06170650, tol)#
+        assert_near_equal(prob['SLS.core_nozz.Fg'], 1518.73183468, tol)#
+        assert_near_equal(prob['SLS.byp_nozz.Fg'], 27102.16987181, tol)#
+        assert_near_equal(prob['SLS.perf.TSFC'], 0.16615380, tol)#
+        assert_near_equal(prob['SLS.perf.OPR'], 34.8648615, tol)#
+        assert_near_equal(prob['SLS.balance.FAR'], 0.02563758, tol)#
+        assert_near_equal(prob['SLS.balance.fan_Nmech'], 1953.93727288, tol)#
+        assert_near_equal(prob['SLS.balance.lp_Nmech'], 6057.25026870, tol)#
+        assert_near_equal(prob['SLS.balance.hp_Nmech'], 21603.5807712, tol)#
+        assert_near_equal(prob['SLS.hpc.Fl_O:tot:T'], 1615.72188365, tol)#
+        assert_near_equal(prob['CRZ.inlet.Fl_O:stat:W'], 802.48368519, tol)#
         assert_near_equal(prob['CRZ.inlet.Fl_O:tot:P'], 5.26210728, tol)#
-        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:P'], 258.04394098, tol)#
-        assert_near_equal(prob['CRZ.burner.Wfuel'], 0.67533764, tol)#
-        assert_near_equal(prob['CRZ.inlet.F_ram'], 19415.54505032, tol)#
-        assert_near_equal(prob['CRZ.core_nozz.Fg'], 1375.4427785, tol)#
-        assert_near_equal(prob['CRZ.byp_nozz.Fg'], 23550.83060746, tol)#
-        assert_near_equal(prob['CRZ.perf.TSFC'], 0.44117862, tol)#
-        assert_near_equal(prob['CRZ.perf.OPR'], 49.03813765, tol)#
-        assert_near_equal(prob['CRZ.balance.FAR'], 0.02528878, tol)#
-        assert_near_equal(prob['CRZ.balance.fan_Nmech'], 2118.62554023, tol)#
-        assert_near_equal(prob['CRZ.balance.lp_Nmech'], 6567.78766693, tol)#
-        assert_near_equal(prob['CRZ.balance.hp_Nmech'], 20574.43651756, tol)#
-        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:T'], 1481.9756247, tol)#
+        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:P'], 258.31877697, tol)#
+        assert_near_equal(prob['CRZ.burner.Wfuel'], 0.67567829, tol)#
+        assert_near_equal(prob['CRZ.inlet.F_ram'], 19420.31159205, tol)#
+        assert_near_equal(prob['CRZ.core_nozz.Fg'], 1368.8996000, tol)#
+        assert_near_equal(prob['CRZ.byp_nozz.Fg'], 23562.14032768, tol)#
+        assert_near_equal(prob['CRZ.perf.TSFC'], 0.44140115, tol)#
+        assert_near_equal(prob['CRZ.perf.OPR'], 49.09036691, tol)#
+        assert_near_equal(prob['CRZ.balance.FAR'], 0.02532611, tol)#
+        assert_near_equal(prob['CRZ.balance.fan_Nmech'], 2119.56857108, tol)#
+        assert_near_equal(prob['CRZ.balance.lp_Nmech'], 6570.71108417, tol)#
+        assert_near_equal(prob['CRZ.balance.hp_Nmech'], 20579.57419479, tol)#
+        assert_near_equal(prob['CRZ.hpc.Fl_O:tot:T'], 1482.5948715, tol)#
 
 if __name__ == "__main__":
     unittest.main()
