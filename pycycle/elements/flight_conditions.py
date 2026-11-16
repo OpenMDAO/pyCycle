@@ -10,7 +10,13 @@ from pycycle.element_base import Element
 
 
 class FlightConditions(Element):
-    """Determines total and static flow properties given an altitude and Mach number using the input atmosphere model"""
+    """
+    Determines total and static flow properties given an altitude and Mach number using the input atmosphere model.
+
+    With `use_external_atmosphere=True` the built-in atmosphere is replaced by the inputs
+    `ambient_static_temperature`, `ambient_static_pressure` and `ambient_density`, so the ambient
+    state can come from another model, such as a mission analysis or a non-standard day.
+    """
 
     def initialize(self):
         self.options.declare('composition', default=None,
@@ -20,6 +26,10 @@ class FlightConditions(Element):
                                    'is mixed into the flow at at the ratio set by the `mix_ratio` input')
         self.options.declare('mix_ratio_name', default='mix:ratio', 
                              desc='The name of the input that governs the mix ratio of the reactant to the primary flow')
+        self.options.declare('use_external_atmosphere', default=False, types=bool,
+                             desc='If True, the built-in atmosphere model is not added and the ambient state is set '
+                                  'by the inputs `ambient_static_temperature`, `ambient_static_pressure` and '
+                                  '`ambient_density` instead of `alt` and `dTs`')
 
         super().initialize()
         
@@ -53,7 +63,19 @@ class FlightConditions(Element):
         # composition = self.Fl_O_data['Fl_O']
         composition = self.options['composition']
 
-        self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
+        if self.options['use_external_atmosphere']:
+            # pass the externally supplied ambient state through to the same outputs as Ambient
+            ambient = om.ExecComp(['Ts = Ts_in', 'Ps = Ps_in', 'rhos = rhos_in'],
+                                  Ts={'units': 'degR'}, Ts_in={'val': 518.67, 'units': 'degR'},
+                                  Ps={'units': 'psi'}, Ps_in={'val': 14.696, 'units': 'psi'},
+                                  rhos={'units': 'slug/ft**3'}, rhos_in={'val': 0.0023769, 'units': 'slug/ft**3'},
+                                  has_diag_partials=True)
+            self.add_subsystem('ambient', ambient,
+                               promotes_inputs=[('Ts_in', 'ambient_static_temperature'),
+                                                ('Ps_in', 'ambient_static_pressure'),
+                                                ('rhos_in', 'ambient_density')])
+        else:
+            self.add_subsystem('ambient', Ambient(), promotes=('alt', 'dTs'))  # inputs
 
         conv = self.add_subsystem('conv', om.Group(), promotes=['*'])
         if reactant is not False:

@@ -16,11 +16,14 @@ class PR_bal(om.ImplicitComponent):
     pressure ratio (Pt/Ps) drops below 1.
     """
 
+    def initialize(self):
+        self.options.declare('PR_guess', default=2.0, desc='Initial guess for the total-to-static pressure ratio')
+
     def setup(self):
         self.add_input('Ps_exhaust', val=5.0, units='lbf/inch**2', desc='Exhaust static pressure')
         self.add_input('Ps_calc', val=5.0, units='lbf/inch**2', desc='Calculated exhaust static pressure')
 
-        self.add_output('PR', val=2.0, lower=1.000001, units=None, desc='Total-to-staic pressure ratio')
+        self.add_output('PR', val=self.options['PR_guess'], lower=1.000001, units=None, desc='Total-to-staic pressure ratio')
 
         self.declare_partials('PR', 'Ps_exhaust', val=1.0)
         self.declare_partials('PR', 'Ps_calc', val=-1.0)
@@ -307,6 +310,8 @@ class Nozzle(Element):
         self.options.declare('lossCoef', default='Cv',
                               desc='If set to "Cfg", then Gross Thrust Coefficient is an input.')
         self.options.declare('internal_solver', default=False)
+        self.options.declare('PR_guess', default=2.0,
+                              desc='Initial guess for the total-to-static pressure ratio solved by PR_bal')
 
         super().initialize()
 
@@ -335,7 +340,7 @@ class Nozzle(Element):
         # self.connect('Ps_exhaust', 'PR_bal.lhs:PR')
         # self.connect('Ps_calc', 'PR_bal.rhs:PR')
 
-        self.add_subsystem('PR_bal', PR_bal(), promotes_inputs=['*'], promotes_outputs=['*'] )
+        self.add_subsystem('PR_bal', PR_bal(PR_guess=self.options['PR_guess']), promotes_inputs=['*'], promotes_outputs=['*'] )
 
         # Calculate pressure at the throat
         prom_in = [('Pt_in', 'Fl_I:tot:P'),
