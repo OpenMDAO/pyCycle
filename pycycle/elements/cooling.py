@@ -37,6 +37,14 @@ class CoolingCalcs(om.ExplicitComponent):
     power (turb_pwr/n_stages) from the primary flow first, and its coolant mixes in afterwards at
     the stage exit pressure, so the rotor coolant does no work in that row. The power removed by
     all rotors sums to turb_pwr.
+
+    The cooling flow correlation and the order of work extraction and coolant mixing follow the
+    COOLIT subroutine in:
+
+    J. W. Gauntner, "Algorithm for Calculating Turbine Cooling Flow and the Resulting Decrease in
+    Turbine Efficiency," NASA TM-81453, 1980. https://ntrs.nasa.gov/citations/19800011581
+
+    The row exit pressures are not part of COOLIT.
     """
 
     def initialize(self):
@@ -102,12 +110,14 @@ class CoolingCalcs(om.ExplicitComponent):
             phi = (T_gas - self.options['T_metal'])/(T_gas-inputs['Tt_cool'])
             phi_prime = (phi + profile_factor)/(profile_factor + 1.)
 
+            # COOLIT cooling flow correlation (NASA TM-81453): 0.022 constant, 4/3 leakage factor
             try:
                 outputs['W_cool'] = W_cool = .022*inputs['x_factor']*(4./3.)*W_primary*(phi_prime/(1-phi_prime))**1.25
             except FloatingPointError:
                 raise om.AnalysisError('bad flow values in {}; W: {}'.format(self.pathname, W_primary))
 
-        # the primary flow does the rotor work (dh is zero for a stator), then the coolant mixes in
+        # The primary flow does the rotor work first (dh is zero for a stator), then this row's
+        # coolant mixes in, as in COOLIT. Coolant ejected at a rotor does no work in that rotor.
         outputs['ht_out'] = (W_primary*inputs['ht_primary'] - dh + W_cool*inputs['ht_cool'])/(W_primary+W_cool)
 
         Pt_out = inputs['Pt_out']
@@ -167,7 +177,7 @@ class CoolingCalcs(om.ExplicitComponent):
         ht_cool = inputs['ht_cool']
 
         WpWc = W_primary + W_cool
-        # ht_out = (W_primary*ht_primary - dh + W_cool*ht_cool)/WpWc
+        # partial derivatives of ht_out (from compute) with respect to the two flows
         dht_out_dW_cool = (W_primary*(ht_cool - ht_primary) + dh)/WpWc**2
         dht_out_dW_primary = (W_cool*(ht_primary - ht_cool) + dh)/WpWc**2
 

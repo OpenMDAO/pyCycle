@@ -256,7 +256,7 @@ class Tests(unittest.TestCase):
         assert_near_equal(p['turb_cool.row_0.Fl_O:tot:T'], 3299.28, tol)
         assert_near_equal(p['turb_cool.row_0.W_cool'], 4.44635, tol)
 
-        # rotor coolant mixes after the rotor work (see module docstring)
+        # rotor coolant mixes after the rotor work (see the CoolingCalcs docstring)
         assert_near_equal(p['turb_cool.row_1.Fl_O:tot:T'], 2859.96, tol)
         assert_near_equal(p['turb_cool.row_2.Fl_O:tot:T'], 2834.11, tol)
         assert_near_equal(p['turb_cool.row_3.Fl_O:tot:T'], 2430.26, tol)
