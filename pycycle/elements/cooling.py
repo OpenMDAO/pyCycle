@@ -29,6 +29,23 @@ class CombineCooling(om.ExplicitComponent):
 
 
 class CoolingCalcs(om.ExplicitComponent):
+    """
+    Cooling flow, exit enthalpy and exit pressure of one turbine blade row.
+
+    Even rows are stators and odd rows are rotors. A stator does no work, so its coolant mixes
+    with the primary flow at the stage inlet pressure. A rotor extracts its share of the turbine
+    power (turb_pwr/n_stages) from the primary flow first, and its coolant mixes in afterwards at
+    the stage exit pressure, so the rotor coolant does no work in that row. The power removed by
+    all rotors sums to turb_pwr.
+
+    The cooling flow correlation and the order of work extraction and coolant mixing follow the
+    COOLIT subroutine in:
+
+    J. W. Gauntner, "Algorithm for Calculating Turbine Cooling Flow and the Resulting Decrease in
+    Turbine Efficiency," NASA TM-81453, 1980. https://ntrs.nasa.gov/citations/19800011581
+
+    The row exit pressures are not part of COOLIT.
+    """
 
     def initialize(self):
         self.options.declare('n_stages', types=int, desc="number of stages in the turbine")
@@ -54,8 +71,13 @@ class CoolingCalcs(om.ExplicitComponent):
 
         self.add_output('ht_out', val=1, units='Btu/lbm', desc="exit total enthalpy")
 
-        # integer math to so you get 1,1,2,2 for the rows of 2 stage machine
-        self.i_stage = (((self.options['i_row'])//2) + 1)//self.options['n_stages']
+        # Fraction of the turbine pressure drop still to come at this row's exit.
+        # A stator sits at its stage inlet pressure and a rotor completes its stage's pressure drop,
+        # so a 2 stage machine gives 1, 1/2, 1/2, 0 for rows 0 to 3.
+        n_stages = self.options['n_stages']
+        i_row = self.options['i_row']
+        stages_done = i_row//2 + i_row%2
+        self.i_stage = 1. - stages_done/n_stages
 
         self.declare_partials('W_cool', ['x_factor', 'W_primary', 'Tt_primary', 'Tt_cool'])
         self.declare_partials('ht_out', ['x_factor', 'W_primary', 'Tt_primary', 'Tt_cool', 'turb_pwr', 'ht_cool', 'ht_primary'])
@@ -88,14 +110,15 @@ class CoolingCalcs(om.ExplicitComponent):
             phi = (T_gas - self.options['T_metal'])/(T_gas-inputs['Tt_cool'])
             phi_prime = (phi + profile_factor)/(profile_factor + 1.)
 
-            # print(self.pathname, W_primary, inputs['Tt_primary'], inputs['Tt_cool'], phi_prime)
-
+            # COOLIT cooling flow correlation (NASA TM-81453): 0.022 constant, 4/3 leakage factor
             try:
                 outputs['W_cool'] = W_cool = .022*inputs['x_factor']*(4./3.)*W_primary*(phi_prime/(1-phi_prime))**1.25
             except FloatingPointError:
                 raise om.AnalysisError('bad flow values in {}; W: {}'.format(self.pathname, W_primary))
 
-        outputs['ht_out'] = (W_primary*inputs['ht_primary'] + W_cool*inputs['ht_cool'])/(W_primary+W_cool) - dh/W_primary
+        # The primary flow does the rotor work first (dh is zero for a stator), then this row's
+        # coolant mixes in, as in COOLIT. Coolant ejected at a rotor does no work in that rotor.
+        outputs['ht_out'] = (W_primary*inputs['ht_primary'] - dh + W_cool*inputs['ht_cool'])/(W_primary+W_cool)
 
         Pt_out = inputs['Pt_out']
         Pt_in = inputs['Pt_in']
@@ -154,7 +177,9 @@ class CoolingCalcs(om.ExplicitComponent):
         ht_cool = inputs['ht_cool']
 
         WpWc = W_primary + W_cool
-        dht_out_dW_cool = -W_primary*ht_primary/WpWc**2 + ht_cool/WpWc - W_cool*ht_cool/WpWc**2
+        # partial derivatives of ht_out (from compute) with respect to the two flows
+        dht_out_dW_cool = (W_primary*(ht_cool - ht_primary) + dh)/WpWc**2
+        dht_out_dW_primary = (W_cool*(ht_primary - ht_cool) + dh)/WpWc**2
 
         J['W_cool', 'W_primary'] = dWc_dWp
         J['W_cool', 'x_factor'] = dWc_dx_factor
@@ -162,12 +187,12 @@ class CoolingCalcs(om.ExplicitComponent):
         J['W_cool', 'Tt_cool'] = dWc_dTt_cool
 
         J['ht_out', 'x_factor'] = dht_out_dW_cool * dWc_dx_factor
-        J['ht_out', 'W_primary'] = (ht_primary-ht_cool)*(W_cool - W_primary*dWc_dWp)/WpWc**2 + dh/W_primary**2
+        J['ht_out', 'W_primary'] = dht_out_dW_primary + dht_out_dW_cool * dWc_dWp
         J['ht_out', 'Tt_primary'] = dht_out_dW_cool * dWc_dTt_primary
         J['ht_out', 'Tt_cool'] = dht_out_dW_cool * dWc_dTt_cool
         J['ht_out', 'ht_primary'] = W_primary/WpWc
         J['ht_out', 'ht_cool'] = W_cool/WpWc
-        J['ht_out', 'turb_pwr'] = -ddh_dturb_pwr/W_primary
+        J['ht_out', 'turb_pwr'] = -ddh_dturb_pwr/WpWc
 
         J['Pt_stage', 'Pt_in'] = self.i_stage
         J['Pt_stage', 'Pt_out'] = 1 - self.i_stage
