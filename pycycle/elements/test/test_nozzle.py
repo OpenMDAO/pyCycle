@@ -87,5 +87,25 @@ class NozzleTestCase(unittest.TestCase):
                                                     includes=['nozzle.*'], excludes=['*.base_thermo.*',])
             assert_check_partials(partial_data, atol=1e-8, rtol=1e-8)
 
+    def test_PR_guess(self):
+        """PR_guess sets the starting value of the nozzle pressure ratio balance"""
+        prob = Problem()
+        cycle = prob.model = Cycle()
+        cycle.options['thermo_method'] = 'CEA'
+        cycle.options['thermo_data'] = janaf
+
+        cycle.add_subsystem('flow_start', FlowStart())
+        cycle.add_subsystem('nozzle', Nozzle(lossCoef='Cfg', internal_solver=True, PR_guess=1.3))
+        cycle.add_subsystem('nozzle_default', Nozzle(lossCoef='Cfg', internal_solver=True))
+        cycle.pyc_connect_flow("flow_start.Fl_O", "nozzle.Fl_I")
+        cycle.pyc_connect_flow("flow_start.Fl_O", "nozzle_default.Fl_I")
+
+        prob.setup(check=False)
+        prob.final_setup()
+
+        assert_near_equal(prob['nozzle.PR'], 1.3, 1e-12)
+        assert_near_equal(prob['nozzle_default.PR'], 2.0, 1e-12)
+
+
 if __name__ == "__main__":
     unittest.main()
