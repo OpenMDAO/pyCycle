@@ -245,6 +245,25 @@ class TestStaticTabular(unittest.TestCase):
         assert_near_equal(p['set_static_area.flow:P'], 30, 1e-4)
         assert_near_equal(p['set_static_area.flow:MN'], p['set_static_Ps.flow:MN'], 1e-4)
 
+    def test_statics_restored_state(self):
+        # restoring the model's vectors must fully determine the next solve, whatever ran in between
+        self.test_statics()
+        p = self.p
+        p.set_solver_print(level=-1)
+        state = p.model._outputs.asarray().copy()
+
+        p.run_model()
+        expected = p.model._outputs.asarray().copy()
+
+        # solve at another total pressure (it feeds guess:Pt), then restore the saved state
+        p.set_val('set_total_TP.P', 40, units='psi')
+        p.run_model()
+        p.model._outputs.asarray()[:] = state
+        p.set_val('set_total_TP.P', 45, units='psi')
+        p.run_model()
+
+        np.testing.assert_array_equal(p.model._outputs.asarray(), expected)
+
 
 
 if __name__ == "__main__": 
