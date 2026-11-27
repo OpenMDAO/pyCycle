@@ -73,16 +73,17 @@ class PsResid(om.ImplicitComponent):
         # self.deriv_options['step_size'] = 1e-7
 
     def guess_nonlinear(self, inputs, outputs, resids):
-        # Seed Ps only from a cold start (MN) or a large residual (area). Both checks read the
-        # model's vectors, so restoring them fully determines the next solve.
+        # Seed Ps on a cold start, and in area mode also when its residual is large. Both checks
+        # read the model's vectors, so restoring them fully determines the next solve.
+        cold_start = np.isclose(outputs['Ps'], PS_INITIAL)
         gamt = inputs['guess:gamt']
         if self.options['mode'] == "MN":
-            if not np.isclose(outputs['Ps'], PS_INITIAL):
+            if not cold_start:
                 return
             ps_guess = inputs['guess:Pt'] * (1 + (gamt-1)/2 * inputs['MN']**2)**(-gamt/(gamt-1))
 
         else:
-            if np.abs(resids['Ps']) < 1e-2:
+            if not cold_start and np.abs(resids['Ps']) < 1e-2:
                 return
 
             def equations(params):
