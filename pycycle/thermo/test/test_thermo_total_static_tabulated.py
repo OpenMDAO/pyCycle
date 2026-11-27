@@ -185,9 +185,9 @@ class TestSetTotalTabular(unittest.TestCase):
 class TestStaticTabular(unittest.TestCase): 
 
 
-    def test_statics(self):
+    def _setup_statics(self):
 
-        p = self.p = om.Problem()
+        p = om.Problem()
         ivc = p.model.add_subsystem('ivc', om.IndepVarComp(), promotes=['*'])
         ivc.add_output('composition', val=np.zeros(1))
         total_TP =  Thermo(mode='total_TP', 
@@ -234,9 +234,13 @@ class TestStaticTabular(unittest.TestCase):
         p.set_val('set_static_Ps.W', 1, units='lbm/s')
         p.set_val('set_static_MN.W', 1, units='lbm/s')
         p.set_val('set_static_area.W', 1, units='lbm/s')
+        return p
 
+    def test_statics(self):
+
+        p = self._setup_statics()
         p.run_model()
-        
+
         assert_near_equal(p['set_static_Ps.flow:P'], 30, 1e-4)
 
         assert_near_equal(p['set_static_MN.flow:P'], 30, 1e-4)
@@ -246,10 +250,11 @@ class TestStaticTabular(unittest.TestCase):
         assert_near_equal(p['set_static_area.flow:MN'], p['set_static_Ps.flow:MN'], 1e-4)
 
     def test_statics_restored_state(self):
-        # restoring the model's vectors must fully determine the next solve, whatever ran in between
-        self.test_statics()
-        p = self.p
+        # restoring the model's vectors must fully determine the next solve, whatever ran in
+        # between and whether or not the model is freshly built
+        p = self._setup_statics()
         p.set_solver_print(level=-1)
+        p.run_model()
         state = p.model._outputs.asarray().copy()
 
         p.run_model()
@@ -261,8 +266,13 @@ class TestStaticTabular(unittest.TestCase):
         p.model._outputs.asarray()[:] = state
         p.set_val('set_total_TP.P', 45, units='psi')
         p.run_model()
-
         np.testing.assert_array_equal(p.model._outputs.asarray(), expected)
+
+        fresh = self._setup_statics()
+        fresh.set_solver_print(level=-1)
+        fresh.model._outputs.asarray()[:] = state
+        fresh.run_model()
+        np.testing.assert_array_equal(fresh.model._outputs.asarray(), expected)
 
     def test_static_area_cold_start(self):
         # the initial enthalpy residual is small here, so Ps must be seeded from its initial value
