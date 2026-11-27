@@ -5,6 +5,8 @@ import openmdao.api as om
 
 from pycycle.constants import R_UNIVERSAL_SI
 
+PS_INITIAL = 1e-3  # bar
+
 class PsResid(om.ImplicitComponent):
     """Actual implicit relationship for when Mach number is specified"""
 
@@ -27,7 +29,7 @@ class PsResid(om.ImplicitComponent):
         self.add_input('guess:gamt', val=1.4, desc="gamma computed from set total")
         self.add_input('guess:Pt', val=1.0, units="bar", desc="total pressure")
 
-        self.add_output('Ps', lower=1e-4, upper=5e4, val=.001, units="bar",
+        self.add_output('Ps', lower=1e-4, upper=5e4, val=PS_INITIAL, units="bar",
                         desc="static pressure state variable",
                         ref0=1e-3)
         self.add_output('V', val=100.0, shape=1, desc="velocity", units="m/s",
@@ -70,23 +72,19 @@ class PsResid(om.ImplicitComponent):
         # self.deriv_options['type'] = 'fd'
         # self.deriv_options['step_size'] = 1e-7
 
-        # cache the old guess and only re-apply it if it changes.
-        # This lets us start from our last converged point, but
-        # only if a new guess isn't present. If a new guess is present,
-        # its a safe bet that we've moved a lot and our old converged point isn't
-        # as good as our new guess
-        self._ps_guess_cache = -1.
-
     def guess_nonlinear(self, inputs, outputs, resids):
+        # Seed Ps on a cold start, and in area mode also when its residual is large. Both checks
+        # read the model's vectors, so restoring them fully determines the next solve.
+        cold_start = np.isclose(outputs['Ps'], PS_INITIAL)
         gamt = inputs['guess:gamt']
         if self.options['mode'] == "MN":
+            if not cold_start:
+                return
             ps_guess = inputs['guess:Pt'] * (1 + (gamt-1)/2 * inputs['MN']**2)**(-gamt/(gamt-1))
-            if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
-                if self._ps_guess_cache == -1:
-                    outputs['Ps'] = ps_guess
-                    self._ps_guess_cache = ps_guess
 
         else:
+            if not cold_start and np.abs(resids['Ps']) < 1e-2:
+                return
 
             def equations(params):
                 ps, MN = params
@@ -98,10 +96,7 @@ class PsResid(om.ImplicitComponent):
             ps_guess = inputs['guess:Pt'] * (1 + (gamt-1)/2 * M_guess**2)**(-gamt/(gamt-1))
             ps_guess, M_guess = fsolve(equations, (ps_guess, M_guess))
 
-            # print('foobar', self.pathname, np.abs(ps_guess - self._ps_guess_cache), inputs['W'], inputs['area'], inputs['Ts'])
-            if np.abs(ps_guess - self._ps_guess_cache) > 1e-10:
-                outputs['Ps'] = ps_guess
-                self._ps_guess_cache = ps_guess
+        outputs['Ps'] = ps_guess
 
     def _compute_outputs_MN(self, i):
 
