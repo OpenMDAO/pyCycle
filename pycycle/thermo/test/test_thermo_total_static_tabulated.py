@@ -264,6 +264,31 @@ class TestStaticTabular(unittest.TestCase):
 
         np.testing.assert_array_equal(p.model._outputs.asarray(), expected)
 
+    def test_static_area_cold_start(self):
+        # the initial enthalpy residual is small here, so Ps must be seeded from its initial value
+        kwargs = {'composition': constants.TAB_AIR_FUEL_COMPOSITION, 'spec': constants.AIR_JETA_TAB_SPEC}
+        p = om.Problem()
+        p.model.add_subsystem('ivc', om.IndepVarComp('composition', val=np.zeros(1)), promotes=['*'])
+        p.model.add_subsystem('total', Thermo(mode='total_TP', method='TABULAR', thermo_kwargs=kwargs),
+                              promotes=['composition'])
+        p.model.add_subsystem('static', Thermo(mode='static_A', method='TABULAR', thermo_kwargs=kwargs),
+                              promotes=['composition'])
+        p.model.connect('total.flow:S', 'static.S')
+        p.model.connect('total.flow:h', 'static.ht')
+        p.model.connect('total.flow:P', 'static.guess:Pt')
+        p.model.connect('total.flow:gamma', 'static.guess:gamt')
+        p.setup()
+        p.set_solver_print(level=-1)
+
+        p.set_val('total.T', 1000, units='degK')
+        p.set_val('total.P', 10, units='bar')
+        p.set_val('static.W', 1, units='kg/s')
+        p.set_val('static.area', 0.00082, units='m**2')
+        p.set_val('static.guess:MN', 0.7)
+        p.run_model()
+
+        assert_near_equal(p['static.flow:MN'], 0.81528, 1e-4)
+
 
 
 if __name__ == "__main__": 
